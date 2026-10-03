@@ -1,0 +1,998 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="波形トレード道場 — 実際のGBP/JPYの統計に合わせて生成した架空相場3年分で、EMAパーフェクトオーダー・RCI・MACD・ダイバージェンスの手法条件を採点しながら練習できるFXトレードゲーム。">
+<meta property="og:title" content="波形トレード道場">
+<meta property="og:description" content="架空相場3年分でトレード手法を練習できるゲーム。エントリーをA/B/Cで採点し、通算成績で傾向を確認できます。">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#1c2230">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='3' width='26' height='26' rx='5' fill='none' stroke='%23d2402b' stroke-width='3'/%3E%3Ctext x='16' y='22' font-size='16' font-weight='700' text-anchor='middle' fill='%23d2402b' font-family='sans-serif'%3E波%3C/text%3E%3C/svg%3E">
+<title>波形トレード道場</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#eceee9; --panel:#fbfbf8; --panel2:#f2f3ef; --panel3:#dfe2dc; --chart:#fdfdfb;
+  --ink:#1c2230; --ink2:#4d5566; --muted:#8a91a0; --line:rgba(28,34,48,.12);
+  --up:#d2402b; --down:#274b8e; --onfill:#ffffff;
+  --e20:#c99400; --e30:#2e9467; --e40:#7a52c7;
+  --rci:#1f7fc4; --rci14:#e0761c; --div:#b03c95; --sigl:#e0761c; --macd:#1c2230; --ev:#c98a00;
+  --tagbg:#1c2230; --tagink:#fbfbf8;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#15171c; --panel:#1d2027; --panel2:#252932; --panel3:#323743; --chart:#181b21;
+  --ink:#eceae4; --ink2:#b3b6be; --muted:#7c818d; --line:rgba(236,234,228,.12);
+  --up:#ef6a52; --down:#5d86d6; --onfill:#ffffff;
+  --e20:#e8bd3a; --e30:#4fbf8c; --e40:#a585f0;
+  --rci:#5fb2ee; --rci14:#f29a4a; --div:#e07bc8; --sigl:#f29a4a; --macd:#eceae4; --ev:#e8b23a;
+  --tagbg:#eceae4; --tagink:#15171c;
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#15171c; --panel:#1d2027; --panel2:#252932; --panel3:#323743; --chart:#181b21;
+  --ink:#eceae4; --ink2:#b3b6be; --muted:#7c818d; --line:rgba(236,234,228,.12);
+  --up:#ef6a52; --down:#5d86d6; --onfill:#ffffff;
+  --e20:#e8bd3a; --e30:#4fbf8c; --e40:#a585f0;
+  --rci:#5fb2ee; --rci14:#f29a4a; --div:#e07bc8; --sigl:#f29a4a; --macd:#eceae4; --ev:#e8b23a;
+  --tagbg:#eceae4; --tagink:#15171c;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Zen Kaku Gothic New",system-ui,-apple-system,"Hiragino Sans",sans-serif;font-size:14px}
+.mono{font-family:"JetBrains Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
+button,select,input{font-family:inherit;color:inherit}
+button{cursor:pointer;touch-action:manipulation}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--up);outline-offset:2px}
+.app{min-height:100%;display:flex;flex-direction:column}
+
+.topbar{display:flex;align-items:center;flex-wrap:wrap;gap:8px 14px;padding:10px 16px;border-bottom:2px solid var(--ink)}
+.brand{display:flex;align-items:center;gap:10px;white-space:nowrap}
+.hanko{width:30px;height:30px;border:2px solid var(--up);color:var(--up);border-radius:5px;display:grid;place-items:center;font-weight:700;font-size:15px;transform:rotate(-4deg)}
+.brand b{font-weight:700;font-size:18px;letter-spacing:.14em}
+.seedbtn{background:transparent;border:1px solid var(--line);border-radius:3px;padding:3px 8px;font-size:11px;color:var(--ink2);white-space:nowrap}
+.seedbtn:hover{border-color:var(--ink);color:var(--ink)}
+.prog{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink2);white-space:nowrap}
+.ticks{display:flex;gap:2px}
+.ticks i{width:5px;height:12px;background:var(--panel3);border-radius:1px}
+.ticks i.on{background:var(--ink)}
+.sp{flex:1}
+.ctrl{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink2)}
+.seg{display:inline-flex;border:1px solid var(--ink);border-radius:3px;overflow:hidden}
+.seg button{background:transparent;border:0;border-right:1px solid var(--line);padding:4px 9px;font-size:12px;color:var(--ink2);white-space:nowrap}
+.seg button:last-child{border-right:0}
+.seg button.on{background:var(--ink);color:var(--panel);font-weight:700}
+.txtbtn{background:transparent;border:0;color:var(--ink2);font-size:12px;padding:4px 2px;text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--line);white-space:nowrap}
+.txtbtn:hover{color:var(--ink);text-decoration-color:var(--ink)}
+.pausebtn{background:transparent;border:1px solid var(--ink);border-radius:3px;padding:4px 10px;font-size:12px;font-weight:700;white-space:nowrap}
+.pausebtn:disabled{opacity:.4;cursor:default}
+
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:14px;padding:14px 16px 18px;flex:1}
+.main{display:flex;flex-direction:column;gap:10px;min-width:0}
+.tools{display:flex;align-items:center;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--ink2)}
+.tools .grp{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.tools .lb{font-weight:700;color:var(--ink)}
+.tools select{background:var(--panel);border:1px solid var(--ink);border-radius:3px;padding:4px 6px;font-size:12px}
+.tog{background:transparent;border:1px solid var(--line);border-radius:3px;padding:3px 8px;font-size:11.5px;color:var(--muted);white-space:nowrap}
+.tog.on{color:var(--ink);border-color:var(--ink)}
+.tog i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:0;background:var(--c,var(--muted));opacity:.35}
+.tog.on i{opacity:1}
+.zb{background:transparent;border:1px solid var(--line);border-radius:3px;width:26px;height:24px;font-size:14px;color:var(--ink2)}
+.zb:hover{border-color:var(--ink);color:var(--ink)}
+.evchip{font-size:11.5px;color:var(--ink2);border:1px dashed var(--ev);border-radius:3px;padding:3px 8px;white-space:nowrap}
+.evchip b{color:var(--ev)}
+.ovwrap{position:relative;background:var(--chart);border:1px solid var(--line);border-radius:2px;height:72px}
+#ov{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:pointer}
+.ovhint{position:absolute;right:8px;top:3px;font-size:10.5px;color:var(--muted);pointer-events:none;background:var(--chart);padding:0 4px}
+@media (max-width:560px){.ovhint{display:none}}
+.charts{display:grid;gap:10px}
+.chartwrap{position:relative;height:clamp(400px,62vh,740px);background:var(--chart);border:1px solid var(--line);border-radius:2px;overflow:hidden}
+.chartwrap.htf{height:clamp(300px,42vh,460px)}
+@media (min-width:1100px){.charts.two{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)}.charts.two .chartwrap.htf{height:auto}}
+#cv,#cvH{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}
+#cv.grab{cursor:grabbing}
+.start{position:absolute;left:16px;right:16px;bottom:34px;z-index:2;margin:0 auto;max-width:520px;display:flex;align-items:center;gap:14px;padding:12px 16px;border-radius:4px;background:var(--ink);color:var(--panel);border:0;text-align:left}
+.start .k{font-weight:700;font-size:15px;white-space:nowrap}
+.start .k::before{content:"▶";margin-right:8px;color:var(--up)}
+.start .s{font-size:11.5px;opacity:.85;line-height:1.55}
+.count{position:absolute;right:24px;top:30px;font-family:"JetBrains Mono",monospace;font-size:64px;font-weight:600;color:var(--up);pointer-events:none;z-index:2}
+.toast{position:absolute;left:10px;top:30px;z-index:3;background:var(--panel);border:1px solid var(--ink);border-radius:3px;padding:7px 11px;font-size:12.5px;max-width:calc(100% - 20px);pointer-events:none;transition:opacity .3s;box-shadow:3px 3px 0 var(--line)}
+.toast.hide{opacity:0}
+.latest{position:absolute;right:70px;bottom:26px;z-index:2;background:var(--ink);color:var(--panel);border:0;border-radius:3px;padding:5px 10px;font-size:11.5px;font-weight:700}
+.overbadge{position:absolute;left:10px;bottom:26px;z-index:2;background:var(--panel);border:1px solid var(--line);border-radius:3px;padding:4px 9px;font-size:11.5px;color:var(--ink2)}
+.overbadge button{background:transparent;border:0;color:var(--ink);font-weight:700;font-size:11.5px;text-decoration:underline;text-underline-offset:3px;padding:0 0 0 6px}
+
+.ticket{display:flex;flex-direction:column;gap:6px}
+.quote{position:relative;display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.side-btn{border:0;border-radius:3px;padding:10px 14px;min-height:84px;display:flex;flex-direction:column;justify-content:center;gap:2px;color:var(--onfill);transition:transform .08s,opacity .2s,filter .15s;user-select:none;-webkit-tap-highlight-color:transparent}
+.side-btn.sell{background:var(--down);align-items:flex-start;text-align:left}
+.side-btn.buy{background:var(--up);align-items:flex-end;text-align:right}
+.side-btn:hover{filter:brightness(1.08)}
+.side-btn:active{transform:translateY(1px)}
+.side-btn .cap{font-size:11px;letter-spacing:.1em;opacity:.85;display:flex;gap:6px;align-items:baseline}
+.side-btn .cap b{font-size:17px;letter-spacing:0;opacity:1}
+.px{font-size:14px;line-height:1.05;white-space:nowrap}
+.px .big{font-size:30px;font-weight:600}
+.px sup{font-size:13px;vertical-align:14px;margin-left:1px}
+.side-btn.dim{opacity:.45}
+.side-btn.deny{animation:deny .3s}
+@keyframes deny{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.spread{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:52px;height:52px;border-radius:50%;background:var(--panel);border:2px solid var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
+.spread span{font-size:9px;color:var(--muted);letter-spacing:.08em}
+.spread b{font-size:13px}
+.settle{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;padding:10px 14px;border-radius:3px;border:1px dashed var(--muted);background:transparent;color:var(--muted);min-height:48px;text-align:left}
+.settle .st{font-weight:700;font-size:14px;letter-spacing:.1em}
+.settle .pi{font-size:12px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.settle .pv{font-size:16px;font-weight:600}
+.settle:not(:disabled){border:2px solid var(--ink);color:var(--ink);background:var(--panel)}
+.settle:not(:disabled) .st::before{content:"■ "}
+.settle.win .pv{color:var(--up)}.settle.lose .pv{color:var(--down)}
+.settle:disabled{cursor:default}
+.hint{font-size:11.5px;color:var(--muted);line-height:1.8}
+kbd{font-family:"JetBrains Mono",monospace;font-size:10.5px;border:1px solid var(--muted);border-radius:2px;padding:0 4px;color:var(--ink2)}
+
+.side{display:flex;flex-direction:column;gap:12px;min-width:0}
+.card{background:var(--panel);border-top:2px solid var(--ink);padding:12px 14px 14px}
+.card h3{margin:0 0 10px;font-size:12px;letter-spacing:.14em;color:var(--ink);font-weight:700;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.card h3 .sm{font-size:10.5px;letter-spacing:0;font-weight:400;color:var(--muted)}
+.row{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:12.5px;margin-bottom:6px}
+.row .l{color:var(--ink2)}
+.row .v{font-weight:600}
+.big-num{font-size:26px;font-weight:600;line-height:1.1}
+.sub{font-size:12.5px;margin:3px 0 10px;color:var(--ink2)}
+.up{color:var(--up)}.down{color:var(--down)}.mut{color:var(--muted)}
+.judge{display:flex;flex-direction:column}
+.jrow{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;font-size:12.5px;padding:7px 0;border-bottom:1px dotted var(--line)}
+.jrow .n{color:var(--ink2)}
+.chip{font-size:11px;font-weight:700;padding:1px 7px;border-radius:2px;white-space:nowrap;border:1px solid}
+.chip.L{color:var(--up);border-color:var(--up)}
+.chip.S{color:var(--down);border-color:var(--down)}
+.chip.N{color:var(--muted);border-color:var(--panel3)}
+.chip.D{color:var(--div);border-color:var(--div)}
+.chip.M{background:var(--tagbg);color:var(--tagink);border-color:var(--tagbg)}
+.score{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.sc{padding:8px 10px;background:var(--panel2);border-radius:2px;border:1px solid transparent}
+.sc .k{font-size:10.5px;color:var(--ink2)}
+.sc .v{font-size:18px;font-weight:600}
+.sc.hot-L{border-color:var(--up)}.sc.hot-S{border-color:var(--down)}
+.pips{display:flex;gap:3px;margin-top:4px}
+.pips i{flex:1;height:4px;background:var(--panel3)}
+.pips.L i.on{background:var(--up)}.pips.S i.on{background:var(--down)}
+.hiddenmsg{font-size:12px;color:var(--ink2);line-height:1.7;background:var(--panel2);padding:10px}
+.log{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px;max-height:240px;overflow-y:auto}
+.log li{display:grid;grid-template-columns:auto auto 1fr auto;gap:6px;align-items:center;font-size:11.5px;color:var(--ink2);padding:3px 4px;border-radius:2px;cursor:pointer}
+.log li:hover{background:var(--panel2)}
+.log li.empty{cursor:default;display:block}
+.tag{font-size:10px;font-weight:700;padding:0 5px;border-radius:2px;color:var(--onfill)}
+.tag.L{background:var(--up)}.tag.S{background:var(--down)}
+.g{font-size:10px;font-weight:700;padding:0 5px;border-radius:2px;border:1px solid}
+.g.A{background:var(--tagbg);color:var(--tagink);border-color:var(--tagbg)}.g.B{color:var(--ink2);border-color:var(--ink2)}.g.C{color:var(--muted);border-color:var(--muted)}
+.empty{font-size:12px;color:var(--muted)}
+.set{display:grid;grid-template-columns:1fr auto;gap:8px 10px;align-items:center;font-size:12.5px}
+.set label{color:var(--ink2)}
+.set select,.set input[type=text]{background:var(--panel);border:1px solid var(--muted);border-radius:2px;padding:4px 6px;font-size:12px;min-width:0;max-width:170px}
+.set .full{grid-column:1/-1;display:flex;gap:8px;align-items:flex-start;color:var(--ink2);font-size:12px;line-height:1.5}
+.set .seedrow{grid-column:1/-1;display:flex;gap:6px}
+.set .seedrow input{flex:1;font-family:"JetBrains Mono",monospace;max-width:none}
+.smallbtn{background:transparent;border:1px solid var(--ink);border-radius:2px;padding:3px 9px;font-size:11.5px;font-weight:700;white-space:nowrap}
+.rec{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line)}
+.rec div{background:var(--panel);padding:7px 9px}
+.rec .k{font-size:10.5px;color:var(--muted)}
+.rec .v{font-size:15px;font-weight:600}
+.note{font-size:11px;color:var(--muted);line-height:1.7;margin:0}
+.foot{padding:10px 16px 18px;font-size:11px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 14px;border-top:1px solid var(--line)}
+.foot button{background:transparent;border:0;color:var(--muted);font-size:11px;text-decoration:underline;text-underline-offset:3px;padding:0}
+
+.modal-bg{position:fixed;inset:0;background:rgba(10,12,16,.6);display:flex;align-items:center;justify-content:center;padding:20px 16px;z-index:20;overflow-y:auto}
+.modal{background:var(--panel);border-top:4px solid var(--up);padding:22px;max-width:520px;width:100%;margin:auto}
+.modal h2{margin:0 0 4px;font-size:22px;letter-spacing:.16em}
+.modal .lead{color:var(--ink2);font-size:12px;margin-bottom:12px;line-height:1.6;white-space:pre-line}
+.modal p{font-size:13px;line-height:1.8;color:var(--ink2);margin:0 0 10px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);margin-bottom:12px}
+.tile{background:var(--panel);padding:9px 11px}
+.tile .k{font-size:10.5px;color:var(--ink2)}
+.tile .v{font-size:17px;font-weight:600;margin-top:2px}
+.eq{width:100%;height:110px;display:block;margin-bottom:12px;background:var(--panel2)}
+table.gt{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:12px}
+table.gt th,table.gt td{padding:6px;text-align:right;border-bottom:1px solid var(--line)}
+table.gt th:first-child,table.gt td:first-child{text-align:left}
+table.gt th{color:var(--ink2);font-weight:500;font-size:11px}
+.verdict{font-size:12.5px;line-height:1.75;color:var(--ink2);background:var(--panel2);padding:10px 12px;margin-bottom:12px;white-space:pre-line}
+.share{display:flex;gap:6px;margin-bottom:12px}
+.share textarea{flex:1;min-width:0;height:64px;resize:none;background:var(--panel2);border:1px solid var(--line);border-radius:2px;font-size:11px;font-family:"JetBrains Mono",monospace;padding:6px;color:var(--ink2)}
+.mbtns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.primary{padding:11px 0;border-radius:3px;border:none;background:var(--ink);color:var(--panel);font-weight:700;font-size:13.5px}
+.secondary{padding:11px 0;border-radius:3px;border:1px solid var(--ink);background:transparent;font-weight:700;font-size:13.5px}
+.loading{position:fixed;inset:0;background:var(--bg);z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--ink2);font-size:13px}
+.loading b{font-size:18px;letter-spacing:.14em;color:var(--ink)}
+.loading .bar{width:220px;height:4px;background:var(--panel3);overflow:hidden;border-radius:2px}
+.loading .bar i{display:block;height:100%;width:40%;background:var(--up);animation:slide 1.1s ease-in-out infinite alternate}
+@keyframes slide{from{transform:translateX(-60%)}to{transform:translateX(250%)}}
+
+@media (max-width:900px){.layout{grid-template-columns:minmax(0,1fr)}.chartwrap{height:clamp(380px,60vh,560px)}}
+@media (max-width:560px){
+  .ticks{display:none}
+  .side-btn{min-height:74px;padding:8px 10px}
+  .px .big{font-size:24px}.px sup{vertical-align:10px}
+  .spread{width:44px;height:44px}
+  .kh{display:none}
+  .mbtns{grid-template-columns:1fr 1fr}
+  .start{max-width:none}
+}
+@media (prefers-reduced-motion:reduce){.side-btn.deny{animation:none}.loading .bar i{animation:none;width:100%}}
+</style>
+
+</head>
+<body>
+<div class="loading" id="loading"><b>波形トレード道場</b><span>架空相場3年分を生成しています…</span><div class="bar"><i></i></div></div>
+
+<div class="app">
+  <header class="topbar">
+    <div class="brand"><span class="hanko">波</span><b>波形トレード道場</b></div>
+    <button class="seedbtn mono" id="seedBtn" title="クリックで場面番号をコピー">場面 #</button>
+    <div class="prog mono"><span id="progText">0 / 150本</span><div class="ticks" id="ticks"></div></div>
+    <div class="sp"></div>
+    <div class="ctrl"><button class="pausebtn" id="btnPause">Ⅱ 一時停止</button>
+      <span>速度</span><div class="seg"><button data-speed="0.5">0.5</button><button class="on" data-speed="1">1</button><button data-speed="2">2</button><button data-speed="4">4</button><button data-speed="8">8</button></div></div>
+    <button class="txtbtn" id="btnSound">音 ON</button>
+    <button class="txtbtn" id="btnReplay">同じ場面で再挑戦</button>
+    <button class="txtbtn" id="btnNew">新しい場面</button>
+  </header>
+
+  <main class="layout">
+    <div class="main">
+      <div class="tools">
+        <div class="grp"><span class="lb">場面の選び方</span>
+          <select id="selScene">
+            <option value="any">ランダム</option>
+            <option value="up">直前が上昇トレンド</option>
+            <option value="down">直前が下降トレンド</option>
+            <option value="range">直前がレンジ</option>
+            <option value="hv">高ボラティリティ</option>
+            <option value="lv">低ボラティリティ</option>
+            <option value="event">ゲーム中に重要指標</option>
+          </select></div>
+        <div class="grp"><span class="lb">上位足</span><div class="seg" id="htfSeg"><button data-htf="0">なし</button><button data-htf="900">15分</button><button data-htf="3600">1時間</button><button data-htf="14400">4時間</button></div></div>
+        <div class="grp"><span class="lb">表示</span>
+          <button class="tog" data-vis="ema" style="--c:var(--e20)"><i></i>EMA</button>
+          <button class="tog" data-vis="rci" style="--c:var(--rci)"><i></i>RCI</button>
+          <button class="tog" data-vis="macd" style="--c:var(--sigl)"><i></i>MACD</button>
+          <button class="tog" data-vis="div" style="--c:var(--div)"><i></i>Div</button>
+          <button class="tog" data-vis="sign" style="--c:var(--up)"><i></i>サイン</button>
+          <button class="tog" data-vis="ev" style="--c:var(--ev)"><i></i>指標</button>
+        </div>
+        <div class="grp"><span class="lb">拡大</span><button class="zb" id="zOut">−</button><button class="zb" id="zIn">＋</button></div>
+        <span class="evchip" id="nextEv" hidden></span>
+      </div>
+      <div class="ovwrap"><canvas id="ov" aria-label="3年分の架空相場の俯瞰チャート。クリックでその日から開始"></canvas><span class="ovhint">3年分の俯瞰 ・ クリックでその日から開始</span></div>
+      <div class="charts" id="charts">
+        <div class="chartwrap" id="wrap">
+          <canvas id="cv" aria-label="GBP/JPY風の5分足チャートとRCI・MACD"></canvas>
+          <button class="start" id="startBtn"><span class="k">開始する</span><span class="s" id="startSub"></span></button>
+          <div class="count" id="count" hidden></div>
+          <div class="toast hide" id="toast"></div>
+          <button class="latest" id="btnLatest" hidden>最新へ ▶</button>
+          <div class="overbadge" id="overBadge" hidden>終了 ・ 見返しモード<button id="btnResult">結果を見る</button></div>
+        </div>
+        <div class="chartwrap htf" id="wrapH" hidden><canvas id="cvH" aria-label="上位足チャート"></canvas></div>
+      </div>
+      <div class="ticket">
+        <div class="quote">
+          <button class="side-btn sell" id="btnSell"><span class="cap"><b>売</b>SELL・Bid</span><span class="px mono" id="bidTxt">-</span></button>
+          <button class="side-btn buy" id="btnBuy"><span class="cap">Ask・BUY<b>買</b></span><span class="px mono" id="askTxt">-</span></button>
+          <div class="spread" aria-hidden="true"><span>SPREAD</span><b class="mono">1.0</b></div>
+        </div>
+        <button class="settle" id="btnClose" disabled><span class="st">決済</span><span class="pi" id="posTxt">ポジションなし</span><span class="pv mono" id="closeTxt">—</span></button>
+      </div>
+      <div class="hint"><span class="kh"><kbd>B</kbd>/<kbd>↑</kbd> 買い　<kbd>S</kbd>/<kbd>↓</kbd> 売り　<kbd>Space</kbd> 決済　<kbd>P</kbd> 一時停止　<kbd>←</kbd><kbd>→</kbd> チャート移動　<kbd>Home</kbd> 最新へ　</span>・チャートはドラッグで過去へ、ホイールで拡大縮小、カーソルを合わせると四本値を表示　・スプレッド1.0pips、ポジションは1つずつ　・エントリー時点の確定足で手法条件を採点</div>
+    </div>
+
+    <aside class="side">
+      <section class="card">
+        <h3>手法判定パネル <span class="chip M" id="modeChip">練習モード</span></h3>
+        <div id="judgeBox">
+          <div class="judge">
+            <div class="jrow"><span class="n">EMA パーフェクトオーダー</span><span class="chip N" id="jPO">—</span></div>
+            <div class="jrow"><span class="n">RCI(9/14)　<span class="mono" id="jRciV">0 / 0</span></span><span class="chip N" id="jRCI">—</span></div>
+            <div class="jrow"><span class="n">MACD(6,13,4)</span><span class="chip N" id="jMACD">—</span></div>
+            <div class="jrow"><span class="n">ダイバージェンス</span><span class="chip N" id="jDIV">なし</span></div>
+            <div class="jrow"><span class="n">上位足PO <span id="jHTFn">（参考）</span></span><span class="chip N" id="jHTF">—</span></div>
+          </div>
+          <div class="score">
+            <div class="sc" id="scL"><div class="k">ロング条件</div><div class="v mono up" id="scLv">0/3</div><div class="pips L" id="pL"><i></i><i></i><i></i></div></div>
+            <div class="sc" id="scS"><div class="k">ショート条件</div><div class="v mono down" id="scSv">0/3</div><div class="pips S" id="pS"><i></i><i></i><i></i></div></div>
+          </div>
+        </div>
+        <div class="hiddenmsg" id="judgeHidden" hidden>実戦モードでは判定パネルとサインを隠しています。決済するとエントリー時の判定（A/B/C）が公開されます。</div>
+      </section>
+
+      <section class="card">
+        <h3>今回の成績</h3>
+        <div class="big-num mono" id="totPips">+0.0 pips</div>
+        <div class="sub mono" id="totYen">¥0</div>
+        <div class="row"><span class="l">含み損益</span><span class="v mono" id="flt">—</span></div>
+        <div class="row"><span class="l">取引回数 / 勝率</span><span class="v mono" id="wr">0回 / —</span></div>
+        <div class="row"><span class="l">A判定エントリー率</span><span class="v mono" id="aRate">—</span></div>
+        <div class="row"><span class="l">上位足と同方向の率</span><span class="v mono" id="hRate">—</span></div>
+      </section>
+
+      <section class="card">
+        <h3>取引履歴 <span class="sm">クリックでチャート上の位置へ</span></h3>
+        <ul class="log" id="log"><li class="empty">まだ取引はありません</li></ul>
+      </section>
+
+      <section class="card">
+        <h3>通算成績 <span class="sm">このブラウザに保存</span></h3>
+        <div class="rec" id="recBox"></div>
+        <div style="margin-top:8px;display:flex;justify-content:flex-end"><button class="txtbtn" id="btnRecReset">通算をリセット</button></div>
+      </section>
+
+      <section class="card">
+        <h3>設定</h3>
+        <div class="set">
+          <label>モード</label>
+          <div class="seg" id="modeSeg"><button data-mode="practice">練習</button><button data-mode="real">実戦</button></div>
+          <label for="selLen">1ゲームの長さ</label>
+          <select id="selLen"><option value="100">5分足100本（約8時間）</option><option value="150">5分足150本（約12時間）</option><option value="300">5分足300本（約1日）</option><option value="576">5分足576本（約2日）</option></select>
+          <label for="selLot">取引数量</label>
+          <select id="selLot"><option value="1000">1,000通貨（1pips=10円）</option><option value="10000">1万通貨（1pips=100円）</option><option value="100000">10万通貨（1pips=1,000円）</option></select>
+          <label for="selTh">RCI 過熱ライン</label>
+          <select id="selTh"><option value="70">±70</option><option value="80">±80</option><option value="90">±90</option></select>
+          <label for="selSL">損切り（逆指値）</label>
+          <select id="selSL"><option value="0">なし</option><option value="10">10 pips</option><option value="15">15 pips</option><option value="20">20 pips</option><option value="30">30 pips</option><option value="50">50 pips</option></select>
+          <label for="selTP">利確（指値）</label>
+          <select id="selTP"><option value="0">なし</option><option value="15">15 pips</option><option value="20">20 pips</option><option value="30">30 pips</option><option value="40">40 pips</option><option value="60">60 pips</option><option value="100">100 pips</option></select>
+          <label class="full"><input type="checkbox" id="chkAuto"> エントリーしたら自動で一時停止する（損切り・利確を落ち着いて設定できます）</label>
+          <label class="full"><input type="checkbox" id="chkHide"> ポジション保有中はローソク足と損益を隠す（RCIとMACDだけで決済を判断する練習）</label>
+          <div class="seedrow"><input type="text" id="seedIn" placeholder="場面番号を入力して同じ場面を再現" inputmode="numeric"><button class="smallbtn" id="btnSeedGo">この場面で開始</button></div>
+        </div>
+      </section>
+
+      <p class="note">判定ルール（このゲームでの簡易版）<br>
+      ロング：①EMA20&gt;30&gt;40かつEMA40が5本前より上 ②RCI(9)が直近7本以内に−ライン以下→現在上向き（RCI(14)は表示のみ） ③MACDがシグナルより上。ショートは逆。3/3＝A、2/3＝B、1以下＝C。ダイバージェンスと上位足POは参考表示（採点外）。<br>
+      値動きは、実際のGBP/JPY 5分足の統計的な性質（値幅の分布、時間帯ごとの値動きの大きさ、ボラティリティの偏りなど）を参考に乱数で生成した架空の3年分です。指標やイベントも架空のカレンダーです。実在の相場や特定の期間を再現したものではなく、将来の値動きや成績を示すものでもありません。</p>
+    </aside>
+  </main>
+  <footer class="foot"><span>波形トレード道場 ・ 架空相場3年分で練習するFXトレードゲーム</span><span>© もちぽよ / 合同会社Trend One</span><button id="btnNotice">ご利用上の注意</button></footer>
+</div>
+
+<div class="modal-bg" id="noticeBg" hidden>
+  <div class="modal" role="dialog" aria-labelledby="nTitle">
+    <h2 id="nTitle">ご利用上の注意</h2>
+    <p>このゲームの値動きは、実際の為替相場（GBP/JPY）の統計的な性質を参考に乱数で作った<b>架空のもの</b>です。実在の相場や特定の期間を再現したものではありません。表示される経済指標やイベントも架空のカレンダーです。</p>
+    <p>トレード手法の練習・学習を目的としたゲームであり、投資助言や特定の取引の推奨ではありません。ゲーム内の成績は、実際の取引の成果を保証するものではありません。実際の取引はご自身の判断と責任で行ってください。</p>
+    <p>成績や設定はお使いのブラウザ内にのみ保存され、外部には送信されません。</p>
+    <div class="mbtns" style="grid-template-columns:1fr"><button class="primary" id="btnNoticeOk">内容を確認しました</button></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modalBg" hidden>
+  <div class="modal" role="dialog" aria-labelledby="mTitle">
+    <h2 id="mTitle">RESULT</h2>
+    <div class="lead" id="mLead"></div>
+    <div class="grid2">
+      <div class="tile"><div class="k">合計損益</div><div class="v mono" id="mPips"></div></div>
+      <div class="tile"><div class="k">勝率</div><div class="v mono" id="mWr"></div></div>
+      <div class="tile"><div class="k">プロフィットファクター</div><div class="v mono" id="mPf"></div></div>
+      <div class="tile"><div class="k">最大ドローダウン</div><div class="v mono" id="mDd"></div></div>
+    </div>
+    <canvas class="eq" id="eqCv" aria-label="損益の推移"></canvas>
+    <table class="gt"><thead><tr><th>エントリー判定</th><th>回数</th><th>勝率</th><th>平均</th><th>合計</th></tr></thead><tbody id="mTable"></tbody></table>
+    <div class="verdict" id="mVerdict"></div>
+    <div class="share"><textarea id="shareTxt" readonly></textarea><button class="smallbtn" id="btnCopy">コピー</button></div>
+    <div class="mbtns"><button class="secondary" id="mReview">チャートを見返す</button><button class="secondary" id="mReplay">同じ場面で再挑戦</button><button class="primary" id="mNew">新しい場面</button></div>
+  </div>
+</div>
+
+<script>
+(()=>{
+'use strict';
+const SUB=12, PIP=0.01, SPREAD=0.01, TICK_MS=60, TF0=300, WARM=2400, WORLD_SEED=20261003;
+const TFS={900:'15分足',3600:'1時間足',14400:'4時間足'};
+const DOW='日月火水木金土';
+const EV_NAMES=['','米指標','米雇用統計','英指標','英中銀','FOMC','日銀','米CPI'];
+const BIG_EV=new Set([2,4,5,6,7]);
+const SCENE_LABEL={any:'ランダム',up:'直前が上昇トレンド',down:'直前が下降トレンド',range:'直前がレンジ',hv:'高ボラティリティ',lv:'低ボラティリティ',event:'ゲーム中に重要指標'};
+const $=id=>document.getElementById(id);
+const cv=$('cv'), cvH=$('cvH');
+
+// ---------- settings ----------
+const S={mode:'practice',scene:'any',th:80,sl:20,tp:0,hide:false,htf:3600,lot:10000,len:150,autoPause:false,sound:true,vis:{ema:true,rci:true,macd:true,div:true,sign:true,ev:true}};
+try{const o=JSON.parse(localStorage.getItem('hakei-dojo3')||'{}');Object.assign(S,o);S.vis=Object.assign({ema:true,rci:true,macd:true,div:true,sign:true,ev:true},o.vis||{})}catch(e){}
+function saveS(){try{localStorage.setItem('hakei-dojo3',JSON.stringify(S))}catch(e){}}
+let REC={games:0,n:0,w:0,pips:0,g:{A:{n:0,w:0,p:0},B:{n:0,w:0,p:0},C:{n:0,w:0,p:0}},on:{n:0,p:0},off:{n:0,p:0}};
+try{const o=JSON.parse(localStorage.getItem('hakei-dojo3-rec')||'null');if(o&&o.g)REC=o}catch(e){}
+function saveRec(){try{localStorage.setItem('hakei-dojo3-rec',JSON.stringify(REC))}catch(e){}}
+
+// ---------- utils ----------
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function gauss(r){let u=0;while(u===0)u=r();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*r())}
+function studentT(r){const z=gauss(r);let c=0;for(let k=0;k<4;k++){const g=gauss(r);c+=g*g}return z/Math.sqrt(c/4)/Math.SQRT2}
+function jst(t){const j=t+32400,day=Math.floor(j/86400),sec=j-day*86400;return{day,dow:(day+4)%7,h:Math.floor(sec/3600),m:Math.floor(sec%3600/60)}}
+function jdate(t){const j=t+32400,day=Math.floor(j/86400),sec=j-day*86400,dt=new Date(j*1000);return{day,dow:(day+4)%7,h:Math.floor(sec/3600),mi:Math.floor(sec%3600/60),y:dt.getUTCFullYear(),mo:dt.getUTCMonth()+1,d:dt.getUTCDate()}}
+const pad=n=>(n<10?'0':'')+n;
+const yearNo=y=>(y-2000)+'年目';
+function fmtT(t,withDate){const D=jdate(t),hm=pad(D.h)+':'+pad(D.mi);return withDate?`${D.mo}/${D.d}(${DOW[D.dow]}) ${hm}`:`${DOW[D.dow]} ${hm}`}
+function fmtDate(t){const D=jdate(t);return `${yearNo(D.y)} ${D.mo}/${D.d}(${DOW[D.dow]}) ${pad(D.h)}:${pad(D.mi)}`}
+function fmtDay(t){const D=jdate(t);return `${yearNo(D.y)} ${D.mo}/${D.d}(${DOW[D.dow]})`}
+const rnd3=v=>Math.round(v*1000)/1000;
+const sg=v=>(v>=0?'+':'')+v.toFixed(1);
+
+// ---------- synthetic world: 3 years of 5m bars, calibrated to real GBP/JPY statistics ----------
+const HOUR_MULT=[1.15,0.79,0.66,0.70,0.60,0.58,0.71,0.68,0.85,1.26,1.07,0.96,0.83,0.80,0.88,1.33,1.44,1.46,1.15,0.98,1.03,1.38,1.39,1.31];
+function nextTradingT(t){for(;;){const D=jdate(t);
+  if(D.dow===6&&D.h>=6){t=(D.day+2)*86400-32400+21600;continue}
+  if(D.dow===0){t=(D.day+1)*86400-32400+21600;continue}
+  if((D.mo===12&&D.d===25)||(D.mo===1&&D.d===1)){t+=86400;continue}
+  return t}}
+function planMonth(y,mo,rEv){
+  const days=[];for(let d=1;d<=31;d++){const dt=new Date(Date.UTC(y,mo-1,d));if(dt.getUTCMonth()!==mo-1)break;days.push({d,dow:dt.getUTCDay()})}
+  const fri=days.filter(x=>x.dow===5),thu=days.filter(x=>x.dow===4),wk=days.filter(x=>x.dow>=1&&x.dow<=5);
+  const pick=a=>a.length?a[Math.floor(rEv()*a.length)].d:0;
+  const cb=[1,3,4,6,7,9,10,12].includes(mo);
+  return{nfp:fri[0].d,cpi:pick(wk.filter(x=>x.d>=10&&x.d<=16)),boe:rEv()<0.7?pick(thu):0,fomc:cb?pick(thu.filter(x=>x.d>=15)):0,boj:cb?pick(days.filter(x=>(x.dow===4||x.dow===5)&&x.d>=15)):0};
+}
+function planDay(D,plan,rEv){const out=[];if(D.dow===0||D.dow===6)return out;const base=D.day*86400-32400;
+  const rr=(a,b)=>a+rEv()*(b-a),add=(h,mi,kind,mult,n,jump)=>out.push({t:base+h*3600+mi*60,kind,mult,n,jump});
+  if(D.d===plan.nfp)add(21,30,2,rr(5,8),2+Math.floor(rEv()*2),rr(20,50));
+  else if(D.d===plan.cpi)add(21,30,7,rr(3.5,6),2,rr(15,35));
+  else if(rEv()<0.4)add(21,30,1,rr(2,3.5),1+Math.floor(rEv()*2),rr(5,15));
+  if(rEv()<0.3)add(15,0,3,rr(2,3.5),1+Math.floor(rEv()*2),rr(5,15));
+  if(D.d===plan.boe)add(20,0,4,rr(3.5,6),2+Math.floor(rEv()*2),rr(15,40));
+  if(D.d===plan.fomc)add(3,0,5,rr(3.5,6),3,rr(15,40));
+  if(D.d===plan.boj)add(12,0,6,rr(3,5),2,rr(10,40));
+  return out;
+}
+function genWorld(){
+  const r=mulberry32(WORLD_SEED),rEv=mulberry32((WORLD_SEED^0x5bd1e995)>>>0);
+  const bars=[],events=[],evAt=new Map(),evMap=new Map(),days=[];
+  let t=Date.UTC(2000,11,31,21,0,0)/1000;const tEnd=Date.UTC(2003,11,31,21,0,0)/1000;
+  let p=rnd3(160+r()*20),L=p;
+  let lv=0,lvS=0,regLeft=0,drift=0,center=p,regType=0,slowLeft=0,slow=0,macroLeft=0,macro=0,LLeft=0,Ldrift=0,crisisLeft=0,spike=null;
+  let curDay=-1,curMonth=-1,plan=null,dayEv=[],nextBig=Infinity;
+  const Ws=new Array(SUB+1);
+  while(t<tEnd){
+    t=nextTradingT(t);if(t>=tEnd)break;const D=jdate(t);
+    if(D.day!==curDay){curDay=D.day;const mk=D.y*12+D.mo;if(mk!==curMonth){curMonth=mk;plan=planMonth(D.y,D.mo,rEv)}
+      dayEv=planDay(D,plan,rEv);for(const e of dayEv)evMap.set(e.t,e);
+      nextBig=Infinity;for(const e of dayEv)if(BIG_EV.has(e.kind)&&e.t>=t&&e.t<nextBig)nextBig=e.t;
+      days.push({i0:bars.length,t0:t,y:D.y,mo:D.mo,d:D.d,c:p});}
+    if(LLeft<=0){LLeft=4000+Math.floor(r()*6000);Ldrift=(r()-0.5)*0.16;if(L>205)Ldrift=-Math.abs(Ldrift);if(L<140)Ldrift=Math.abs(Ldrift)}
+    if(macroLeft<=0){macroLeft=5000+Math.floor(r()*28000);const k=r();macro=k<0.3?0:(r()<.5?-1:1)*(0.02+r()*0.08)}
+    if(slowLeft<=0){slowLeft=300+Math.floor(r()*600);slow=r()<.3?0:(r()<.5?-1:1)*(0.05+r()*0.25)}
+    if(regLeft<=0){regLeft=18+Math.floor(r()*50);const k=r();regType=k<.35?0:k<.65?1:2;drift=regType===1?(r()<.5?-1:1)*(0.3+r()*1.1):0;center=p}
+    LLeft--;macroLeft--;slowLeft--;regLeft--;
+    L+=Ldrift*PIP;
+    lv=0.9*lv+0.18*gauss(r);lvS=0.9995*lvS+0.009*gauss(r);
+    if(crisisLeft>0)crisisLeft--;else if(r()<1/60000)crisisLeft=1500+Math.floor(r()*4000);
+    let sigma=5.0*HOUR_MULT[D.h]*Math.exp(lv-0.085)*Math.exp(lvS-0.04)*(crisisLeft>0?1.5:1);
+    if((D.mo===12&&D.d>=24)||(D.mo===1&&D.d<=3))sigma*=0.5;
+    if(nextBig>t&&nextBig-t<=3600)sigma*=0.7;
+    let d=drift+slow+macro+(L-p)/PIP*0.0004;if(regType===2)d+=(center-p)/PIP*0.03;if(crisisLeft>0)d+=macro*1.5;
+    const ev=evMap.get(t);
+    if(ev){spike={left:ev.n,mult:ev.mult,tail:6};d+=ev.jump*(r()<0.5?-1:1);evAt.set(bars.length,ev);events.push({i:bars.length,t,kind:ev.kind});
+      if(nextBig<=t){nextBig=Infinity;for(const e of dayEv)if(BIG_EV.has(e.kind)&&e.t>t&&e.t<nextBig)nextBig=e.t}}
+    else if(spike===null&&r()<0.0012)spike={left:1+Math.floor(r()*2),mult:3,tail:0};
+    if(spike){if(spike.left>0){sigma*=spike.mult;spike.left--}else if(spike.tail>0){sigma*=Math.sqrt(spike.mult);spike.tail--}else spike=null}
+    const o=p,dlt=(d+sigma*(r()<0.08?studentT(r)*1.6:gauss(r)*0.95))*PIP,sb=sigma*1.3/Math.sqrt(SUB)*PIP;
+    Ws[0]=0;for(let s=1;s<=SUB;s++)Ws[s]=Ws[s-1]+gauss(r)*sb;
+    let h=o,l=o;for(let s=1;s<=SUB;s++){const v=rnd3(o+dlt*s/SUB+(Ws[s]-s/SUB*Ws[SUB]));if(v>h)h=v;if(v<l)l=v}
+    p=rnd3(o+dlt);if(p>h)h=p;if(p<l)l=p;
+    bars.push({t,o,h,l,c:p});
+    if(days.length)days[days.length-1].c=p;
+    t+=TF0;
+  }
+  return{bars,events,evAt,days};
+}
+function synthTicks(b,r){
+  const bull=b.c>=b.o;let x1=bull?b.l:b.h,x2=bull?b.h:b.l;if(r()<0.25){const s=x1;x1=x2;x2=s}
+  const out=[];const seg=(a,c,n)=>{for(let k=1;k<n;k++){const v=a+(c-a)*k/n+gauss(r)*0.25*Math.abs(c-a);out.push(rnd3(Math.min(b.h,Math.max(b.l,v))))}out.push(c)};
+  seg(b.o,x1,4);seg(x1,x2,4);seg(x2,b.c,4);return out;
+}
+
+// ---------- indicators ----------
+function emaArr(src,n){const a=2/(n+1),out=new Float64Array(src.length);let e=src[0];for(let i=0;i<src.length;i++){e=i===0?src[0]:a*src[i]+(1-a)*e;out[i]=e}return out}
+function rciAt(get,end,n){
+  if(end<n-1)return 0;const w=[];for(let k=0;k<n;k++)w.push(get(end-k));
+  let d2=0;for(let k=0;k<n;k++){let hi=0,eq=0;for(let j=0;j<n;j++){if(w[j]>w[k])hi++;else if(w[j]===w[k])eq++}const pr=hi+(eq+1)/2;d2+=(k+1-pr)**2}
+  return(1-6*d2/(n*(n*n-1)))*100;
+}
+const bucketStart=(t,tf)=>{const off=tf===14400?75600:0;return Math.floor((t-off)/tf)*tf+off};
+function aggregate(bars,tf){const out=[],byT=new Map();for(const b of bars){const B=bucketStart(b.t,tf);const k=byT.get(B);if(k===undefined){byT.set(B,out.length);out.push({t:B,o:b.o,h:b.h,l:b.l,c:b.c})}else{const x=out[k];if(b.h>x.h)x.h=b.h;if(b.l<x.l)x.l=b.l;x.c=b.c}}return out}
+function makeDS(bars,tf){
+  const n=bars.length,c=new Float64Array(n);for(let i=0;i<n;i++)c[i]=bars[i].c;
+  const e20=emaArr(c,20),e30=emaArr(c,30),e40=emaArr(c,40),e6=emaArr(c,6),e13=emaArr(c,13);
+  const macd=new Float64Array(n);for(let i=0;i<n;i++)macd[i]=e6[i]-e13[i];const sig=emaArr(macd,4);
+  const rci=new Float64Array(n),rci14=new Float64Array(n);const gc=j=>c[j];for(let i=0;i<n;i++){rci[i]=rciAt(gc,i,9);rci14[i]=rciAt(gc,i,14)}
+  const divs=[],R=3;let pl=-1,ph=-1;
+  for(let j=R;j<n-R;j++){
+    let isL=true,isH=true;const bj=bars[j];
+    for(let k=1;k<=R;k++){const a=bars[j-k],b=bars[j+k];if(!(bj.l<a.l&&bj.l<=b.l))isL=false;if(!(bj.h>a.h&&bj.h>=b.h))isH=false;if(!isL&&!isH)break}
+    if(isL){if(pl>=0&&j-pl>=5&&j-pl<=40&&bj.l<bars[pl].l&&macd[j]>macd[pl])divs.push({t:1,j1:pl,j2:j,cf:j+R});pl=j}
+    if(isH){if(ph>=0&&j-ph>=5&&j-ph<=40&&bj.h>bars[ph].h&&macd[j]<macd[ph])divs.push({t:-1,j1:ph,j2:j,cf:j+R});ph=j}
+  }
+  const divAt=new Int8Array(n);for(const d of divs)for(let i=d.cf;i<=d.cf+10&&i<n;i++)divAt[i]=d.t;
+  const byT=new Map();for(let i=0;i<n;i++)byT.set(bars[i].t,i);
+  return{tf,bars,I:{c,e20,e30,e40,e6,e13,macd,sig,rci,rci14},divs,divAt,signs:new Int8Array(n),byT};
+}
+function cond(ds,i){
+  const I=ds.I;if(i<45)return{po:0,rciL:false,rciS:false,macdUp:false,div:0,L:0,S:0,rv:I.rci[i]||0,rv14:I.rci14[i]||0,rUp:false};
+  const po=(I.e20[i]>I.e30[i]&&I.e30[i]>I.e40[i]&&I.e40[i]>I.e40[i-5])?1:(I.e20[i]<I.e30[i]&&I.e30[i]<I.e40[i]&&I.e40[i]<I.e40[i-5])?-1:0;
+  let mn=999,mx=-999;for(let k=i-6;k<=i;k++){if(I.rci[k]<mn)mn=I.rci[k];if(I.rci[k]>mx)mx=I.rci[k]}
+  const rUp=I.rci[i]>I.rci[i-1],rciL=mn<=-S.th&&rUp,rciS=mx>=S.th&&I.rci[i]<I.rci[i-1];
+  const macdUp=I.macd[i]>I.sig[i];
+  const div=ds.divAt[i];
+  return{po,rciL,rciS,macdUp,div,L:(po===1)+rciL+macdUp,S:(po===-1)+rciS+(!macdUp),rv:I.rci[i],rv14:I.rci14[i],rUp};
+}
+function buildSigns(ds){let pL=0,pS=0;for(let i=0;i<ds.bars.length;i++){const c=cond(ds,i);ds.signs[i]=c.L===3&&pL<3?1:c.S===3&&pS<3?-1:0;pL=c.L;pS=c.S}}
+function liveOf(ds,i,b){
+  const I=ds.I,a=n=>2/(n+1),c=b.c,e=(arr,n)=>i>0?a(n)*c+(1-a(n))*arr[i-1]:c;
+  const e6=e(I.e6,6),e13=e(I.e13,13),macd=e6-e13,sig=i>0?a(4)*macd+(1-a(4))*I.sig[i-1]:macd;
+  const gc=j=>j===i?c:(j<I.c.length?I.c[j]:c);
+  return{t:b.t,o:b.o,h:b.h,l:b.l,c,e20:e(I.e20,20),e30:e(I.e30,30),e40:e(I.e40,40),macd,sig,rci:rciAt(gc,i,9),rci14:rciAt(gc,i,14)};
+}
+function lowerBound(bars,t){let lo=0,hi=bars.length;while(lo<hi){const m=(lo+hi)>>1;if(bars[m].t<t)lo=m+1;else hi=m}return lo}
+
+// ---------- world + game state ----------
+let WORLD,BASE,EVENTS,HTF={},scene,G,PCT=null;
+let VIEW={z:1,right:0,follow:true},HOVER=null,DRAG=null;
+const TICK_CACHE=new Map();
+function ticksOf(i){let t=TICK_CACHE.get(i);if(t)return t;const r=mulberry32((WORLD_SEED+i*2654435761)>>>0);t=synthTicks(BASE.bars[i],r);if(TICK_CACHE.size>3000)TICK_CACHE.clear();TICK_CACHE.set(i,t);return t}
+function getHTF(tf){if(!HTF[tf])HTF[tf]=makeDS(aggregate(BASE.bars,tf),tf);return HTF[tf]}
+function leadStats(s){const b=BASE.bars;let hi=-1e9,lo=1e9,atr=0;const a=s-288;for(let i=a;i<s;i++){const x=b[i];if(x.h>hi)hi=x.h;if(x.l<lo)lo=x.l;atr+=x.h-x.l}return{net:(b[s-1].c-b[a].o)/PIP,range:(hi-lo)/PIP,atr:atr/288/PIP}}
+function pct(){if(PCT)return PCT;const N=BASE.bars.length,rs=[],as=[];const r=mulberry32(99);for(let k=0;k<800;k++){const s=WARM+Math.floor(r()*(N-WARM-600));const st=leadStats(s);rs.push(st.range);as.push(st.atr)}rs.sort((a,b)=>a-b);as.sort((a,b)=>a-b);const q=(a,p)=>a[Math.floor(p*(a.length-1))];PCT={r45:q(rs,0.45),a85:q(as,0.85),a20:q(as,0.2)};return PCT}
+function eventsIn(s,e){const out=[];const k0=lowerBoundEv(s);for(let k=k0;k<EVENTS.length&&EVENTS[k].i<e;k++)out.push(EVENTS[k]);return out}
+function lowerBoundEv(i){let lo=0,hi=EVENTS.length;while(lo<hi){const m=(lo+hi)>>1;if(EVENTS[m].i<i)lo=m+1;else hi=m}return lo}
+function sceneTags(s,len){const st=leadStats(s),P=pct(),tags=[];
+  if(st.range>=60&&st.net>0.5*st.range)tags.push('up');if(st.range>=60&&st.net<-0.5*st.range)tags.push('down');
+  if(Math.abs(st.net)<0.3*st.range&&st.range<=P.r45)tags.push('range');
+  if(st.atr>=P.a85)tags.push('hv');if(st.atr<=P.a20)tags.push('lv');
+  if(eventsIn(s,s+len).some(e=>BIG_EV.has(e.kind)))tags.push('event');
+  return tags}
+function pickStart(filter,len){const N=BASE.bars.length,lo=WARM,hi=N-len-1;
+  if(filter==='any')return lo+Math.floor(Math.random()*(hi-lo));
+  for(let k=0;k<2000;k++){const s=lo+Math.floor(Math.random()*(hi-lo));if(sceneTags(s,len).includes(filter))return s}
+  return -1}
+function newGame(s0){
+  const N=BASE.bars.length;
+  if(s0==null){s0=pickStart(S.scene,S.len);if(s0<0){s0=pickStart('any',S.len);toast('条件に合う場面が見つからなかったため、ランダムに選びました')}}
+  s0=Math.max(WARM,Math.min(N-S.len-1,Math.floor(s0)));scene=s0;
+  TICK_CACHE.clear();
+  G={s0,end:Math.min(s0+S.len,N),idx:s0,sub:0,running:false,paused:false,over:false,speed:G?G.speed:1,pos:null,trades:[],timer:null,review:false};
+  VIEW={z:VIEW.z,right:s0,follow:true};HOVER=null;
+  $('modalBg').hidden=true;$('startBtn').hidden=false;$('count').hidden=true;$('overBadge').hidden=true;
+  $('btnPause').textContent='Ⅱ 一時停止';
+  const tags=sceneTags(s0,S.len).filter(x=>x!=='event').map(x=>SCENE_LABEL[x].replace('直前が','')),evs=eventsIn(s0,G.end).filter(e=>BIG_EV.has(e.kind));
+  $('startSub').textContent=`${fmtDate(BASE.bars[s0].t)} から 5分足${S.len}本${tags.length?' ・ 直前：'+tags.join('・'):''}${evs.length?' ・ ゲーム中の指標：'+evs.map(e=>fmtT(e.t,false).slice(2)+' '+EV_NAMES[e.kind]).join('、'):''} ・ Enterでも開始`;
+  $('seedBtn').textContent='場面 #'+scene;
+  renderLog();updateUI();draw();drawOverview();
+}
+function baseBar(){const i=G.idx,b=BASE.bars[i],t=ticksOf(i);let h=b.o,l=b.o;for(let s=0;s<=G.sub;s++){if(t[s]>h)h=t[s];if(t[s]<l)l=t[s]}return{t:b.t,o:b.o,h,l,c:t[G.sub]}}
+function live(){return liveOf(BASE,G.idx,baseBar())}
+function bucketIndex(ds,T){const B=bucketStart(T,ds.tf);const k=ds.byT.get(B);return k!==undefined?k:lowerBound(ds.bars,B)}
+function htfState(){
+  if(!S.htf)return null;const ds=getHTF(S.htf),tf=ds.tf,T=BASE.bars[G.idx].t,B=bucketStart(T,tf),K=bucketIndex(ds,T);
+  const lb=baseBar();let o=lb.o,h=lb.h,l=lb.l,j=G.idx;
+  while(j-1>=0&&bucketStart(BASE.bars[j-1].t,tf)===B){j--;const b=BASE.bars[j];o=b.o;if(b.h>h)h=b.h;if(b.l<l)l=b.l}
+  return{ds,K,L:liveOf(ds,K,{t:B,o,h,l,c:lb.c}),remain:Math.round((B+tf-T)/TF0)-1};
+}
+const bid=()=>baseBar().c-SPREAD/2, ask=()=>baseBar().c+SPREAD/2;
+function curPips(){if(!G.pos)return 0;const c=baseBar().c;return G.pos.dir===1?((c-SPREAD/2)-G.pos.price)/PIP:(G.pos.price-(c+SPREAD/2))/PIP}
+const yenPerPip=()=>S.lot*PIP;
+
+function step(){
+  if(!G.running||G.paused||G.over)return;
+  const ms=TICK_MS/G.speed,k=Math.max(1,Math.round(16/ms));
+  for(let n=0;n<k;n++){
+    G.sub++;
+    if(G.sub>=SUB){G.sub=0;G.idx++;if(G.idx>=G.end){G.idx=G.end-1;G.sub=SUB-1;finish();return}onNewBar()}
+    checkStops();if(!G.running)return;
+  }
+  G.timer=setTimeout(step,Math.max(16,ms*k));
+  updateUI();draw();
+}
+function onNewBar(){
+  if(VIEW.follow)VIEW.right=G.idx;
+  const s=BASE.signs[G.idx-1];
+  if(s&&S.mode==='practice'&&S.vis.sign){toast(`サイン点灯：${s===1?'ロング':'ショート'}条件 3/3`);beep(s===1?880:440,0.12,0.05,'triangle')}
+  const ev=WORLD.evAt.get(G.idx);if(ev&&S.vis.ev){toast(`${fmtT(BASE.bars[G.idx].t,false).slice(2)} ${EV_NAMES[ev.kind]} 発表`);if(BIG_EV.has(ev.kind))beep(330,0.1,0.04,'square')}
+}
+function checkStops(){if(!G.pos)return;const p=curPips();if(S.sl>0&&p<=-S.sl)closePos('損切り');else if(S.tp>0&&p>=S.tp)closePos('利確')}
+function start(){
+  if(G.running||G.over)return;
+  initAudio();
+  $('startBtn').hidden=true;const cEl=$('count');cEl.hidden=false;let n=3;cEl.textContent=n;
+  const iv=setInterval(()=>{n--;if(n<=0){clearInterval(iv);cEl.hidden=true;G.running=true;G.timer=setTimeout(step,TICK_MS/G.speed);updateUI()}else cEl.textContent=n},600);
+}
+function htfPoNow(){const h=htfState();return h?cond(h.ds,h.K-1).po:null}
+function agreeTxt(a){return a==null?'':a==='順'?'上位足と同方向':a==='逆'?'上位足と逆方向':'上位足PO崩れ'}
+function entry(dir){
+  const btn=dir===1?$('btnBuy'):$('btnSell');
+  if(!G.running||G.over||G.pos){btn.classList.remove('deny');void btn.offsetWidth;btn.classList.add('deny');if(G.pos)toast('ポジションは1つずつです。先に決済してください');else if(!G.running&&!G.over)toast('「開始する」を押すと始まります');return}
+  const c=cond(BASE,G.idx-1),n=dir===1?c.L:c.S,grade=n===3?'A':n===2?'B':'C';
+  const counter=(dir===1&&c.po===-1)||(dir===-1&&c.po===1);
+  const hp=htfPoNow(),agree=hp==null?null:hp===dir?'順':hp===-dir?'逆':'中';
+  G.pos={dir,price:dir===1?ask():bid(),idx:G.idx,t:BASE.bars[G.idx].t,grade,n,div:c.div===dir,counter,agree,htf:S.htf};
+  beep(dir===1?660:520,0.07,0.04);
+  if(S.mode==='practice')toast(`${dir===1?'買い':'売り'}エントリー：判定 <b class="g A">${grade}</b>（条件 ${n}/3${G.pos.div?'・ダイバージェンスあり':''}${counter?'・PO逆行の逆張り':''}${agree?'・'+agreeTxt(agree):''}）`);
+  else toast(`${dir===1?'買い':'売り'}エントリー（判定は決済後に公開）`);
+  if(S.autoPause&&!G.paused){togglePause();setTimeout(()=>toast('自動で一時停止中。損切り・利確を設定したら P か「再開」で続行'),1200)}
+  updateUI();draw();
+}
+function closePos(reason='手動'){
+  if(!G.pos)return;
+  const p=G.pos,exit=p.dir===1?bid():ask(),pips=(p.dir===1?exit-p.price:p.price-exit)/PIP;
+  G.trades.push({...p,exit,exitIdx:G.idx,pips,reason});G.pos=null;
+  if(pips>=0){beep(784,0.08,0.05);setTimeout(()=>beep(1047,0.12,0.05),90)}else beep(262,0.18,0.05,'sawtooth');
+  toast(`決済（${reason}）：<b class="${pips>=0?'up':'down'}">${sg(pips)} pips</b>　判定 <b class="g A">${p.grade}</b>（${p.n}/3${p.agree?'・'+agreeTxt(p.agree):''}）`);
+  renderLog();updateUI();draw();
+}
+function finish(){
+  G.over=true;G.running=false;clearTimeout(G.timer);
+  if(G.pos)closePos('時間切れ');
+  REC.games++;for(const t of G.trades){REC.n++;if(t.pips>0)REC.w++;REC.pips+=t.pips;const g=REC.g[t.grade];g.n++;if(t.pips>0)g.w++;g.p+=t.pips;if(t.agree==='順'){REC.on.n++;REC.on.p+=t.pips}else if(t.agree==='逆'){REC.off.n++;REC.off.p+=t.pips}}
+  saveRec();renderRec();
+  $('overBadge').hidden=false;
+  updateUI();draw();showResult();
+}
+
+// ---------- audio ----------
+let AC=null;
+function initAudio(){if(!AC){try{AC=new(window.AudioContext||window.webkitAudioContext)()}catch(e){}}if(AC&&AC.state==='suspended')AC.resume().catch(()=>{})}
+function beep(f,d=0.08,g=0.05,type='sine'){if(!S.sound||!AC)return;try{const o=AC.createOscillator(),v=AC.createGain();o.type=type;o.frequency.value=f;v.gain.value=g;o.connect(v);v.connect(AC.destination);const t=AC.currentTime;o.start(t);v.gain.setValueAtTime(g,t);v.gain.exponentialRampToValueAtTime(0.0001,t+d);o.stop(t+d+0.02)}catch(e){}}
+
+// ---------- UI ----------
+const fmtP=v=>sg(v)+' pips';
+const fmtY=v=>(v>=0?'+¥':'-¥')+Math.abs(Math.round(v)).toLocaleString('ja-JP');
+let toastT;
+function toast(html){const t=$('toast');t.innerHTML=html;t.classList.remove('hide');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.add('hide'),3400)}
+function setChip(el,cls,txt){el.className='chip '+cls;el.textContent=txt}
+function qHTML(p){const s=p.toFixed(3);return`${s.slice(0,4)}<span class="big">${s.slice(4,6)}</span><sup>${s.slice(6)}</sup>`}
+function nextEventText(){const T=BASE.bars[G.idx].t;let k=lowerBoundEv(G.idx+1);while(k<EVENTS.length&&EVENTS[k].i<=G.idx)k++;if(k>=EVENTS.length)return '';const e=EVENTS[k];const dt=e.t-T;if(dt>48*3600)return '';const h=Math.floor(dt/3600),m=Math.floor(dt%3600/60);return `次の指標 <b>${fmtT(e.t,true)} ${EV_NAMES[e.kind]}</b>（あと${h?h+'時間':''}${m}分）`}
+function updateUI(){
+  const L=baseBar();
+  $('bidTxt').innerHTML=qHTML(L.c-SPREAD/2);$('askTxt').innerHTML=qHTML(L.c+SPREAD/2);
+  const total=G.end-G.s0,done=Math.min(total,G.idx-G.s0+(G.over?1:0));
+  $('progText').textContent=`${done} / ${total}本`;const tk=$('ticks').children;for(let k=0;k<tk.length;k++)tk[k].classList.toggle('on',k<Math.floor(done/total*tk.length));
+  const practice=S.mode==='practice';
+  $('judgeBox').hidden=!practice;$('judgeHidden').hidden=practice;
+  setChip($('modeChip'),'M',practice?'練習モード':'実戦モード');
+  const c=cond(BASE,G.idx-1);
+  setChip($('jPO'),c.po===1?'L':c.po===-1?'S':'N',c.po===1?'上昇PO':c.po===-1?'下降PO':'崩れ');
+  $('jRciV').textContent=c.rv.toFixed(0)+' / '+c.rv14.toFixed(0);
+  setChip($('jRCI'),c.rciL?'L':c.rciS?'S':'N',c.rciL?'底から反転↑':c.rciS?'天井から反転↓':(c.rUp?'上向き':'下向き'));
+  setChip($('jMACD'),c.macdUp?'L':'S',c.macdUp?'シグナル上':'シグナル下');
+  setChip($('jDIV'),c.div?'D':'N',c.div===1?'強気Div':c.div===-1?'弱気Div':'なし');
+  const hp=htfPoNow();$('jHTFn').textContent=S.htf?`（${TFS[S.htf]}・参考）`:'（参考）';
+  if(hp==null)setChip($('jHTF'),'N','上位足なし');else setChip($('jHTF'),hp===1?'L':hp===-1?'S':'N',hp===1?'上昇PO':hp===-1?'下降PO':'崩れ');
+  $('scLv').textContent=c.L+'/3';$('scSv').textContent=c.S+'/3';
+  $('scL').className='sc'+(c.L===3?' hot-L':'');$('scS').className='sc'+(c.S===3?' hot-S':'');
+  [...$('pL').children].forEach((e,k)=>e.classList.toggle('on',k<c.L));[...$('pS').children].forEach((e,k)=>e.classList.toggle('on',k<c.S));
+  const cb=$('btnClose'),hide=S.hide&&G.pos;
+  if(G.pos){const p=curPips();cb.disabled=false;cb.className='settle '+(hide?'':p>0.05?'win':p<-0.05?'lose':'');$('posTxt').textContent=`${G.pos.dir===1?'買':'売'} ${S.lot.toLocaleString('ja-JP')}通貨 @${G.pos.price.toFixed(3)}`;
+    $('closeTxt').textContent=hide?'損益非表示':fmtP(p);$('flt').textContent=hide?'非表示':fmtP(p)+' / '+fmtY(p*yenPerPip());$('flt').className='v mono '+(hide?'mut':p>=0?'up':'down')}
+  else{cb.disabled=true;cb.className='settle';$('posTxt').textContent='ポジションなし';$('closeTxt').textContent='—';$('flt').textContent='—';$('flt').className='v mono'}
+  $('btnBuy').classList.toggle('dim',!!G.pos||G.over);$('btnSell').classList.toggle('dim',!!G.pos||G.over);
+  const T=G.trades,tot=T.reduce((s,t)=>s+t.pips,0);
+  $('totPips').textContent=fmtP(tot);$('totPips').className='big-num mono '+(tot>0?'up':tot<0?'down':'');
+  $('totYen').textContent=fmtY(tot*yenPerPip())+`（${S.lot.toLocaleString('ja-JP')}通貨換算）`;
+  const n=T.length,w=T.filter(t=>t.pips>0).length;
+  $('wr').textContent=`${n}回 / ${n?Math.round(w/n*100)+'%':'—'}`;
+  $('aRate').textContent=n?Math.round(T.filter(t=>t.grade==='A').length/n*100)+'%':'—';
+  const withH=T.filter(t=>t.agree);$('hRate').textContent=withH.length?Math.round(withH.filter(t=>t.agree==='順').length/withH.length*100)+'%':'—';
+  $('btnLatest').hidden=VIEW.follow;
+  $('btnPause').disabled=!G.running||G.over;
+  const ne=S.vis.ev?nextEventText():'';$('nextEv').hidden=!ne;if(ne)$('nextEv').innerHTML=ne;
+}
+function renderLog(){
+  const ul=$('log');if(!G.trades.length){ul.innerHTML='<li class="empty">まだ取引はありません</li>';return}
+  ul.innerHTML=G.trades.map((t,k)=>`<li data-k="${k}"><span class="tag ${t.dir===1?'L':'S'}">${t.dir===1?'買':'売'}</span><span class="g ${t.grade}">${t.grade}</span><span class="mono">${t.price.toFixed(3)}→${t.exit.toFixed(3)}${t.agree?' ・上位'+t.agree:''}${t.reason!=='手動'?' ・'+t.reason:''}</span><span class="mono ${t.pips>=0?'up':'down'}">${sg(t.pips)}</span></li>`).reverse().join('');
+}
+function renderRec(){
+  const R=REC,pc=(w,n)=>n?Math.round(w/n*100)+'%':'—',avg=(p,n)=>n?sg(p/n):'—';
+  $('recBox').innerHTML=[['ゲーム数',R.games+'回'],['合計損益',(R.n?sg(R.pips):'±0.0')+' pips'],['取引 / 勝率',R.n+'回 / '+pc(R.w,R.n)],['A判定率',pc(R.g.A.n,R.n)],
+    ['A 平均・勝率',avg(R.g.A.p,R.g.A.n)+' / '+pc(R.g.A.w,R.g.A.n)],['B 平均・勝率',avg(R.g.B.p,R.g.B.n)+' / '+pc(R.g.B.w,R.g.B.n)],['C 平均・勝率',avg(R.g.C.p,R.g.C.n)+' / '+pc(R.g.C.w,R.g.C.n)],['上位足 順/逆 平均',avg(R.on.p,R.on.n)+' / '+avg(R.off.p,R.off.n)]]
+    .map(([k,v])=>`<div><div class="k">${k}</div><div class="v mono">${v}</div></div>`).join('');
+}
+function grp(a){const s=a.reduce((x,t)=>x+t.pips,0);return{n:a.length,s,avg:a.length?s/a.length:0,wr:a.length?Math.round(a.filter(t=>t.pips>0).length/a.length*100):null}}
+function showResult(){
+  const T=G.trades,n=T.length,tot=T.reduce((s,t)=>s+t.pips,0),w=T.filter(t=>t.pips>0);
+  const gp=w.reduce((s,t)=>s+t.pips,0),gl=-T.filter(t=>t.pips<0).reduce((s,t)=>s+t.pips,0);
+  let eq=0,pk=0,dd=0;for(const t of T){eq+=t.pips;pk=Math.max(pk,eq);dd=Math.max(dd,pk-eq)}
+  const t0=BASE.bars[G.s0].t,t1=BASE.bars[G.end-1].t;
+  $('mLead').textContent=`場面 #${scene} ・ ${fmtDate(t0)} 〜 ${fmtDate(t1)}（架空カレンダー）\n${S.mode==='practice'?'練習':'実戦'}モード ・ 5分足${G.end-G.s0}本${S.htf?' ・ 上位足 '+TFS[S.htf]:''} ・ ${S.lot.toLocaleString('ja-JP')}通貨`;
+  $('mPips').textContent=fmtP(tot)+'　'+fmtY(tot*yenPerPip());$('mPips').className='v mono '+(tot>=0?'up':'down');
+  $('mWr').textContent=n?Math.round(w.length/n*100)+'%（'+w.length+'勝'+(n-w.length)+'敗）':'—';
+  const pf=n?(gl?(gp/gl).toFixed(2):(gp>0?'∞':'—')):'—';$('mPf').textContent=pf;
+  $('mDd').textContent=n?'-'+dd.toFixed(1)+' pips':'—';
+  const lbl={A:'3/3',B:'2/3',C:'1以下'};
+  const rows=['A','B','C'].map(g=>({g,...grp(T.filter(t=>t.grade===g))}));
+  $('mTable').innerHTML=rows.map(r=>`<tr><td><span class="g ${r.g}">${r.g}</span> ${lbl[r.g]}</td><td class="mono">${r.n}</td><td class="mono">${r.wr===null?'—':r.wr+'%'}</td><td class="mono ${r.avg>=0?'up':'down'}">${r.n?sg(r.avg):'—'}</td><td class="mono ${r.s>=0?'up':'down'}">${r.n?sg(r.s):'—'}</td></tr>`).join('');
+  let v;const A=rows[0],C=rows[2];
+  if(!n)v='取引なしで終了しました。\n条件がそろう場面を待つのも手法のうちですが、練習では何度かエントリーしてみましょう。';
+  else{
+    v=`A判定（3条件そろい）でのエントリーは ${A.n}/${n}回（${Math.round(A.n/n*100)}%）。`;
+    if(A.n&&C.n)v+=`\nA判定の平均 ${sg(A.avg)} pips、C判定の平均 ${sg(C.avg)} pips。`;
+    const on=grp(T.filter(t=>t.agree==='順')),off=grp(T.filter(t=>t.agree==='逆'));
+    if(on.n||off.n)v+=`\n上位足POと同方向 ${on.n}回（平均 ${on.n?sg(on.avg):'—'} pips）、逆方向 ${off.n}回（平均 ${off.n?sg(off.avg):'—'} pips）。`;
+    const counter=T.filter(t=>t.counter).length;if(counter)v+=`\n5分足のパーフェクトオーダーに逆らった逆張りが ${counter}回ありました。`;
+    const early=T.filter(t=>t.reason==='手動'&&t.pips>0&&t.pips<5).length;if(early>=2)v+=`\n+5pips未満での利確が ${early}回。利を伸ばせる場面がなかったか、RCIの反転を待って確認してみましょう。`;
+    const sl=T.filter(t=>t.reason==='損切り').length;if(sl>=3)v+=`\n損切りが ${sl}回。エントリーのタイミングが早すぎないか（RCIの反転を待てているか）を見返してみてください。`;
+    v+=`\n\n※1ゲームの結果だけで手法の優劣は判断できません。通算成績で回数を重ねた傾向を見てください。`;
+  }
+  $('mVerdict').textContent=v;
+  $('shareTxt').value=`波形トレード道場 場面#${scene} ${S.mode==='practice'?'練習':'実戦'}\n${fmtP(tot)} ｜ 勝率 ${n?Math.round(w.length/n*100)+'%':'—'}（${n}回）｜ A判定率 ${n?Math.round(A.n/n*100)+'%':'—'}\nPF ${pf} ｜ 最大DD -${dd.toFixed(1)} pips`;
+  $('btnCopy').textContent='コピー';
+  $('modalBg').hidden=false;
+  requestAnimationFrame(drawEquity);
+}
+function drawEquity(){
+  const c=$('eqCv'),ctx=c.getContext('2d'),dpr=window.devicePixelRatio||1,W=c.clientWidth,H=c.clientHeight;if(!W)return;
+  c.width=W*dpr;c.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);
+  const css=getComputedStyle(document.documentElement),C=k=>css.getPropertyValue(k).trim();
+  ctx.clearRect(0,0,W,H);
+  const T=G.trades;const pts=[0];let e=0;for(const t of T){e+=t.pips;pts.push(e)}
+  const lo=Math.min(0,...pts),hi=Math.max(0,...pts),padv=(hi-lo)*0.15||5;
+  const Y=v=>10+(hi+padv-v)/(hi-lo+2*padv)*(H-20),X=i=>12+i/Math.max(1,pts.length-1)*(W-60);
+  ctx.strokeStyle=C('--line');ctx.beginPath();ctx.moveTo(0,Y(0)+.5);ctx.lineTo(W,Y(0)+.5);ctx.stroke();
+  ctx.font='10px "JetBrains Mono",monospace';ctx.fillStyle=C('--muted');ctx.textBaseline='middle';ctx.fillText('0',W-44,Y(0));ctx.fillText('損益推移（取引ごと）',12,H-6);
+  if(pts.length<2){ctx.fillText('取引なし',W/2-24,H/2);return}
+  const end=pts[pts.length-1],col=end>=0?C('--up'):C('--down');
+  ctx.beginPath();ctx.moveTo(X(0),Y(0));pts.forEach((v,i)=>ctx.lineTo(X(i),Y(v)));ctx.lineTo(X(pts.length-1),Y(0));ctx.closePath();ctx.globalAlpha=.15;ctx.fillStyle=col;ctx.fill();ctx.globalAlpha=1;
+  ctx.strokeStyle=col;ctx.lineWidth=1.6;ctx.beginPath();pts.forEach((v,i)=>i?ctx.lineTo(X(i),Y(v)):ctx.moveTo(X(i),Y(v)));ctx.stroke();
+  pts.forEach((v,i)=>{if(!i)return;ctx.fillStyle=T[i-1].pips>=0?C('--up'):C('--down');ctx.beginPath();ctx.arc(X(i),Y(v),2.5,0,Math.PI*2);ctx.fill()});
+  ctx.fillStyle=col;ctx.fillText(sg(end),X(pts.length-1)+6,Y(end));
+}
+
+// ---------- overview strip (3 years) ----------
+let OVGEO=null;
+function drawOverview(){
+  const c=$('ov'),ctx=c.getContext('2d'),dpr=window.devicePixelRatio||1,W=c.clientWidth,H=c.clientHeight;if(!W||!H)return;
+  if(c.width!==Math.round(W*dpr)||c.height!==Math.round(H*dpr)){c.width=Math.round(W*dpr);c.height=Math.round(H*dpr)}
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  const css=getComputedStyle(document.documentElement),C=k=>css.getPropertyValue(k).trim();
+  ctx.fillStyle=C('--chart');ctx.fillRect(0,0,W,H);
+  const D=WORLD.days,n=D.length,padL=8,padR=8,top=16,bot=14,pw=W-padL-padR,ph=H-top-bot;
+  let lo=1e9,hi=-1e9;for(const d of D){if(d.c<lo)lo=d.c;if(d.c>hi)hi=d.c}
+  const X=k=>padL+k/(n-1)*pw,Y=v=>top+(hi-v)/(hi-lo)*ph;
+  OVGEO={padL,pw,n};
+  // year/month ticks
+  ctx.font='10px "JetBrains Mono",monospace';ctx.textBaseline='top';ctx.textAlign='left';
+  for(let k=1;k<n;k++){const d=D[k],p=D[k-1];if(d.mo!==p.mo){const x=Math.round(X(k))+.5;ctx.strokeStyle=C('--line');ctx.beginPath();ctx.moveTo(x,top-2);ctx.lineTo(x,H-bot);ctx.stroke();
+    if(d.mo===1){ctx.fillStyle=C('--ink2');ctx.fillText(yearNo(d.y),x+3,2)}else if(pw/36>20){ctx.fillStyle=C('--muted');ctx.fillText(d.mo+'月',x+3,H-bot+2)}}}
+  ctx.fillStyle=C('--ink2');ctx.fillText(yearNo(D[0].y),padL+3,2);
+  // line
+  ctx.strokeStyle=C('--ink2');ctx.lineWidth=1.1;ctx.beginPath();for(let k=0;k<n;k++){const x=X(k),y=Y(D[k].c);k?ctx.lineTo(x,y):ctx.moveTo(x,y)}ctx.stroke();
+  // price labels
+  // current scene marker
+  if(G){const k0=dayIndexOf(G.s0),k1=dayIndexOf(G.end-1);const x0=X(k0),x1=Math.max(X(k1),x0+3);
+    ctx.fillStyle=C('--up');ctx.globalAlpha=.25;ctx.fillRect(x0-1,top-4,x1-x0+2,ph+8);ctx.globalAlpha=1;ctx.fillRect(x0-1,top-4,2,ph+8);
+    const vx=X(dayIndexOf(VIEW.follow?G.idx:Math.round(VIEW.right)));ctx.fillStyle=C('--ink');ctx.beginPath();ctx.moveTo(vx,H-bot+1);ctx.lineTo(vx-4,H-1);ctx.lineTo(vx+4,H-1);ctx.closePath();ctx.fill()}
+}
+function dayIndexOf(i){const D=WORLD.days;let lo=0,hi=D.length-1;while(lo<hi){const m=(lo+hi+1)>>1;if(D[m].i0<=i)lo=m;else hi=m-1}return lo}
+$('ov').addEventListener('click',e=>{if(!OVGEO)return;const r=$('ov').getBoundingClientRect(),x=e.clientX-r.left;const k=Math.max(0,Math.min(OVGEO.n-1,Math.round((x-OVGEO.padL)/OVGEO.pw*(OVGEO.n-1))));
+  const d=WORLD.days[k];let i=d.i0;const day=jst(BASE.bars[i].t).day;while(i<BASE.bars.length-1&&jst(BASE.bars[i].t).day===day&&jst(BASE.bars[i].t).h<9)i++;
+  restart(i);toast(`${fmtDay(BASE.bars[i].t)} の場面から開始します`)});
+
+// ---------- drawing ----------
+const GEO={};
+function draw(){
+  try{drawChart(cv,BASE,G.idx,live(),{isBase:true});
+  const h=htfState();if(h&&!$('wrapH').hidden)drawChart(cvH,h.ds,h.K,h.L,{isBase:false,remain:h.remain})}catch(e){console.error(e)}
+}
+function panes(H){
+  const axisH=18,top=22,av=H-axisH,n=(S.vis.rci?1:0)+(S.vis.macd?1:0),pf=n===2?0.58:n===1?0.74:1;
+  const out={P:{y:top,h:av*pf-top},axisY:av};let y=av*pf;const ph=n?(av-av*pf)/n:0;
+  if(S.vis.rci){out.R={y:y+14,h:ph-14};y+=ph}if(S.vis.macd){out.M={y:y+14,h:ph-14};y+=ph}return out;
+}
+function drawChart(canvas,ds,fi,Lv,opt){
+  const ctx=canvas.getContext('2d'),isBase=opt.isBase;
+  const dpr=window.devicePixelRatio||1,W=canvas.clientWidth,H=canvas.clientHeight;if(!W||!H)return;
+  if(canvas.width!==Math.round(W*dpr)||canvas.height!==Math.round(H*dpr)){canvas.width=Math.round(W*dpr);canvas.height=Math.round(H*dpr)}
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  const css=getComputedStyle(document.documentElement),C=k=>css.getPropertyValue(k).trim();
+  ctx.fillStyle=C('--chart');ctx.fillRect(0,0,W,H);
+  const axisW=62,plotW=W-axisW;
+  const bw=Math.max(2.5,Math.min(24,Math.max(5,Math.min(11,plotW/(isBase?74:56)))*(isBase?VIEW.z:1)));
+  const N=Math.floor(plotW/bw)-2;
+  let right=fi;if(isBase&&!VIEW.follow)right=Math.round(Math.max(Math.min(VIEW.right,fi),Math.min(fi,20)));
+  const last=right,first=Math.max(1,last-N+1);
+  const {P,R,M,axisY}=panes(H);
+  const X=i=>(i-first)*bw+bw/2;
+  const bar=i=>i<fi?ds.bars[i]:Lv, val=(k,i)=>i<fi?ds.I[k][i]:Lv[k];
+  const hidePrice=S.hide&&G.pos, practice=S.mode==='practice';
+  let lo=Infinity,hi=-Infinity;
+  for(let i=first;i<=last;i++){const b=bar(i);if(b.l<lo)lo=b.l;if(b.h>hi)hi=b.h;if(S.vis.ema){const e=val('e40',i);if(e<lo)lo=e;if(e>hi)hi=e}}
+  if(isBase&&G.pos&&!hidePrice){lo=Math.min(lo,G.pos.price);hi=Math.max(hi,G.pos.price)}
+  const padv=(hi-lo)*0.08||0.1;lo-=padv;hi+=padv;
+  const Y=v=>P.y+(hi-v)/(hi-lo)*P.h;
+  if(isBase)GEO.base={first,last,bw,plotW,P,lo,hi,fi};
+  ctx.lineWidth=1;
+  // day separators, event marks, time axis
+  const secs=[900,1800,3600,7200,10800,21600,43200,86400];let labSec=86400;for(const s of secs){const nb=s/ds.tf;if(nb>=1&&nb*bw>=64){labSec=s;break}}
+  ctx.font='10px "JetBrains Mono",monospace';ctx.textBaseline='middle';
+  let lastLabX=-100;
+  for(let i=first;i<=last;i++){
+    const t=bar(i).t,x=X(i);
+    const dayChange=i>first&&jst(t).day!==jst(bar(i-1).t).day;
+    if(dayChange){ctx.strokeStyle=C('--line');ctx.setLineDash([2,4]);ctx.beginPath();ctx.moveTo(Math.round(x-bw/2)+.5,P.y);ctx.lineTo(Math.round(x-bw/2)+.5,axisY);ctx.stroke();ctx.setLineDash([]);
+      const lb=fmtT(t,true).slice(0,-6),lx0=x-bw/2+3;if(lx0>lastLabX+6&&lx0>=2){ctx.fillStyle=C('--ink2');ctx.textAlign='left';ctx.fillText(lb,lx0,axisY+9);lastLabX=lx0+ctx.measureText(lb).width}continue}
+    if((t+32400)%labSec===0&&x-lastLabX>40){const lb=pad(jst(t).h)+':'+pad(jst(t).m);ctx.fillStyle=C('--muted');ctx.textAlign='center';const w=ctx.measureText(lb).width;if(x-w/2>lastLabX+6){ctx.fillText(lb,x,axisY+9);lastLabX=x+w/2}}
+  }
+  if(isBase&&S.vis.ev){ctx.textAlign='left';ctx.font='10px "Zen Kaku Gothic New",sans-serif';for(let i=first;i<=Math.min(last,fi);i++){const ev=WORLD.evAt.get(i);if(!ev)continue;const x=Math.round(X(i))+.5;
+    ctx.strokeStyle=C('--ev');ctx.globalAlpha=.55;ctx.setLineDash([1,3]);ctx.beginPath();ctx.moveTo(x,P.y+12);ctx.lineTo(x,axisY);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;
+    ctx.fillStyle=C('--ev');ctx.beginPath();ctx.moveTo(x,P.y+2);ctx.lineTo(x-4,P.y+9);ctx.lineTo(x+4,P.y+9);ctx.closePath();ctx.fill();
+    if(bw>=4||BIG_EV.has(ev.kind))ctx.fillText(EV_NAMES[ev.kind],x+5,P.y+6)}}
+  ctx.textAlign='left';ctx.font='11px "JetBrains Mono",monospace';
+  ctx.strokeStyle=C('--line');
+  const stepv=niceStep((hi-lo)/5);
+  for(let v=Math.ceil(lo/stepv)*stepv;v<hi;v+=stepv){const y=Math.round(Y(v))+.5;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(plotW,y);ctx.stroke();if(!hidePrice){ctx.fillStyle=C('--muted');ctx.fillText(v.toFixed(3),plotW+6,y)}}
+  ctx.strokeStyle=C('--line');[R&&R.y-14,M&&M.y-14,axisY].forEach(y=>{if(y==null)return;ctx.beginPath();ctx.moveTo(0,y+.5);ctx.lineTo(W,y+.5);ctx.stroke()});
+  ctx.beginPath();ctx.moveTo(plotW+.5,0);ctx.lineTo(plotW+.5,axisY);ctx.stroke();
+
+  ctx.save();ctx.beginPath();ctx.rect(0,P.y-4,plotW,P.h+8);ctx.clip();
+  ctx.globalAlpha=hidePrice?0.05:1;
+  if(practice&&S.vis.div)for(const d of ds.divs){if(d.cf>fi-1||d.j2<first||d.j1>last)continue;
+    const b1=ds.bars[d.j1],b2=ds.bars[d.j2],y1=d.t===1?b1.l:b1.h,y2=d.t===1?b2.l:b2.h;
+    ctx.strokeStyle=C('--div');ctx.setLineDash([4,3]);ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(X(d.j1),Y(y1));ctx.lineTo(X(d.j2),Y(y2));ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle=C('--div');ctx.font='10px "Zen Kaku Gothic New",sans-serif';ctx.fillText(d.t===1?'強気Div':'弱気Div',X(d.j2)+4,Y(y2)+(d.t===1?10:-10));ctx.font='11px "JetBrains Mono",monospace'}
+  if(S.vis.ema)[['e40','--e40'],['e30','--e30'],['e20','--e20']].forEach(([k,col])=>{ctx.strokeStyle=C(col);ctx.lineWidth=1.4;ctx.beginPath();for(let i=first;i<=last;i++){const x=X(i),y=Y(val(k,i));i===first?ctx.moveTo(x,y):ctx.lineTo(x,y)}ctx.stroke()});
+  const cw=Math.max(1.5,bw*0.62);
+  for(let i=first;i<=last;i++){const b=bar(i),col=b.c>=b.o?C('--up'):C('--down'),x=X(i);
+    ctx.strokeStyle=col;ctx.fillStyle=col;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(Math.round(x)+.5,Y(b.h));ctx.lineTo(Math.round(x)+.5,Y(b.l));ctx.stroke();
+    const yo=Y(b.o),yc=Y(b.c);ctx.fillRect(x-cw/2,Math.min(yo,yc),cw,Math.max(1,Math.abs(yc-yo)))}
+  if(isBase&&practice&&S.vis.sign){for(let i=first;i<fi;i++){const s=ds.signs[i];if(!s)continue;const b=ds.bars[i],x=X(i);
+    ctx.fillStyle=s===1?C('--up'):C('--down');ctx.beginPath();
+    if(s===1){const y=Y(b.l)+10;ctx.moveTo(x,y);ctx.lineTo(x-5,y+8);ctx.lineTo(x+5,y+8)}else{const y=Y(b.h)-10;ctx.moveTo(x,y);ctx.lineTo(x-5,y-8);ctx.lineTo(x+5,y-8)}
+    ctx.closePath();ctx.fill()}}
+  const MX=i=>isBase?i:bucketIndex(ds,BASE.bars[i].t);
+  const drawTrade=(t,ei,ex)=>{const col=t.dir===1?C('--up'):C('--down');
+    const a=MX(t.idx);if(a>=first&&a<=last){ctx.fillStyle=col;ctx.strokeStyle=C('--chart');ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(X(a),Y(t.price),isBase?4.5:3.5,0,Math.PI*2);ctx.fill();ctx.stroke()}
+    if(ei!=null){const e=MX(ei);if(e>=first&&e<=last){const x=X(e),y=Y(ex);ctx.strokeStyle=C('--ink');ctx.lineWidth=isBase?2:1.5;const r=isBase?4:3;ctx.beginPath();ctx.moveTo(x-r,y-r);ctx.lineTo(x+r,y+r);ctx.moveTo(x+r,y-r);ctx.lineTo(x-r,y+r);ctx.stroke();
+      if(a<=last){ctx.strokeStyle=col;ctx.lineWidth=1;ctx.setLineDash([2,3]);ctx.beginPath();ctx.moveTo(X(a),Y(t.price));ctx.lineTo(x,y);ctx.stroke();ctx.setLineDash([])}}}};
+  for(const t of G.trades)drawTrade(t,t.exitIdx,t.exit);
+  ctx.globalAlpha=1;
+  if(G.pos&&!hidePrice){const p=G.pos;drawTrade(p,null,null);
+    ctx.setLineDash([5,4]);ctx.lineWidth=1;ctx.strokeStyle=C('--ink2');ctx.beginPath();ctx.moveTo(0,Y(p.price)+.5);ctx.lineTo(plotW,Y(p.price)+.5);ctx.stroke();
+    const lvl=(pips,col,lb)=>{const v=p.price+p.dir*pips*PIP;ctx.strokeStyle=col;ctx.beginPath();ctx.moveTo(0,Y(v));ctx.lineTo(plotW,Y(v));ctx.stroke();ctx.fillStyle=col;ctx.font='10px "Zen Kaku Gothic New",sans-serif';ctx.fillText(lb,4,Y(v)-7);ctx.font='11px "JetBrains Mono",monospace'};
+    if(S.sl>0)lvl(-S.sl,C('--down'),'損切り '+S.sl);if(S.tp>0)lvl(S.tp,C('--up'),'利確 '+S.tp);ctx.setLineDash([])}
+  ctx.restore();
+  ctx.textBaseline='middle';
+  if(!hidePrice){const y=Y(Lv.c);ctx.fillStyle=Lv.c>=Lv.o?C('--up'):C('--down');ctx.fillRect(plotW+1,y-9,axisW-1,18);ctx.fillStyle=C('--onfill');ctx.fillText(Lv.c.toFixed(3),plotW+6,y)}
+  else{ctx.fillStyle=C('--ink2');ctx.font='600 13px "Zen Kaku Gothic New",sans-serif';ctx.textAlign='center';ctx.fillText(isBase?'価格を非表示中 ・ RCIとMACDで決済を判断':'価格を非表示中',plotW/2,P.y+P.h/2);ctx.textAlign='left';ctx.font='11px "JetBrains Mono",monospace'}
+  if(right===fi){const x=X(fi),lb=fmtT(Lv.t,true);ctx.font='10px "JetBrains Mono",monospace';const w=ctx.measureText(lb).width+8;ctx.fillStyle=C('--tagbg');ctx.fillRect(Math.min(x-w/2,plotW-w),axisY+1,w,16);ctx.fillStyle=C('--tagink');ctx.textAlign='center';ctx.fillText(lb,Math.min(x,plotW-w/2),axisY+9);ctx.textAlign='left';ctx.font='11px "JetBrains Mono",monospace'}
+  ctx.textBaseline='alphabetic';
+  let lx=8;const lab=(t,col,y)=>{ctx.fillStyle=col;ctx.fillText(t,lx,y);lx+=ctx.measureText(t).width+12};
+  lab(isBase?'GBP/JPY風 5分足（架空）':'上位足 '+TFS[ds.tf],isBase?C('--ink2'):C('--ink'),14);
+  if(S.vis.ema){lab('EMA20',C('--e20'),14);lab('EMA30',C('--e30'),14);lab('EMA40',C('--e40'),14)}
+  if(!isBase){const tx=`形成中 残り${Math.max(0,opt.remain)}本`;if(lx+ctx.measureText(tx).width<plotW)lab(tx,C('--muted'),14)}
+  if(R){const RY=v=>R.y+(100-v)/200*R.h;
+    ctx.globalAlpha=.07;ctx.fillStyle=C('--up');ctx.fillRect(0,R.y,plotW,RY(S.th)-R.y);ctx.fillStyle=C('--down');ctx.fillRect(0,RY(-S.th),plotW,R.y+R.h-RY(-S.th));ctx.globalAlpha=1;
+    ctx.strokeStyle=C('--line');ctx.setLineDash([3,3]);[S.th,0,-S.th].forEach(v=>{ctx.beginPath();ctx.moveTo(0,RY(v)+.5);ctx.lineTo(plotW,RY(v)+.5);ctx.stroke()});ctx.setLineDash([]);
+    ctx.fillStyle=C('--muted');ctx.textBaseline='middle';[S.th,0,-S.th].forEach(v=>ctx.fillText((v>0?'+':'')+v,plotW+6,RY(v)));
+    [['rci14','--rci14',1.3],['rci','--rci',1.7]].forEach(([k,col,lw])=>{ctx.strokeStyle=C(col);ctx.lineWidth=lw;ctx.beginPath();for(let i=first;i<=last;i++){const y=RY(val(k,i));i===first?ctx.moveTo(X(i),y):ctx.lineTo(X(i),y)}ctx.stroke()});
+    if(right===fi){ctx.fillStyle=C('--rci');ctx.beginPath();ctx.arc(X(last),RY(Lv.rci),3,0,Math.PI*2);ctx.fill()}
+    ctx.textBaseline='alphabetic';lx=8;lab('RCI(9) '+Lv.rci.toFixed(1),C('--rci'),R.y-3);lab('RCI(14) '+Lv.rci14.toFixed(1),C('--rci14'),R.y-3)}
+  if(M){let mm=1e-6;for(let i=first;i<=last;i++)mm=Math.max(mm,Math.abs(val('macd',i)),Math.abs(val('sig',i)));mm*=1.1;
+    const MY=v=>M.y+M.h/2-v/mm*M.h/2;
+    ctx.strokeStyle=C('--line');ctx.beginPath();ctx.moveTo(0,MY(0)+.5);ctx.lineTo(plotW,MY(0)+.5);ctx.stroke();
+    for(let i=first;i<=last;i++){const h=val('macd',i)-val('sig',i);ctx.globalAlpha=.4;ctx.fillStyle=h>=0?C('--up'):C('--down');const y0=MY(0),y1=MY(h*1.6);ctx.fillRect(X(i)-cw/2,Math.min(y0,y1),cw,Math.abs(y1-y0));ctx.globalAlpha=1}
+    [['macd','--macd'],['sig','--sigl']].forEach(([k,col])=>{ctx.strokeStyle=C(col);ctx.lineWidth=1.3;ctx.beginPath();for(let i=first;i<=last;i++){const y=MY(val(k,i));i===first?ctx.moveTo(X(i),y):ctx.lineTo(X(i),y)}ctx.stroke()});
+    if(practice&&S.vis.div)for(const d of ds.divs){if(d.cf>fi-1||d.j2<first||d.j1>last)continue;ctx.strokeStyle=C('--div');ctx.setLineDash([4,3]);ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(X(d.j1),MY(ds.I.macd[d.j1]));ctx.lineTo(X(d.j2),MY(ds.I.macd[d.j2]));ctx.stroke();ctx.setLineDash([])}
+    lx=8;lab('MACD(6,13,4)',C('--ink2'),M.y-3);lab('MACD',C('--macd'),M.y-3);lab('シグナル',C('--sigl'),M.y-3)}
+  // crosshair (base only)
+  if(isBase&&HOVER){
+    const i=first+Math.floor(HOVER.x/bw);
+    if(i>=first&&i<=last&&HOVER.x<plotW){
+      const b=bar(i),x=Math.round(X(i))+.5;
+      ctx.strokeStyle=C('--ink2');ctx.setLineDash([3,3]);ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,P.y-4);ctx.lineTo(x,axisY);ctx.stroke();
+      ctx.textBaseline='middle';
+      if(HOVER.y>=P.y&&HOVER.y<=P.y+P.h){const y=Math.round(HOVER.y)+.5;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(plotW,y);ctx.stroke();
+        if(!hidePrice){const v=hi-(HOVER.y-P.y)/P.h*(hi-lo);ctx.fillStyle=C('--ink2');ctx.fillRect(plotW+1,y-8,axisW-1,16);ctx.fillStyle=C('--onfill');ctx.fillText(v.toFixed(3),plotW+6,y)}}
+      ctx.setLineDash([]);
+      ctx.font='10px "JetBrains Mono",monospace';const tl=fmtT(b.t,true),w=ctx.measureText(tl).width+8;ctx.fillStyle=C('--ink2');ctx.fillRect(Math.max(0,Math.min(x-w/2,plotW-w)),axisY+1,w,16);ctx.fillStyle=C('--onfill');ctx.textAlign='center';ctx.fillText(tl,Math.max(w/2,Math.min(x,plotW-w/2)),axisY+9);ctx.textAlign='left';
+      const rows=[];rows.push(`${fmtDate(b.t)}${hidePrice?'':`  ${sg((b.c-b.o)/PIP)}p  幅 ${((b.h-b.l)/PIP).toFixed(1)}p`}`);
+      if(!hidePrice)rows.push(`O ${b.o.toFixed(3)} H ${b.h.toFixed(3)} L ${b.l.toFixed(3)} C ${b.c.toFixed(3)}`);
+      rows.push(`RCI9 ${val('rci',i).toFixed(0)}  RCI14 ${val('rci14',i).toFixed(0)}  MACD ${(val('macd',i)/PIP).toFixed(1)}p  Sig ${(val('sig',i)/PIP).toFixed(1)}p`);
+      if(S.vis.ema&&!hidePrice)rows.push(`EMA20 ${val('e20',i).toFixed(3)}  30 ${val('e30',i).toFixed(3)}  40 ${val('e40',i).toFixed(3)}`);
+      const ev=i<=fi?WORLD.evAt.get(i):null;if(ev)rows.push(`指標：${EV_NAMES[ev.kind]}`);
+      ctx.font='11px "JetBrains Mono",monospace';const bw2=Math.max(...rows.map(r=>ctx.measureText(r).width))+14,bh=rows.length*16+8,bx=Math.min(plotW-bw2-4,Math.max(4,x+14)),by=P.y+20;
+      ctx.fillStyle=C('--panel');ctx.globalAlpha=.94;ctx.fillRect(bx,by,bw2,bh);ctx.globalAlpha=1;ctx.strokeStyle=C('--line');ctx.strokeRect(bx+.5,by+.5,bw2,bh);
+      ctx.fillStyle=C('--ink');rows.forEach((r,k)=>ctx.fillText(r,bx+7,by+12+k*16));
+    }
+  }
+}
+function niceStep(r){const p=Math.pow(10,Math.floor(Math.log10(r))),f=r/p;return(f<1.5?1:f<3?2:f<7?5:10)*p}
+
+// ---------- chart interaction ----------
+function setRight(v){const g=GEO.base;if(!g)return;const mn=Math.min(G.idx,g.last-g.first+2);VIEW.right=Math.max(mn,Math.min(G.idx,Math.round(v)));VIEW.follow=VIEW.right>=G.idx;$('btnLatest').hidden=VIEW.follow;draw();drawOverview()}
+function goLatest(){VIEW.follow=true;VIEW.right=G.idx;$('btnLatest').hidden=true;draw();drawOverview()}
+function zoom(f){VIEW.z=Math.max(0.35,Math.min(3,VIEW.z*f));draw()}
+cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);const r=cv.getBoundingClientRect();DRAG={x:e.clientX,right:VIEW.follow?G.idx:VIEW.right,moved:false};HOVER={x:e.clientX-r.left,y:e.clientY-r.top};draw()});
+cv.addEventListener('pointermove',e=>{const r=cv.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;
+  if(DRAG&&e.buttons){const dx=e.clientX-DRAG.x;if(Math.abs(dx)>3){DRAG.moved=true;cv.classList.add('grab');const g=GEO.base;if(g){let v=DRAG.right-dx/g.bw;const mn=Math.min(G.idx,g.last-g.first+2);v=Math.max(mn,Math.min(G.idx,v));VIEW.right=Math.round(v);VIEW.follow=VIEW.right>=G.idx;$('btnLatest').hidden=VIEW.follow}}}
+  HOVER={x,y};draw()});
+const endDrag=e=>{if(DRAG){DRAG=null;cv.classList.remove('grab');drawOverview()}if(e&&e.pointerType!=='mouse'){setTimeout(()=>{HOVER=null;draw()},1800)}};
+cv.addEventListener('pointerup',endDrag);cv.addEventListener('pointercancel',endDrag);
+cv.addEventListener('pointerleave',()=>{HOVER=null;DRAG=null;cv.classList.remove('grab');draw()});
+cv.addEventListener('wheel',e=>{e.preventDefault();const g=GEO.base;if(!g)return;if(Math.abs(e.deltaX)>Math.abs(e.deltaY)||e.shiftKey){setRight((VIEW.follow?G.idx:VIEW.right)+(e.shiftKey?e.deltaY:e.deltaX)/g.bw*2)}else zoom(e.deltaY<0?1.15:1/1.15)},{passive:false});
+$('btnLatest').onclick=goLatest;$('zIn').onclick=()=>zoom(1.25);$('zOut').onclick=()=>zoom(0.8);
+
+// ---------- controls ----------
+$('startBtn').onclick=start;
+$('btnBuy').onclick=()=>entry(1);$('btnSell').onclick=()=>entry(-1);$('btnClose').onclick=()=>closePos();
+$('btnPause').onclick=togglePause;
+function togglePause(){if(!G.running||G.over)return;G.paused=!G.paused;$('btnPause').textContent=G.paused?'▶ 再開':'Ⅱ 一時停止';if(!G.paused){clearTimeout(G.timer);G.timer=setTimeout(step,TICK_MS/G.speed)}}
+document.querySelectorAll('[data-speed]').forEach(b=>b.onclick=()=>{G.speed=+b.dataset.speed;document.querySelectorAll('[data-speed]').forEach(x=>x.classList.toggle('on',x===b))});
+const restart=s=>{clearTimeout(G.timer);G.running=false;newGame(s)};
+$('btnReplay').onclick=()=>restart(scene);$('btnNew').onclick=()=>restart();
+$('mReplay').onclick=()=>restart(scene);$('mNew').onclick=()=>restart();
+$('mReview').onclick=()=>{$('modalBg').hidden=true;G.review=true;toast('見返しモード：ドラッグや ← → でゲーム全体を見返せます。履歴をクリックするとその取引へ移動します')};
+$('btnResult').onclick=()=>{$('modalBg').hidden=false;requestAnimationFrame(drawEquity)};
+$('btnSound').onclick=()=>{S.sound=!S.sound;saveS();syncSettings();if(S.sound){initAudio();beep(660,0.08,0.04)}};
+$('seedBtn').onclick=()=>copyText(String(scene),$('seedBtn'),'場面 #'+scene);
+$('btnCopy').onclick=()=>copyText($('shareTxt').value,$('btnCopy'),'コピー');
+function copyText(txt,btn,orig){const done=()=>{btn.textContent='コピーしました';setTimeout(()=>btn.textContent=orig,1500)};
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(done).catch(()=>{const ta=$('shareTxt');ta.value=txt;ta.select();done()})}else{const ta=$('shareTxt');ta.value=txt;ta.select();done()}}
+$('btnSeedGo').onclick=()=>{const v=parseInt($('seedIn').value,10);if(!isFinite(v)){toast('場面番号（整数）を入力してください');return}restart(v)};
+$('seedIn').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('btnSeedGo').click()}});
+$('log').addEventListener('click',e=>{const li=e.target.closest('li[data-k]');if(!li)return;const t=G.trades[+li.dataset.k];const g=GEO.base;const N=g?g.last-g.first:60;setRight(t.exitIdx+Math.floor(N*0.3));toast(`${fmtT(t.t,true)} ${t.dir===1?'買い':'売り'} @${t.price.toFixed(3)} → ${t.exit.toFixed(3)}（${fmtP(t.pips)}・判定 ${t.grade}）`)});
+$('btnRecReset').onclick=()=>{REC={games:0,n:0,w:0,pips:0,g:{A:{n:0,w:0,p:0},B:{n:0,w:0,p:0},C:{n:0,w:0,p:0}},on:{n:0,p:0},off:{n:0,p:0}};saveRec();renderRec();toast('通算成績をリセットしました')};
+document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{S.mode=b.dataset.mode;saveS();syncSettings();updateUI();draw()});
+document.querySelectorAll('[data-htf]').forEach(b=>b.onclick=()=>{S.htf=+b.dataset.htf;saveS();syncSettings();updateUI();requestAnimationFrame(draw)});
+document.querySelectorAll('[data-vis]').forEach(b=>b.onclick=()=>{S.vis[b.dataset.vis]=!S.vis[b.dataset.vis];saveS();syncSettings();updateUI();draw()});
+$('selScene').onchange=e=>{S.scene=e.target.value;saveS();if(!G.running||G.over)restart();else toast('次の「新しい場面」から適用されます')};
+$('selTh').onchange=e=>{S.th=+e.target.value;saveS();buildSigns(BASE);updateUI();draw()};
+$('selSL').onchange=e=>{S.sl=+e.target.value;saveS();checkStops();updateUI();draw()};
+$('selTP').onchange=e=>{S.tp=+e.target.value;saveS();checkStops();updateUI();draw()};
+$('selLot').onchange=e=>{S.lot=+e.target.value;saveS();updateUI()};
+$('selLen').onchange=e=>{S.len=+e.target.value;saveS();if(G.running&&!G.over)toast('次のゲームから適用されます');else restart(scene)};
+$('chkHide').onchange=e=>{S.hide=e.target.checked;saveS();updateUI();draw()};
+$('chkAuto').onchange=e=>{S.autoPause=e.target.checked;saveS()};
+$('btnNotice').onclick=()=>{$('noticeBg').hidden=false};
+$('btnNoticeOk').onclick=()=>{$('noticeBg').hidden=true;try{localStorage.setItem('hakei-dojo3-notice','1')}catch(e){}};
+function syncSettings(){
+  document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('on',b.dataset.mode===S.mode));
+  document.querySelectorAll('[data-htf]').forEach(b=>b.classList.toggle('on',+b.dataset.htf===S.htf));
+  document.querySelectorAll('[data-vis]').forEach(b=>b.classList.toggle('on',!!S.vis[b.dataset.vis]));
+  $('wrapH').hidden=!S.htf;$('charts').classList.toggle('two',!!S.htf);
+  $('selScene').value=S.scene;$('selTh').value=S.th;$('selSL').value=S.sl;$('selTP').value=S.tp;$('selLot').value=S.lot;$('selLen').value=S.len;
+  $('chkHide').checked=S.hide;$('chkAuto').checked=S.autoPause;
+  $('btnSound').textContent=S.sound?'音 ON':'音 OFF';
+}
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='SELECT'||e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;
+  if(!$('noticeBg').hidden)return;
+  const k=e.key.toLowerCase();
+  if(k==='enter'&&!G.running&&!G.over){e.preventDefault();start()}
+  else if(k==='b'||k==='arrowup'){e.preventDefault();entry(1)}
+  else if(k==='s'||k==='arrowdown'){e.preventDefault();entry(-1)}
+  else if(k===' '){e.preventDefault();closePos()}
+  else if(k==='p')togglePause();
+  else if(k==='arrowleft'){e.preventDefault();setRight((VIEW.follow?G.idx:VIEW.right)-10)}
+  else if(k==='arrowright'){e.preventDefault();setRight((VIEW.follow?G.idx:VIEW.right)+10)}
+  else if(k==='home'){e.preventDefault();goLatest()}
+  else if(k==='+'||k==='=')zoom(1.25);else if(k==='-')zoom(0.8);
+  else if(k==='escape'&&!$('modalBg').hidden){$('modalBg').hidden=true;G.review=true}
+});
+
+// ---------- boot ----------
+function boot(){
+  WORLD=genWorld();BASE=makeDS(WORLD.bars,TF0);buildSigns(BASE);EVENTS=WORLD.events;
+  $('ticks').innerHTML='<i></i>'.repeat(15);
+  syncSettings();renderRec();newGame();
+  const ro=new ResizeObserver(()=>{draw();drawOverview()});ro.observe($('wrap'));ro.observe($('wrapH'));ro.observe(document.querySelector('.ovwrap'));
+  document.fonts&&document.fonts.ready.then(()=>{draw();drawOverview()});
+  try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{draw();drawOverview()});new MutationObserver(()=>{draw();drawOverview()}).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']})}catch(e){}
+  $('loading').hidden=true;
+  let seen=false;try{seen=!!localStorage.getItem('hakei-dojo3-notice')}catch(e){}
+  if(!seen)$('noticeBg').hidden=false;
+}
+setTimeout(boot,30);
+})();
+</script>
+</body>
+</html>
