@@ -1,0 +1,861 @@
+<title>波形トレード道場</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#eceee9; --panel:#fbfbf8; --panel2:#f2f3ef; --panel3:#dfe2dc; --chart:#fdfdfb;
+  --ink:#1c2230; --ink2:#4d5566; --muted:#8a91a0; --line:rgba(28,34,48,.12);
+  --up:#d2402b; --down:#274b8e; --onfill:#ffffff;
+  --e20:#c99400; --e30:#2e9467; --e40:#7a52c7;
+  --rci:#1f7fc4; --rci14:#e0761c; --div:#b03c95; --sigl:#e0761c; --macd:#1c2230;
+  --tagbg:#1c2230; --tagink:#fbfbf8; --shade:rgba(28,34,48,.035);
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#15171c; --panel:#1d2027; --panel2:#252932; --panel3:#323743; --chart:#181b21;
+  --ink:#eceae4; --ink2:#b3b6be; --muted:#7c818d; --line:rgba(236,234,228,.12);
+  --up:#ef6a52; --down:#5d86d6; --onfill:#ffffff;
+  --e20:#e8bd3a; --e30:#4fbf8c; --e40:#a585f0;
+  --rci:#5fb2ee; --rci14:#f29a4a; --div:#e07bc8; --sigl:#f29a4a; --macd:#eceae4;
+  --tagbg:#eceae4; --tagink:#15171c; --shade:rgba(236,234,228,.04);
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#15171c; --panel:#1d2027; --panel2:#252932; --panel3:#323743; --chart:#181b21;
+  --ink:#eceae4; --ink2:#b3b6be; --muted:#7c818d; --line:rgba(236,234,228,.12);
+  --up:#ef6a52; --down:#5d86d6; --onfill:#ffffff;
+  --e20:#e8bd3a; --e30:#4fbf8c; --e40:#a585f0;
+  --rci:#5fb2ee; --rci14:#f29a4a; --div:#e07bc8; --sigl:#f29a4a; --macd:#eceae4;
+  --tagbg:#eceae4; --tagink:#15171c; --shade:rgba(236,234,228,.04);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:"Zen Kaku Gothic New",system-ui,-apple-system,"Hiragino Sans",sans-serif;font-size:14px}
+.mono{font-family:"JetBrains Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
+button,select,input{font-family:inherit;color:inherit}
+button{cursor:pointer;touch-action:manipulation}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--up);outline-offset:2px}
+.app{min-height:100%;display:flex;flex-direction:column}
+
+.topbar{display:flex;align-items:center;flex-wrap:wrap;gap:8px 14px;padding:10px 16px;border-bottom:2px solid var(--ink)}
+.brand{display:flex;align-items:center;gap:10px;white-space:nowrap}
+.hanko{width:30px;height:30px;border:2px solid var(--up);color:var(--up);border-radius:5px;display:grid;place-items:center;font-weight:700;font-size:15px;transform:rotate(-4deg)}
+.brand b{font-weight:700;font-size:18px;letter-spacing:.14em}
+.seedbtn{background:transparent;border:1px solid var(--line);border-radius:3px;padding:3px 8px;font-size:11px;color:var(--ink2);white-space:nowrap}
+.seedbtn:hover{border-color:var(--ink);color:var(--ink)}
+.prog{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink2);white-space:nowrap}
+.ticks{display:flex;gap:2px}
+.ticks i{width:5px;height:12px;background:var(--panel3);border-radius:1px}
+.ticks i.on{background:var(--ink)}
+.sp{flex:1}
+.ctrl{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink2)}
+.seg{display:inline-flex;border:1px solid var(--ink);border-radius:3px;overflow:hidden}
+.seg button{background:transparent;border:0;border-right:1px solid var(--line);padding:4px 9px;font-size:12px;color:var(--ink2);white-space:nowrap}
+.seg button:last-child{border-right:0}
+.seg button.on{background:var(--ink);color:var(--panel);font-weight:700}
+.txtbtn{background:transparent;border:0;color:var(--ink2);font-size:12px;padding:4px 2px;text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--line);white-space:nowrap}
+.txtbtn:hover{color:var(--ink);text-decoration-color:var(--ink)}
+.pausebtn{background:transparent;border:1px solid var(--ink);border-radius:3px;padding:4px 10px;font-size:12px;font-weight:700;white-space:nowrap}
+
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:14px;padding:14px 16px 18px;flex:1}
+.main{display:flex;flex-direction:column;gap:10px;min-width:0}
+.tools{display:flex;align-items:center;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--ink2)}
+.tools .grp{display:flex;align-items:center;gap:6px}
+.tools .lb{font-weight:700;color:var(--ink)}
+.tog{background:transparent;border:1px solid var(--line);border-radius:3px;padding:3px 8px;font-size:11.5px;color:var(--muted)}
+.tog.on{color:var(--ink);border-color:var(--ink)}
+.tog i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:0;background:var(--c,var(--muted));opacity:.35}
+.tog.on i{opacity:1}
+.zb{background:transparent;border:1px solid var(--line);border-radius:3px;width:26px;height:24px;font-size:14px;color:var(--ink2)}
+.zb:hover{border-color:var(--ink);color:var(--ink)}
+.tfn{font-size:11px;color:var(--muted)}
+.charts{display:grid;gap:10px}
+.chartwrap{position:relative;height:clamp(400px,64vh,760px);background:var(--chart);border:1px solid var(--line);border-radius:2px;overflow:hidden}
+.chartwrap.htf{height:clamp(300px,42vh,460px)}
+@media (min-width:1100px){.charts.two{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)}.charts.two .chartwrap.htf{height:auto}}
+#cv,#cvH{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}
+#cv.grab{cursor:grabbing}
+.start{position:absolute;left:16px;right:16px;bottom:34px;z-index:2;margin:0 auto;max-width:440px;display:flex;align-items:center;gap:14px;padding:12px 16px;border-radius:4px;background:var(--ink);color:var(--panel);border:0;text-align:left}
+.start .k{font-weight:700;font-size:15px;white-space:nowrap}
+.start .k::before{content:"▶";margin-right:8px;color:var(--up)}
+.start .s{font-size:11.5px;opacity:.8;line-height:1.5}
+.count{position:absolute;right:24px;top:30px;font-family:"JetBrains Mono",monospace;font-size:64px;font-weight:600;color:var(--up);pointer-events:none;z-index:2}
+.toast{position:absolute;left:10px;top:30px;z-index:3;background:var(--panel);border:1px solid var(--ink);border-radius:3px;padding:7px 11px;font-size:12.5px;max-width:calc(100% - 20px);pointer-events:none;transition:opacity .3s;box-shadow:3px 3px 0 var(--line)}
+.toast.hide{opacity:0}
+.latest{position:absolute;right:70px;bottom:26px;z-index:2;background:var(--ink);color:var(--panel);border:0;border-radius:3px;padding:5px 10px;font-size:11.5px;font-weight:700}
+.overbadge{position:absolute;left:10px;bottom:26px;z-index:2;background:var(--panel);border:1px solid var(--line);border-radius:3px;padding:4px 9px;font-size:11.5px;color:var(--ink2)}
+.overbadge button{background:transparent;border:0;color:var(--ink);font-weight:700;font-size:11.5px;text-decoration:underline;text-underline-offset:3px;padding:0 0 0 6px}
+
+.ticket{display:flex;flex-direction:column;gap:6px}
+.quote{position:relative;display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.side-btn{border:0;border-radius:3px;padding:10px 14px;min-height:84px;display:flex;flex-direction:column;justify-content:center;gap:2px;color:var(--onfill);transition:transform .08s,opacity .2s,filter .15s;user-select:none;-webkit-tap-highlight-color:transparent}
+.side-btn.sell{background:var(--down);align-items:flex-start;text-align:left}
+.side-btn.buy{background:var(--up);align-items:flex-end;text-align:right}
+.side-btn:hover{filter:brightness(1.08)}
+.side-btn:active{transform:translateY(1px)}
+.side-btn .cap{font-size:11px;letter-spacing:.1em;opacity:.85;display:flex;gap:6px;align-items:baseline}
+.side-btn .cap b{font-size:17px;letter-spacing:0;opacity:1}
+.px{font-size:14px;line-height:1.05;white-space:nowrap}
+.px .big{font-size:30px;font-weight:600}
+.px sup{font-size:13px;vertical-align:14px;margin-left:1px}
+.side-btn.dim{opacity:.45}
+.side-btn.deny{animation:deny .3s}
+@keyframes deny{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.spread{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:52px;height:52px;border-radius:50%;background:var(--panel);border:2px solid var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
+.spread span{font-size:9px;color:var(--muted);letter-spacing:.08em}
+.spread b{font-size:13px}
+.settle{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;padding:10px 14px;border-radius:3px;border:1px dashed var(--muted);background:transparent;color:var(--muted);min-height:48px;text-align:left}
+.settle .st{font-weight:700;font-size:14px;letter-spacing:.1em}
+.settle .pi{font-size:12px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.settle .pv{font-size:16px;font-weight:600}
+.settle:not(:disabled){border:2px solid var(--ink);color:var(--ink);background:var(--panel)}
+.settle:not(:disabled) .st::before{content:"■ "}
+.settle.win .pv{color:var(--up)}.settle.lose .pv{color:var(--down)}
+.settle:disabled{cursor:default}
+.hint{font-size:11.5px;color:var(--muted);line-height:1.8}
+kbd{font-family:"JetBrains Mono",monospace;font-size:10.5px;border:1px solid var(--muted);border-radius:2px;padding:0 4px;color:var(--ink2)}
+
+.side{display:flex;flex-direction:column;gap:12px;min-width:0}
+.card{background:var(--panel);border-top:2px solid var(--ink);padding:12px 14px 14px}
+.card h3{margin:0 0 10px;font-size:12px;letter-spacing:.14em;color:var(--ink);font-weight:700;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.card h3 .sm{font-size:10.5px;letter-spacing:0;font-weight:400;color:var(--muted)}
+.row{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:12.5px;margin-bottom:6px}
+.row .l{color:var(--ink2)}
+.row .v{font-weight:600}
+.big-num{font-size:26px;font-weight:600;line-height:1.1}
+.sub{font-size:12.5px;margin:3px 0 10px;color:var(--ink2)}
+.up{color:var(--up)}.down{color:var(--down)}.mut{color:var(--muted)}
+.judge{display:flex;flex-direction:column}
+.jrow{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;font-size:12.5px;padding:7px 0;border-bottom:1px dotted var(--line)}
+.jrow .n{color:var(--ink2)}
+.chip{font-size:11px;font-weight:700;padding:1px 7px;border-radius:2px;white-space:nowrap;border:1px solid}
+.chip.L{color:var(--up);border-color:var(--up)}
+.chip.S{color:var(--down);border-color:var(--down)}
+.chip.N{color:var(--muted);border-color:var(--panel3)}
+.chip.D{color:var(--div);border-color:var(--div)}
+.chip.M{background:var(--tagbg);color:var(--tagink);border-color:var(--tagbg)}
+.score{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.sc{padding:8px 10px;background:var(--panel2);border-radius:2px;border:1px solid transparent}
+.sc .k{font-size:10.5px;color:var(--ink2)}
+.sc .v{font-size:18px;font-weight:600}
+.sc.hot-L{border-color:var(--up)}.sc.hot-S{border-color:var(--down)}
+.pips{display:flex;gap:3px;margin-top:4px}
+.pips i{flex:1;height:4px;background:var(--panel3)}
+.pips.L i.on{background:var(--up)}.pips.S i.on{background:var(--down)}
+.hiddenmsg{font-size:12px;color:var(--ink2);line-height:1.7;background:var(--panel2);padding:10px}
+.log{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px;max-height:240px;overflow-y:auto}
+.log li{display:grid;grid-template-columns:auto auto 1fr auto;gap:6px;align-items:center;font-size:11.5px;color:var(--ink2);padding:3px 4px;border-radius:2px;cursor:pointer}
+.log li:hover{background:var(--panel2)}
+.log li.empty{cursor:default;display:block}
+.tag{font-size:10px;font-weight:700;padding:0 5px;border-radius:2px;color:var(--onfill)}
+.tag.L{background:var(--up)}.tag.S{background:var(--down)}
+.g{font-size:10px;font-weight:700;padding:0 5px;border-radius:2px;border:1px solid}
+.g.A{background:var(--tagbg);color:var(--tagink);border-color:var(--tagbg)}.g.B{color:var(--ink2);border-color:var(--ink2)}.g.C{color:var(--muted);border-color:var(--muted)}
+.empty{font-size:12px;color:var(--muted)}
+.set{display:grid;grid-template-columns:1fr auto;gap:8px 10px;align-items:center;font-size:12.5px}
+.set label{color:var(--ink2)}
+.set select,.set input[type=text]{background:var(--panel);border:1px solid var(--muted);border-radius:2px;padding:4px 6px;font-size:12px;min-width:0}
+.set .full{grid-column:1/-1;display:flex;gap:8px;align-items:flex-start;color:var(--ink2);font-size:12px;line-height:1.5}
+.set .seedrow{grid-column:1/-1;display:flex;gap:6px}
+.set .seedrow input{flex:1;font-family:"JetBrains Mono",monospace}
+.smallbtn{background:transparent;border:1px solid var(--ink);border-radius:2px;padding:3px 9px;font-size:11.5px;font-weight:700;white-space:nowrap}
+.rec{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line)}
+.rec div{background:var(--panel);padding:7px 9px}
+.rec .k{font-size:10.5px;color:var(--muted)}
+.rec .v{font-size:15px;font-weight:600}
+.note{font-size:11px;color:var(--muted);line-height:1.7;margin:0}
+
+.modal-bg{position:fixed;inset:0;background:rgba(10,12,16,.6);display:flex;align-items:center;justify-content:center;padding:20px 16px;z-index:20;overflow-y:auto}
+.modal{background:var(--panel);border-top:4px solid var(--up);padding:22px;max-width:520px;width:100%;margin:auto}
+.modal h2{margin:0 0 4px;font-size:22px;letter-spacing:.16em}
+.modal .lead{color:var(--ink2);font-size:12px;margin-bottom:12px;line-height:1.6}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);margin-bottom:12px}
+.tile{background:var(--panel);padding:9px 11px}
+.tile .k{font-size:10.5px;color:var(--ink2)}
+.tile .v{font-size:17px;font-weight:600;margin-top:2px}
+.eq{width:100%;height:110px;display:block;margin-bottom:12px;background:var(--panel2)}
+table.gt{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:12px}
+table.gt th,table.gt td{padding:6px;text-align:right;border-bottom:1px solid var(--line)}
+table.gt th:first-child,table.gt td:first-child{text-align:left}
+table.gt th{color:var(--ink2);font-weight:500;font-size:11px}
+.verdict{font-size:12.5px;line-height:1.75;color:var(--ink2);background:var(--panel2);padding:10px 12px;margin-bottom:12px;white-space:pre-line}
+.share{display:flex;gap:6px;margin-bottom:12px}
+.share textarea{flex:1;min-width:0;height:64px;resize:none;background:var(--panel2);border:1px solid var(--line);border-radius:2px;font-size:11px;font-family:"JetBrains Mono",monospace;padding:6px;color:var(--ink2)}
+.mbtns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.primary{padding:11px 0;border-radius:3px;border:none;background:var(--ink);color:var(--panel);font-weight:700;font-size:13.5px}
+.secondary{padding:11px 0;border-radius:3px;border:1px solid var(--ink);background:transparent;font-weight:700;font-size:13.5px}
+
+@media (max-width:900px){.layout{grid-template-columns:minmax(0,1fr)}.chartwrap{height:clamp(380px,62vh,560px)}}
+@media (max-width:560px){
+  .ticks{display:none}
+  .side-btn{min-height:74px;padding:8px 10px}
+  .px .big{font-size:24px}.px sup{vertical-align:10px}
+  .spread{width:44px;height:44px}
+  .kh{display:none}
+  .mbtns{grid-template-columns:1fr 1fr}
+}
+@media (prefers-reduced-motion:reduce){.side-btn.deny{animation:none}}
+</style>
+
+<div class="app">
+  <header class="topbar">
+    <div class="brand"><span class="hanko">波</span><b>波形トレード道場</b></div>
+    <button class="seedbtn mono" id="seedBtn" title="クリックでコピー">#</button>
+    <div class="prog mono"><span id="progText">0 / 150本</span><div class="ticks" id="ticks"></div></div>
+    <div class="sp"></div>
+    <div class="ctrl"><button class="pausebtn" id="btnPause">Ⅱ 一時停止</button>
+      <span>速度</span><div class="seg"><button data-speed="0.5">0.5</button><button class="on" data-speed="1">1</button><button data-speed="2">2</button><button data-speed="4">4</button><button data-speed="8">8</button></div></div>
+    <button class="txtbtn" id="btnSound">音 ON</button>
+    <button class="txtbtn" id="btnReplay">同じ相場で再挑戦</button>
+    <button class="txtbtn" id="btnNew">新しい相場</button>
+  </header>
+
+  <main class="layout">
+    <div class="main">
+      <div class="tools">
+        <div class="grp"><span class="lb">相場</span><div class="seg" id="dataSeg"><button data-data="synth">乱数生成</button><button data-data="real">実データ</button></div></div>
+        <div class="grp"><span class="lb">上位足</span><div class="seg" id="htfSeg"><button data-htf="0">なし</button><button data-htf="900">15分</button><button data-htf="3600">1時間</button><button data-htf="14400">4時間</button></div></div>
+        <div class="grp"><span class="lb">表示</span>
+          <button class="tog" data-vis="ema" style="--c:var(--e20)"><i></i>EMA</button>
+          <button class="tog" data-vis="rci" style="--c:var(--rci)"><i></i>RCI</button>
+          <button class="tog" data-vis="macd" style="--c:var(--sigl)"><i></i>MACD</button>
+          <button class="tog" data-vis="div" style="--c:var(--div)"><i></i>Div</button>
+          <button class="tog" data-vis="sign" style="--c:var(--up)"><i></i>サイン</button>
+        </div>
+        <div class="grp"><span class="lb">拡大</span><button class="zb" id="zOut">−</button><button class="zb" id="zIn">＋</button></div>
+        <span class="tfn" id="dataNote"></span>
+      </div>
+      <div class="charts" id="charts">
+        <div class="chartwrap" id="wrap">
+          <canvas id="cv" aria-label="GBP/JPYの5分足チャートとRCI・MACD"></canvas>
+          <button class="start" id="startBtn"><span class="k">開始する</span><span class="s" id="startSub"></span></button>
+          <div class="count" id="count" hidden></div>
+          <div class="toast hide" id="toast"></div>
+          <button class="latest" id="btnLatest" hidden>最新へ ▶</button>
+          <div class="overbadge" id="overBadge" hidden>終了 ・ 見返しモード<button id="btnResult">結果を見る</button></div>
+        </div>
+        <div class="chartwrap htf" id="wrapH" hidden><canvas id="cvH" aria-label="上位足チャート"></canvas></div>
+      </div>
+      <div class="ticket">
+        <div class="quote">
+          <button class="side-btn sell" id="btnSell"><span class="cap"><b>売</b>SELL・Bid</span><span class="px mono" id="bidTxt">-</span></button>
+          <button class="side-btn buy" id="btnBuy"><span class="cap">Ask・BUY<b>買</b></span><span class="px mono" id="askTxt">-</span></button>
+          <div class="spread" aria-hidden="true"><span>SPREAD</span><b class="mono">1.0</b></div>
+        </div>
+        <button class="settle" id="btnClose" disabled><span class="st">決済</span><span class="pi" id="posTxt">ポジションなし</span><span class="pv mono" id="closeTxt">—</span></button>
+      </div>
+      <div class="hint"><span class="kh"><kbd>B</kbd>/<kbd>↑</kbd> 買い　<kbd>S</kbd>/<kbd>↓</kbd> 売り　<kbd>Space</kbd> 決済　<kbd>P</kbd> 一時停止　<kbd>←</kbd><kbd>→</kbd> チャート移動　<kbd>Home</kbd> 最新へ　</span>・チャートはドラッグで過去へ、ホイールで拡大縮小、カーソルを合わせると四本値を表示　・スプレッド1.0pips、ポジションは1つずつ　・エントリー時点の確定足で手法条件を採点</div>
+    </div>
+
+    <aside class="side">
+      <section class="card">
+        <h3>手法判定パネル <span class="chip M" id="modeChip">練習モード</span></h3>
+        <div id="judgeBox">
+          <div class="judge">
+            <div class="jrow"><span class="n">EMA パーフェクトオーダー</span><span class="chip N" id="jPO">—</span></div>
+            <div class="jrow"><span class="n">RCI(9/14)　<span class="mono" id="jRciV">0 / 0</span></span><span class="chip N" id="jRCI">—</span></div>
+            <div class="jrow"><span class="n">MACD(6,13,4)</span><span class="chip N" id="jMACD">—</span></div>
+            <div class="jrow"><span class="n">ダイバージェンス</span><span class="chip N" id="jDIV">なし</span></div>
+            <div class="jrow"><span class="n">上位足PO <span id="jHTFn">（参考）</span></span><span class="chip N" id="jHTF">—</span></div>
+          </div>
+          <div class="score">
+            <div class="sc" id="scL"><div class="k">ロング条件</div><div class="v mono up" id="scLv">0/3</div><div class="pips L" id="pL"><i></i><i></i><i></i></div></div>
+            <div class="sc" id="scS"><div class="k">ショート条件</div><div class="v mono down" id="scSv">0/3</div><div class="pips S" id="pS"><i></i><i></i><i></i></div></div>
+          </div>
+        </div>
+        <div class="hiddenmsg" id="judgeHidden" hidden>実戦モードでは判定パネルとサインを隠しています。決済するとエントリー時の判定（A/B/C）が公開されます。</div>
+      </section>
+
+      <section class="card">
+        <h3>今回の成績</h3>
+        <div class="big-num mono" id="totPips">+0.0 pips</div>
+        <div class="sub mono" id="totYen">¥0</div>
+        <div class="row"><span class="l">含み損益</span><span class="v mono" id="flt">—</span></div>
+        <div class="row"><span class="l">取引回数 / 勝率</span><span class="v mono" id="wr">0回 / —</span></div>
+        <div class="row"><span class="l">A判定エントリー率</span><span class="v mono" id="aRate">—</span></div>
+        <div class="row"><span class="l">上位足と同方向の率</span><span class="v mono" id="hRate">—</span></div>
+      </section>
+
+      <section class="card">
+        <h3>取引履歴 <span class="sm">クリックでチャート上の位置へ</span></h3>
+        <ul class="log" id="log"><li class="empty">まだ取引はありません</li></ul>
+      </section>
+
+      <section class="card">
+        <h3>通算成績 <span class="sm">このブラウザに保存</span></h3>
+        <div class="rec" id="recBox"></div>
+        <div style="margin-top:8px;display:flex;justify-content:flex-end"><button class="txtbtn" id="btnRecReset">通算をリセット</button></div>
+      </section>
+
+      <section class="card">
+        <h3>設定</h3>
+        <div class="set">
+          <label>モード</label>
+          <div class="seg" id="modeSeg"><button data-mode="practice">練習</button><button data-mode="real">実戦</button></div>
+          <label for="selLen">1ゲームの長さ</label>
+          <select id="selLen"><option value="100">5分足100本（約8時間）</option><option value="150">5分足150本（約12時間）</option><option value="300">5分足300本（約1日）</option></select>
+          <label for="selLot">取引数量</label>
+          <select id="selLot"><option value="1000">1,000通貨（1pips=10円）</option><option value="10000">1万通貨（1pips=100円）</option><option value="100000">10万通貨（1pips=1,000円）</option></select>
+          <label for="selTh">RCI 過熱ライン</label>
+          <select id="selTh"><option value="70">±70</option><option value="80">±80</option><option value="90">±90</option></select>
+          <label for="selSL">損切り（逆指値）</label>
+          <select id="selSL"><option value="0">なし</option><option value="10">10 pips</option><option value="15">15 pips</option><option value="20">20 pips</option><option value="30">30 pips</option><option value="50">50 pips</option></select>
+          <label for="selTP">利確（指値）</label>
+          <select id="selTP"><option value="0">なし</option><option value="15">15 pips</option><option value="20">20 pips</option><option value="30">30 pips</option><option value="40">40 pips</option><option value="60">60 pips</option><option value="100">100 pips</option></select>
+          <label class="full"><input type="checkbox" id="chkAuto"> エントリーしたら自動で一時停止する（損切り・利確を落ち着いて設定できます）</label>
+          <label class="full"><input type="checkbox" id="chkHide"> ポジション保有中はローソク足と損益を隠す（RCIとMACDだけで決済を判断する練習）</label>
+          <label class="full"><input type="checkbox" id="chkDate"> 実データの日付を表示する（オフだと曜日と時刻のみ。日付は結果画面で公開）</label>
+          <div class="seedrow"><input type="text" id="seedIn" placeholder="シード番号を入力して同じ相場を再現" inputmode="numeric"><button class="smallbtn" id="btnSeedGo">この相場で開始</button></div>
+        </div>
+      </section>
+
+      <p class="note">判定ルール（このゲームでの簡易版）<br>
+      ロング：①EMA20&gt;30&gt;40かつEMA40が5本前より上 ②RCI(9)が直近7本以内に−ライン以下→現在上向き（RCI(14)は表示のみ） ③MACDがシグナルより上。ショートは逆。3/3＝A、2/3＝B、1以下＝C。ダイバージェンスと上位足POは参考表示（採点外）。<br>
+      「乱数生成」は実際のGBP/JPYの統計（時間帯ごとの値動きの大きさなど）に合わせて作った架空の値動きです。「実データ」は<span id="realSpan"></span>のGBP/JPY 5分足（TradingView経由、確定足のみ）で、その期間の一部を切り出して再生します。どちらも将来の値動きや成績を示すものではありません。</p>
+    </aside>
+  </main>
+</div>
+
+<div class="modal-bg" id="modalBg" hidden>
+  <div class="modal" role="dialog" aria-labelledby="mTitle">
+    <h2 id="mTitle">RESULT</h2>
+    <div class="lead" id="mLead"></div>
+    <div class="grid2">
+      <div class="tile"><div class="k">合計損益</div><div class="v mono" id="mPips"></div></div>
+      <div class="tile"><div class="k">勝率</div><div class="v mono" id="mWr"></div></div>
+      <div class="tile"><div class="k">プロフィットファクター</div><div class="v mono" id="mPf"></div></div>
+      <div class="tile"><div class="k">最大ドローダウン</div><div class="v mono" id="mDd"></div></div>
+    </div>
+    <canvas class="eq" id="eqCv" aria-label="損益の推移"></canvas>
+    <table class="gt"><thead><tr><th>エントリー判定</th><th>回数</th><th>勝率</th><th>平均</th><th>合計</th></tr></thead><tbody id="mTable"></tbody></table>
+    <div class="verdict" id="mVerdict"></div>
+    <div class="share"><textarea id="shareTxt" readonly></textarea><button class="smallbtn" id="btnCopy">コピー</button></div>
+    <div class="mbtns"><button class="secondary" id="mReview">チャートを見返す</button><button class="secondary" id="mReplay">同じ相場で再挑戦</button><button class="primary" id="mNew">新しい相場</button></div>
+  </div>
+</div>
+
+<script>
+(()=>{
+'use strict';
+const SUB=12, PIP=0.01, TICK=0.001, SPREAD=0.01, TICK_MS=60, TF0=300, PRE=3400;
+const TFS={900:'15分足',3600:'1時間足',14400:'4時間足'};
+const DOW='日月火水木金土';
+const $=id=>document.getElementById(id);
+const cv=$('cv'), cvH=$('cvH');
+
+// ---------- embedded real data (GBP/JPY, TradingView FX:GBPJPY) ----------
+const RAW5M={t0:1788263700,s:"1,216674,57,-8,49;1,0,5,-32,-29;1,0,31,-11,20;1,0,2,-32,-13;1,0,30,-19,7;1,0,43,-6,40;1,0,27,-12,9;1,0,46,-6,14;1,0,16,-52,-44;1,0,21,-17,9;1,0,1,-161,-45;1,0,0,-60,-52;1,0,29,-33,-19;1,0,24,-12,13;1,0,37,-16,30;1,0,8,-56,-51;1,0,51,-9,36;1,0,17,-24,9;1,0,30,-12,22;1,0,38,-23,15;1,0,15,-38,-12;1,0,91,-8,75;1,0,13,-97,-59;1,0,74,-2,52;1,0,46,-30,-26;1,0,103,-55,74;1,0,36,-13,7;1,0,19,-36,-15;1,0,2,-113,-84;1,0,6,-56,-51;1,0,1,-54,-50;1,0,4,-60,-48;1,0,95,-13,85;1,0,49,-8,46;1,0,36,-10,15;1,0,10,-61,-15;1,0,36,-14,14;1,0,32,-150,-86;1,0,27,-59,4;1,0,20,-42,-20;1,0,11,-40,-30;1,0,12,-36,-22;1,0,27,-20,4;1,0,19,-15,-6;1,0,23,-23,9;1,0,2,-53,-38;1,0,0,-44,-11;1,0,2,-44,-27;1,0,12,-29,-11;1,0,17,-19,-6;1,0,17,-39,3;1,0,60,-1,54;1,0,33,-21,19;1,0,47,-33,35;1,0,32,-11,8;1,0,38,-11,-2;1,0,10,-41,-13;1,0,19,-50,-24;1,0,3,-61,-45;1,0,12,-33,-16;1,0,8,-36,-25;1,0,43,-18,18;1,0,22,-27,16;1,0,9,-24,-2;1,0,14,-15,9;1,0,17,-17,12;1,0,39,-8,35;1,0,12,-55,-54;1,0,54,0,35;1,0,0,-34,-6;1,0,14,-12,10;1,0,24,-19,18;1,0,8,-30,-1;1,0,13,-25,-2;1,0,8,-20,-13;1,0,6,-6,-4;1,0,20,-14,18;1,0,17,-26,-22;1,0,6,-38,-34;1,0,8,-19,3;1,0,7,-53,-43;1,0,32,0,31;1,0,38,-2,36;1,0,5,-26,-7;1,0,3,-33,-13;1,0,23,-16,-2;1,0,20,-16,11;1,0,7,-13,-2;1,0,5,-15,-3;1,0,6,-11,-5;1,0,32,-7,20;1,0,9,-44,-26;1,0,8,-10,-3;1,0,18,-2,18;1,0,20,-19,5;1,0,26,-5,-4;1,0,13,-20,-6;1,0,1,-22,-12;1,0,10,-14,-9;1,0,11,-15,7;1,0,3,-25,-17;1,0,1,-17,-11;1,0,13,-9,-2;1,0,34,-8,23;1,0,19,-17,-2;1,0,23,-6,21;1,0,29,-11,20;1,0,3,-24,-18;1,0,24,-87,-75;1,0,6,-81,-80;1,0,87,0,75;1,0,15,-5,5;1,0,3,-76,-66;1,0,50,0,21;1,0,44,-1,2;1,0,50,-4,50;1,0,13,-24,-2;1,0,22,-15,2;1,0,5,-32,-12;1,0,47,-32,-9;1,0,14,-30,3;1,0,109,0,97;1,0,17,-9,8;1,0,4,-21,0;1,0,2,-19,1;1,0,9,-10,5;1,0,2,-25,-18;1,0,6,-30,-6;1,0,9,-10,-8;1,0,8,-9,4;1,0,23,0,22;1,0,2,-21,-18;1,0,20,0,19;1,0,10,-9,5;1,0,17,-4,7;1,0,10,-13,-9;1,0,4,-5,-4;1,0,0,-26,-14;1,0,5,-10,-4;1,0,3,-33,-23;1,0,5,-20,-14;1,0,31,0,27;1,0,26,-3,9;1,0,15,-24,-1;1,0,21,-22,-20;1,0,20,-67,-50;1,0,18,-16,11;1,0,38,-16,3;1,0,27,-7,6;1,0,4,-61,-49;1,0,17,-11,8;1,0,84,-9,72;1,0,34,-6,-3;1,0,13,-58,-34;1,0,27,-18,-10;1,0,62,-4,56;1,0,26,-13,7;1,0,28,-2,13;1,0,12,-18,-17;1,0,15,-33,-30;1,0,44,-10,35;1,0,11,-29,-5;1,0,34,0,7;1,0,41,-21,36;1,0,5,-31,-16;1,0,34,-1,16;1,0,53,-1,36;1,0,6,-18,-18;1,0,22,-4,22;1,0,4,-66,-53;1,0,20,-22,7;1,0,23,-14,20;1,0,25,-6,16;1,0,18,-50,-33;1,0,7,-23,-20;1,0,2,-23,-7;1,0,3,-31,-24;1,0,12,-26,-11;1,0,28,-2,0;1,0,21,-13,-3;1,0,9,-18,-4;1,0,3,-49,-23;1,0,5,-24,-10;1,0,24,-3,19;1,0,9,-15,-12;1,0,4,-32,-26;1,0,17,-14,-12;1,0,7,-22,-18;1,0,3,-22,-11;1,0,4,-61,-55;1,0,22,-7,19;1,0,3,-19,-1;1,0,17,-12,-8;1,0,2,-70,-69;1,0,3,-39,-6;1,0,4,-34,4;1,0,47,-21,28;1,0,7,-42,-28;1,0,2,-37,-1;1,0,9,-61,-51;1,0,27,-3,13;1,0,3,-44,-37;1,0,25,-143,-61;1,0,0,-111,-68;1,0,47,-21,43;1,0,4,-39,-2;1,0,8,-44,-41;1,0,17,-66,-14;1,0,56,-97,30;1,0,30,-8,13;1,0,10,-77,-73;1,0,34,-27,21;1,0,14,-53,-21;1,0,9,-95,-44;1,0,0,-114,-103;1,0,37,-58,7;1,0,4,-64,-55;1,0,0,-232,-215;1,0,3,-229,-212;1,0,124,-74,49;1,0,181,-4,181;1,0,43,-47,-22;1,0,30,-100,-29;1,0,47,-76,-54;1,0,62,-21,19;1,0,5,-132,-124;1,0,55,-29,15;1,0,4,-174,-96;1,0,109,-20,8;1,0,204,0,134;1,0,43,-27,24;1,0,112,-19,98;1,0,155,-37,122;1,0,2,-94,-72;1,0,6,-71,-34;1,0,20,-56,-37;1,0,129,0,106;1,0,1,-92,1;1,0,69,-26,41;1,0,3,-69,-26;1,0,83,-23,71;1,0,63,-33,56;1,0,19,-35,-29;1,0,31,-43,19;1,0,62,-2,36;1,0,0,-120,-110;1,0,11,-44,-15;1,0,29,-16,3;1,0,97,-10,81;1,0,54,-5,37;1,0,29,-35,6;1,0,13,-48,-46;1,0,45,-6,18;1,0,54,-9,38;1,0,37,-39,-24;1,0,22,-77,-69;1,0,12,-37,-8;1,0,19,-35,-5;1,0,68,-4,37;1,0,1,-70,-65;1,0,5,-47,-32;1,0,36,-23,23;1,0,1,-32,-10;1,0,20,-90,-80;1,0,12,-54,-28;1,0,19,-52,-34;1,0,47,0,37;1,0,6,-50,-33;1,0,0,-50,-35;1,0,36,-13,3;1,0,44,-4,41;1,0,23,-35,-6;1,0,2,-48,-34;1,0,31,-14,-13;1,0,26,-18,22;1,0,23,-31,16;1,0,46,-28,41;1,0,23,-16,16;1,0,29,-19,-2;1,0,1,-99,-48;1,0,3,-77,-55;1,0,39,-20,-20;1,0,0,-87,-81;1,0,3,-103,-74;1,0,0,-95,-47;1,0,129,-8,106;1,0,45,-3,29;1,0,9,-65,-60;1,0,12,-118,-100;1,0,6,-63,-43;1,0,24,-52,-44;1,0,48,-33,39;1,0,10,-60,-56;1,0,60,-67,16;1,0,97,-7,12;1,0,88,-13,60;1,0,1,-39,-21;1,0,35,-53,-14;1,0,62,-21,2;1,0,33,-70,-67;1,0,11,-97,-95;1,0,68,-33,47;1,0,29,-40,-20;1,0,68,-40,68;1,0,64,-13,-12;1,0,1,-139,-128;1,0,16,-1319,-591;1,0,221,-180,166;1,0,19,-501,-330;1,0,167,-129,-41;1,0,183,0,45;1,0,76,-136,-6;1,0,68,-166,11;1,0,260,-25,-5;1,0,70,-38,52;1,0,17,-118,-33;1,0,108,-24,75;1,0,0,-95,-22;1,0,11,-85,-17;1,0,109,-11,33;1,0,36,-55,-9;1,0,46,-260,39;1,0,0,-68,-10;1,0,128,-44,-26;1,0,57,-135,52;1,0,62,-55,32;1,0,14,-79,-61;1,0,17,-77,-71;1,0,21,-66,-30;1,0,16,-91,0;1,0,36,-31,18;1,0,0,-50,-33;1,0,26,-50,-27;1,0,106,0,93;1,0,38,-39,-3;1,0,37,-4,14;1,0,76,-14,75;1,0,66,-9,44;1,0,13,-37,3;1,0,10,-46,0;1,0,21,-23,-18;1,0,41,-37,21;1,0,14,-33,-29;1,0,16,-72,-61;1,0,41,-6,26;1,0,32,-6,17;1,0,8,-33,-25;1,0,10,-38,-2;1,0,26,-36,-13;1,0,48,-35,25;1,0,12,-19,-14;1,0,4,-26,-21;1,0,51,-13,-5;1,0,21,-20,2;1,0,69,-1,58;1,0,4,-60,-17;1,0,4,-37,-27;1,0,23,-36,8;1,0,4,-155,-121;1,0,55,-23,44;1,0,24,-13,0;1,0,1,-36,-27;1,0,60,-5,42;1,0,54,-7,50;1,0,29,-89,-9;1,0,21,-27,-1;1,0,12,-11,8;1,0,10,-41,-18;1,0,15,-12,12;1,0,50,-4,50;1,0,11,-18,3;1,0,0,-50,-50;1,0,17,-35,-2;1,0,11,-32,-10;1,0,27,-4,21;1,0,59,0,13;1,0,9,-26,-15;1,0,0,-31,-13;1,0,5,-41,-36;1,0,33,-39,-33;1,0,22,-15,-12;1,0,23,-2,19;1,0,9,-40,-39;1,0,19,-39,-37;1,0,3,-76,-55;1,0,20,-122,-71;1,0,35,-25,-4;1,0,4,-121,-78;1,0,37,-3,22;1,0,67,-5,58;1,0,19,-39,-39;1,0,54,-5,52;1,0,6,-37,-13;1,0,6,-40,-20;1,0,63,-6,37;1,0,10,-25,-16;1,0,0,-179,-179;2,0,51,0,34;1,0,53,-3,39;1,0,35,-41,-22;1,0,27,0,9;1,0,15,-76,-76;1,0,121,-4,88;1,0,12,-38,-8;1,0,29,-20,1;1,0,25,-18,-17;1,0,14,-26,-22;1,0,60,-6,12;1,0,88,-20,88;1,0,0,-36,-13;1,0,9,-16,-3;1,0,66,-1,43;1,0,4,-34,-27;1,0,31,-4,14;1,0,29,-1,24;1,0,25,-1,21;1,0,1,-23,-12;1,0,75,-4,56;1,0,0,-68,-46;1,0,14,-15,-7;1,0,61,-25,36;1,0,40,0,38;1,0,19,-8,10;1,0,2,-51,-42;1,0,13,-13,-1;1,0,0,-33,-6;1,0,37,0,35;1,0,24,-13,21;1,0,33,-7,29;1,0,44,-5,22;1,0,11,-34,9;1,0,57,-2,4;1,0,20,-92,-49;1,0,55,-6,36;1,0,83,-35,78;1,0,28,-16,22;1,0,6,-142,-125;1,0,38,-25,-9;1,0,9,-103,-103;1,0,31,-107,-101;1,0,77,-44,18;1,0,25,-118,-83;1,0,68,-46,44;1,0,115,-14,106;1,0,16,-119,-80;1,0,27,-54,-11;1,0,31,-75,-66;1,0,27,-114,-74;1,0,81,-17,35;1,0,5,-183,-181;1,0,4,-168,-58;1,0,1,-165,-141;1,0,129,-48,103;1,0,67,-23,60;1,0,18,-28,-10;1,0,65,-13,49;1,0,27,-105,-63;1,0,9,-103,-82;1,0,39,-104,-98;1,0,49,-37,-31;1,0,9,-193,-136;1,0,9,-111,-74;1,0,22,-44,8;1,0,61,-118,-71;1,0,116,-48,113;1,0,48,-178,-140;1,0,59,-102,37;1,0,74,-46,4;1,0,13,-155,-139;1,0,29,-155,-140;1,0,52,-151,-19;1,0,109,-33,31;1,0,53,-100,51;1,0,40,-78,-12;1,0,56,-33,21;1,0,133,-16,79;1,0,36,-43,-16;1,0,4,-125,-73;1,0,4,-81,-49;1,0,48,-4,18;1,0,88,-15,85;1,0,32,-58,-17;1,0,5,-99,-73;1,0,43,-40,28;1,0,2,-110,-83;1,0,46,-15,-6;1,0,11,-210,-63;1,0,40,-121,-94;1,0,88,-28,73;1,0,47,-48,27;1,0,11,-25,1;1,0,71,-20,-20;1,0,39,-10,20;1,0,40,-13,38;1,0,54,-6,1;1,0,7,-77,-69;1,0,65,-84,-36;1,0,23,-88,-34;1,0,99,-19,83;1,0,0,-179,-163;1,0,85,-9,82;1,0,0,-147,-141;1,0,43,-124,-122;1,0,18,-114,-111;1,0,28,-159,-105;1,0,90,-67,31;1,0,12,-94,-93;1,0,12,-106,-6;1,0,63,-62,-6;1,0,11,-95,-92;1,0,122,-18,101;1,0,74,-12,28;1,0,4,-155,-134;1,0,54,-110,-86;1,0,87,-51,-42;1,0,88,-13,79;1,0,2,-526,-462;1,0,52,-419,-337;1,0,381,-95,357;1,0,1,-155,-70;1,0,34,-143,-118;1,0,214,-16,204;1,0,65,-36,7;1,0,732,-205,471;1,0,125,-1,52;1,0,223,-73,172;1,0,25,-126,-68;1,0,4,-175,-143;1,0,100,-78,-76;1,0,16,-187,-115;1,0,47,-79,23;1,0,164,-4,126;1,0,0,-91,-71;1,0,13,-138,-120;1,0,112,-38,50;1,0,24,-90,-88;1,0,10,-170,-161;1,0,21,-217,-156;1,0,17,-93,-85;1,0,178,-7,155;1,0,197,-94,108;1,0,28,-182,-132;1,0,19,-214,-119;1,0,18,-259,-216;1,0,160,-6,45;1,0,77,-36,-36;1,0,77,-62,-60;1,0,50,-116,-108;1,0,36,-99,-27;1,0,8,-180,-150;1,0,187,-5,172;1,0,123,0,109;1,0,1,-233,-232;1,0,100,-85,85;1,0,52,-66,9;1,0,12,-79,1;1,0,123,-22,117;1,0,2,-344,-267;1,0,138,-13,133;1,0,83,-133,-103;1,0,133,-10,97;1,0,30,-84,-42;1,0,53,-65,-40;1,0,80,-24,58;1,0,36,-101,-86;1,0,78,-187,-129;1,0,16,-161,-115;1,0,94,-268,-186;1,0,99,-52,93;1,0,99,-32,99;1,0,113,-29,-26;1,0,105,-24,102;1,0,77,-7,19;1,0,51,-56,-47;1,0,104,-7,19;1,0,0,-70,-43;1,0,70,-149,-76;1,0,31,-63,8;1,0,20,-139,-113;1,0,24,-192,-171;1,0,13,-208,-118;1,0,120,-13,0;1,0,64,-108,54;1,0,174,-44,-36;1,0,113,-87,-71;1,0,103,-42,103;1,0,62,-161,-64;1,0,141,-22,132;1,0,124,-16,102;1,0,36,-131,-54;1,0,110,0,29;1,0,11,-281,-134;1,0,104,-53,32;1,0,60,-64,-45;1,0,57,-79,-10;1,0,57,-48,-29;1,0,145,-4,67;1,0,23,-82,-34;1,0,31,-169,-124;1,0,67,-71,-71;1,0,115,-15,88;1,0,32,-89,-14;1,0,0,-131,-73;1,0,52,-56,47;1,0,114,-64,-40;1,0,129,-3,118;1,0,61,-82,53;1,0,118,-56,76;1,0,48,-42,-21;1,0,10,-116,-101;1,0,100,-15,44;1,0,8,-155,-98;1,0,176,-22,171;1,0,371,0,267;1,0,142,-1,91;1,0,63,-94,31;1,0,172,-28,-3;1,0,49,-67,-26;1,0,6,-215,-194;1,0,67,-8,4;1,0,30,-109,-103;1,0,51,-43,-11;1,0,63,-53,-12;1,0,35,-57,-36;1,0,67,-43,17;1,0,64,-16,42;1,0,31,-36,-14;1,0,100,-3,81;1,0,22,-33,-33;1,0,128,0,112;1,0,0,-111,-87;1,0,41,-24,19;1,0,8,-75,-30;1,0,32,-7,25;1,0,58,-25,23;1,0,3,-44,-14;1,0,98,-25,95;1,0,41,-68,3;1,0,47,-27,-23;1,0,30,-39,6;1,0,81,-17,59;1,0,30,-52,-50;1,0,24,-34,21;1,0,33,-36,-18;1,0,5,-30,-21;1,0,8,-21,2;1,0,12,-24,7;1,0,30,-17,-5;1,0,15,-68,-68;1,0,31,-12,24;1,0,51,-3,46;1,0,9,-32,-26;1,0,49,-19,47;1,0,29,-46,-44;1,0,102,-4,88;1,0,33,-32,-9;1,0,39,-8,21;1,0,48,-44,48;1,0,16,-56,-30;1,0,14,-75,-67;1,0,121,-14,98;1,0,49,-4,47;1,0,65,-6,34;1,0,13,-81,-63;1,0,9,-48,-44;1,0,80,-12,80;1,0,53,-74,44;1,0,39,-24,-23;1,0,23,-54,-2;1,0,23,-18,-13;1,0,8,-51,-13;1,0,5,-66,-6;1,0,53,-10,45;1,0,18,-26,-7;1,0,23,-11,21;1,0,9,-25,-17;1,0,2,-33,-30;1,0,20,-12,19;1,0,15,-24,-8;1,0,43,-12,38;1,0,32,-5,19;1,0,10,-11,-2;1,0,9,-17,-4;1,0,0,-106,-85;1,0,0,-48,-47;1,0,118,0,95;1,0,70,-1,59;1,0,23,-17,22;1,0,0,-25,-7;1,0,79,-15,71;1,0,3,-86,-83;1,0,51,-15,14;1,0,26,-15,18;1,0,39,-34,-24;1,0,25,-16,16;1,0,24,-38,-9;1,0,36,-87,20;1,0,12,-16,-1;1,0,0,-30,-30;1,0,21,0,16;1,0,16,-15,14;1,0,22,-4,6;1,0,61,-1,48;1,0,76,0,26;1,0,28,0,6;1,0,95,-2,72;1,0,174,-2,144;1,0,61,-31,36;1,0,58,-29,30;1,0,1,-134,-94;1,0,61,-22,15;1,0,28,-58,-29;1,0,3,-87,-21;1,0,26,-63,-47;1,0,0,-262,-122;1,0,6,-119,-68;1,0,64,-72,14;1,0,0,-174,-153;1,0,53,-89,-74;1,0,51,-52,-27;1,0,30,-275,-265;1,0,45,-182,37;1,0,189,-60,134;1,0,252,-1,230;1,0,34,-101,17;1,0,86,-73,82;1,0,148,-12,123;1,0,22,-95,-50;1,0,19,-262,-134;1,0,7,-157,-43;1,0,47,-59,-58;1,0,133,-131,126;1,0,43,-104,4;1,0,117,-41,29;1,0,124,-71,119;1,0,92,-43,91;1,0,57,-93,44;1,0,108,-56,-56;1,0,143,-41,104;1,0,85,-35,78;1,0,41,-37,-11;1,0,7,-123,-107;1,0,68,-40,-20;1,0,28,-92,-85;1,0,15,-75,-45;1,0,82,-27,65;1,0,79,-24,62;1,0,22,-62,5;1,0,68,-33,50;1,0,51,-37,-14;1,0,66,0,63;1,0,13,-115,-69;1,0,26,-59,13;1,0,3,-52,-22;1,0,107,-12,85;1,0,73,-7,39;1,0,84,0,41;1,0,29,-61,17;1,0,21,-53,-37;1,0,54,-9,51;1,0,1,-69,-47;1,0,32,-8,16;1,0,52,-8,32;1,0,197,-22,179;1,0,124,-40,123;1,0,70,-38,-15;1,0,31,-58,19;1,0,40,-47,-3;1,0,15,-81,-41;1,0,44,-32,38;1,0,40,-34,26;1,0,37,-6,10;1,0,80,-28,80;1,0,6,-119,-96;1,0,15,-65,9;1,0,16,-90,-87;1,0,4,-55,-30;1,0,37,-8,25;1,0,57,-34,20;1,0,70,-2,23;1,0,97,-4,83;1,0,31,-56,-53;1,0,7,-99,-93;1,0,65,-36,58;1,0,46,-12,43;1,0,23,-79,-64;1,0,60,-22,26;1,0,55,-13,53;1,0,9,-35,-5;1,0,59,-6,51;1,0,39,-84,-28;1,0,27,-18,7;1,0,169,-23,163;1,0,11,-242,-143;1,0,72,-94,-46;1,0,104,-8,70;1,0,14,-74,-63;1,0,37,-74,-63;1,0,35,-102,-102;1,0,121,0,56;1,0,23,-74,-29;1,0,22,-80,-38;1,0,95,0,95;1,0,126,-7,107;1,0,201,-15,160;1,0,35,-57,9;1,0,3,-57,-30;1,0,63,-35,11;1,0,2,-122,-104;1,0,88,0,43;1,0,71,-15,1;1,0,55,-23,-21;1,0,37,-50,-3;1,0,8,-73,-63;1,0,68,-94,7;1,0,18,-84,-83;1,0,103,-12,57;1,0,94,0,73;1,0,38,-38,-28;1,0,10,-63,-5;1,0,30,-34,25;1,0,61,-1,42;1,0,4,-229,-215;1,0,81,-21,77;1,0,46,-38,26;1,0,25,-39,25;1,0,98,-11,24;1,0,44,-22,32;1,0,2,-117,-105;1,0,52,-14,0;1,0,1,-57,-51;1,0,41,-41,-12;1,0,29,-30,-17;1,0,43,-63,34;1,0,158,-6,119;1,0,113,-16,102;1,0,42,-67,-64;1,0,53,-13,53;1,0,3,-107,-91;1,0,7,-63,-37;1,0,2,-68,-55;1,0,31,-23,17;1,0,11,-75,-63;1,0,43,-15,32;1,0,17,-21,-4;1,0,5,-84,-68;1,0,32,-39,28;1,0,73,-27,30;1,0,52,-8,45;1,0,11,-50,-34;1,0,14,-13,7;1,0,13,-31,-4;1,0,29,-20,-13;1,0,79,-3,54;1,0,20,-72,-35;1,0,59,-3,41;1,0,10,-48,-24;1,0,17,-24,6;1,0,6,-55,-50;1,0,41,-2,24;1,0,2,-70,-70;1,0,6,-91,-66;1,0,38,-17,0;1,0,67,0,61;1,0,32,-49,-29;1,0,17,-60,-16;1,0,6,-104,-72;1,0,49,-73,-63;1,0,32,-43,3;1,0,20,-226,-223;1,0,373,-97,127;1,0,55,-388,-261;1,0,173,0,63;1,0,47,-637,-586;1,0,17,-649,-375;1,0,457,-9,204;1,0,306,-10,296;1,0,203,-32,152;1,0,43,-139,-3;1,0,6,-152,-112;1,0,28,-240,-198;1,0,71,-84,-64;1,0,165,-138,147;1,0,80,-54,-9;1,0,5,-240,-26;1,0,133,-76,125;1,0,40,-124,-94;1,0,89,-5,29;1,0,291,-14,286;1,0,100,-74,95;1,0,68,-41,9;1,0,76,-41,23;1,0,40,-47,-42;1,0,31,-63,-5;1,0,26,-126,-90;1,0,15,-109,-40;1,0,206,0,184;1,0,143,-1,110;1,0,68,-60,18;1,0,32,-73,-47;1,0,46,-97,-78;1,0,56,-15,56;1,0,7,-143,-120;1,0,72,-4,57;1,0,94,-21,74;1,0,41,-38,25;1,0,46,-67,19;1,0,69,-23,47;1,0,14,-48,-18;1,0,32,-28,-15;1,0,11,-70,-2;1,0,63,-29,44;1,0,12,-62,-27;1,0,36,-14,6;1,0,59,-8,37;1,0,2,-67,-62;1,0,4,-69,-27;1,0,29,-8,1;1,0,32,-9,-1;1,0,12,-14,2;1,0,9,-64,-20;1,0,38,-18,3;1,0,40,-4,28;1,0,22,-140,-105;1,0,146,0,139;1,0,14,-76,-63;1,0,19,-36,-3;1,0,23,-19,-17;1,0,61,-18,35;1,0,20,-13,-13;1,0,9,-67,-51;1,0,55,-4,32;1,0,9,-34,0;1,0,15,-30,-24;1,0,25,-21,21;1,0,61,0,50;1,0,9,-26,-13;1,0,7,-20,4;1,0,16,-7,5;1,0,11,-10,1;1,0,22,-13,14;1,0,29,-28,27;1,0,2,-25,-9;1,0,68,-6,61;1,0,23,-48,3;1,0,44,-12,24;1,0,37,-1,19;1,0,8,-35,-31;1,0,39,-15,30;1,0,18,-11,-7;1,0,28,0,15;1,0,11,-28,6;1,0,30,-3,8;1,0,23,-2,21;1,0,31,-15,13;1,0,31,-2,13;1,0,23,-18,18;1,0,1,-21,-12;1,0,20,-7,-4;1,0,20,-12,-7;1,0,48,-9,46;1,0,0,-68,-67;1,0,15,-14,12;1,0,9,-6,1;1,0,21,-1,15;1,0,16,-102,-23;1,0,22,-24,-5;1,0,13,-24,5;1,0,15,-52,-51;1,0,27,-31,23;1,0,8,-21,-1;1,0,0,-107,-53;577,-377,139,0,133;3,0,2,-91,2;1,0,5,-44,-44;1,0,67,-5,56;1,0,56,-9,54;1,0,54,0,38;1,0,27,-6,8;1,0,15,-15,3;1,0,13,-42,0;1,0,12,-37,-12;1,0,246,-31,236;1,0,0,-75,-63;1,0,27,-15,24;1,0,21,-3,20;1,0,2,-13,-9;1,0,0,-22,-11;1,0,29,0,8;1,0,15,0,12;1,0,25,-19,-14;1,0,9,-25,-7;1,0,1,-28,-28;1,0,5,-6,1;1,0,8,-69,-56;1,0,48,-2,22;1,0,11,-66,-57;1,0,15,-20,-14;1,0,41,-5,33;1,0,11,-40,-6;1,0,24,-48,-29;1,0,55,-9,48;1,0,32,-15,31;1,0,61,-4,45;1,0,29,-52,-43;1,0,36,-17,16;1,0,75,-68,-28;1,0,77,-39,-10;1,0,2,-66,-39;1,0,42,-71,-61;1,0,2,-112,-48;1,0,2,-170,-167;1,0,16,-103,-56;1,0,20,-70,-50;1,0,120,-4,103;1,0,47,-26,31;1,0,11,-95,-19;1,0,55,-57,-29;1,0,92,-53,58;1,0,4,-118,-34;1,0,35,-25,12;1,0,95,-6,56;1,0,13,-73,-17;1,0,74,-62,68;1,0,88,-16,53;1,0,7,-47,-18;1,0,18,-48,-48;1,0,43,-57,-37;1,0,14,-30,4;1,0,15,-39,-9;1,0,4,-50,-26;1,0,119,-1,92;1,0,58,-6,52;1,0,18,-26,-11;1,0,14,-35,-9;1,0,19,-38,-28;1,0,32,-25,23;1,0,16,-18,14;1,0,72,-1,56;1,0,20,-14,-4;1,0,17,-34,-15;1,0,19,-33,-20;1,0,33,-26,-9;1,0,21,-28,9;1,0,3,-62,-56;1,0,15,-25,-17;1,0,41,-6,14;1,0,19,-55,-33;1,0,36,-19,36;1,0,1,-44,-4;1,0,7,-28,-21;1,0,34,-3,2;1,0,14,-25,-22;1,0,3,-48,-29;1,0,43,-1,41;1,0,62,-4,46;1,0,46,0,30;1,0,13,-20,-9;1,0,39,-4,38;1,0,1,-17,-6;1,0,9,-39,-37;1,0,2,-83,-46;1,0,5,-55,-38;1,0,39,-2,9;1,0,42,-22,38;1,0,0,-79,-48;1,0,16,-46,3;1,0,26,-2,19;1,0,0,-56,-6;1,0,24,-6,10;1,0,15,-26,-7;1,0,18,-37,-36;1,0,23,-30,-16;1,0,1,-62,-22;1,0,33,-1,9;1,0,20,-34,-25;1,0,3,-86,-84;1,0,0,-100,-73;1,0,60,-6,37;1,0,21,-85,1;1,0,8,-65,4;1,0,19,-119,-101;1,0,34,-207,-77;1,0,118,-20,95;1,0,58,-34,-4;1,0,37,-30,14;1,0,71,-18,51;1,0,86,0,67;1,0,19,-36,-20;1,0,139,0,137;1,0,22,-34,-27;1,0,26,-49,-46;1,0,39,-28,25;1,0,34,-165,-162;1,0,34,-40,6;1,0,0,-104,-104;1,0,108,-14,54;1,0,95,-7,88;1,0,66,-40,65;1,0,23,-146,-136;1,0,10,-109,-84;1,0,26,-59,-15;1,0,37,-326,-187;1,0,45,-1006,-731;1,0,5,-334,-135;1,0,125,-265,-177;1,0,35,-279,-73;1,0,49,-492,-482;1,0,138,-74,85;1,0,236,-57,224;1,0,105,-93,-1;1,0,29,-238,29;1,0,127,-52,-21;1,0,146,-5,47;1,0,50,-137,-82;1,0,67,-80,-74;1,0,182,-12,161;1,0,46,-84,-4;1,0,29,-75,-55;1,0,8,-219,-190;1,0,114,-1,89;1,0,134,-7,108;1,0,43,-68,-27;1,0,86,-37,80;1,0,98,-30,64;1,0,72,-18,-18;1,0,74,-4,24;1,0,7,-84,-4;1,0,89,-19,84;1,0,64,-3,63;1,0,42,-36,-26;1,0,137,-1,93;1,0,57,-26,1;1,0,100,-28,85;1,0,49,-25,3;1,0,4,-108,-84;1,0,10,-62,5;1,0,40,-4,-4;1,0,87,-11,63;1,0,12,-45,6;1,0,45,-47,-2;1,0,50,-4,18;1,0,20,-100,-82;1,0,50,-36,-27;1,0,2,-85,-30;1,0,55,-8,16;1,0,48,0,32;1,0,24,-23,17;1,0,26,-41,-16;1,0,34,-23,16;1,0,22,-41,17;1,0,8,-47,-24;1,0,32,-22,27;1,0,50,-151,-115;1,0,30,-170,-90;1,0,32,-113,-93;1,0,25,-115,-71;1,0,34,-78,-60;1,0,0,-143,-126;1,0,165,-23,129;1,0,94,-6,56;1,0,119,-21,106;1,0,59,-39,55;1,0,13,-101,-97;1,0,1,-108,-85;1,0,108,-3,102;1,0,0,-111,-79;1,0,105,-5,77;1,0,74,-11,50;1,0,0,-63,-38;1,0,1,-121,-42;1,0,87,-43,85;1,0,58,-32,58;1,0,50,-37,-34;1,0,101,-15,74;1,0,61,-36,12;1,0,15,-128,-95;1,0,23,-135,-135;1,0,73,-43,21;1,0,13,-84,-72;1,0,58,-4,30;1,0,12,-79,-26;1,0,57,-59,46;1,0,74,-3,70;1,0,28,-81,-68;1,0,1,-89,-56;1,0,141,-1,69;1,0,57,-47,-2;1,0,6,-82,-23;1,0,25,-20,-10;1,0,15,-45,9;1,0,1,-110,-108;1,0,99,-44,96;1,0,10,-45,-27;1,0,16,-45,-4;1,0,57,-8,19;1,0,75,-3,74;1,0,31,-55,-33;1,0,42,-6,31;1,0,3,-52,-40;1,0,25,-9,21;1,0,17,-11,10;1,0,13,-13,6;1,0,24,-33,-16;1,0,3,-44,-29;1,0,9,-50,-15;1,0,4,-32,-29;1,0,81,-1,64;1,0,14,-11,5;1,0,20,-47,-44;1,0,18,-20,7;1,0,12,-30,5;1,0,4,-31,-19;1,0,14,-10,1;1,0,5,-22,2;1,0,0,-28,-7;1,0,31,0,29;1,0,2,-20,-13;1,0,20,-5,15;1,0,24,-3,23;1,0,8,-10,-9;1,0,16,-24,-16;1,0,17,0,12;1,0,3,-29,-27;1,0,14,-2,10;1,0,2,-11,-9;1,0,2,-8,-8;1,0,6,-6,5;1,0,4,-7,0;1,0,16,-6,14;1,0,11,-8,-5;1,0,0,-11,-5;1,0,6,-10,-10;1,0,9,-8,-7;1,0,26,-1,19;1,0,7,-11,-9;1,0,17,0,5;1,0,13,-4,4;1,0,4,-43,-35;1,0,4,-12,2;1,0,18,-15,9;1,0,22,-4,17;1,0,1,-14,-13;1,0,22,0,22;1,0,1,-31,-27;1,0,8,-5,-1;1,0,19,-9,1;1,0,25,-2,20;1,0,10,-4,8;1,0,28,-9,10;1,0,9,-19,-12;1,0,4,-16,-8;1,0,2,-32,-30;1,0,14,-3,10;1,0,46,-2,37;1,0,14,0,9;1,0,6,-34,-17;1,0,0,-95,-95;1,0,0,-18,-18;4,0,0,-52,-48;1,0,53,0,24;1,0,77,-13,58;1,0,45,0,28;1,0,34,-6,31;1,0,35,-7,28;1,0,7,-10,-4;1,0,19,-70,-68;1,0,99,0,14;1,0,32,-10,18;1,0,65,0,53;1,0,4,-85,-68;1,0,14,-106,-82;1,0,4,-104,-87;1,0,62,-14,36;1,0,5,-28,-1;1,0,33,-4,17;1,0,26,-11,16;1,0,5,-118,-113;1,0,74,-1,17;1,0,15,-66,-52;1,0,5,-100,-87;1,0,51,-112,-90;1,0,30,-206,-154;1,0,219,-18,178;1,0,95,-47,-36;1,0,113,-105,42;1,0,81,-34,45;1,0,5,-129,-125;1,0,17,-72,8;1,0,90,-38,57;1,0,0,-216,-189;1,0,76,-268,-72;1,0,50,-86,33;1,0,60,-200,-162;1,0,28,-173,-147;1,0,106,-78,63;1,0,1,-134,-123;1,0,121,-10,23;1,0,207,0,148;1,0,115,-26,109;1,0,36,-49,-45;1,0,31,-130,-50;1,0,169,-1,120;1,0,16,-115,-18;1,0,10,-103,-90;1,0,117,-33,-27;1,0,17,-110,-12;1,0,44,-113,-76;1,0,0,-190,-185;1,0,36,-98,13;1,0,34,-123,31;1,0,93,-56,43;1,0,130,-12,129;1,0,0,-201,-172;1,0,13,-151,-147;1,0,0,-276,-262;1,0,113,-26,45;1,0,53,-52,10;1,0,2,-137,-49;1,0,9,-411,-295;1,0,86,-77,-6;1,0,233,-1,227;1,0,106,-15,13;1,0,44,-177,-158;1,0,101,-35,71;1,0,145,-93,145;1,0,63,-67,49;1,0,13,-168,-159;1,0,113,-41,93;1,0,76,-17,2;1,0,77,-3,59;1,0,33,-46,-24;1,0,15,-34,-3;1,0,24,-72,-18;1,0,42,-58,-41;1,0,23,-86,-62;1,0,36,-80,10;1,0,132,-1,131;1,0,61,-14,35;1,0,164,-37,147;1,0,40,-156,-128;1,0,10,-140,8;1,0,110,-27,77;1,0,52,-8,14;1,0,120,-1,83;1,0,40,-67,25;1,0,60,-19,50;1,0,53,-32,-14;1,0,46,-22,34;1,0,43,-57,-45;1,0,13,-76,-35;1,0,37,-74,-37;1,0,43,-96,-96;1,0,8,-73,-54;1,0,81,-46,47;1,0,187,-33,175;1,0,30,-78,30;1,0,68,-23,25;1,0,5,-84,-83;1,0,15,-43,-29;1,0,66,-48,35;1,0,83,-29,73;1,0,3,-225,-224;1,0,156,-15,115;1,0,106,-61,85;1,0,82,-16,80;1,0,85,-29,85;1,0,175,0,124;1,0,28,-95,-26;1,0,155,-22,148;1,0,70,-27,41;1,0,1,-147,-147;1,0,94,-13,-13;1,0,40,-51,-40;1,0,63,-45,61;1,0,99,-16,10;1,0,159,-29,116;1,0,165,-23,147;1,0,5,-167,-156;1,0,64,-26,-23;1,0,11,-93,-63;1,0,140,-7,131;1,0,8,-155,-36;1,0,9,-130,-119;1,0,110,-5,66;1,0,5,-177,-57;1,0,42,-75,-67;1,0,345,-77,258;1,0,3,-227,-198;1,0,43,-70,40;1,0,114,-12,24;1,0,53,-137,-126;1,0,97,-27,85;1,0,75,-5,44;1,0,114,-26,98;1,0,208,-12,178;1,0,182,-79,-79;1,0,62,-14,8;1,0,131,0,75;1,0,14,-80,-77;1,0,5,-65,-31;1,0,42,-55,36;1,0,14,-105,-104;1,0,54,-11,21;1,0,22,-113,-70;1,0,156,-205,142;1,0,45,-28,-9;1,0,0,-275,-142;1,0,25,-77,-63;1,0,2,-104,-67;1,0,147,0,98;1,0,51,-25,27;1,0,68,-6,26;1,0,97,-13,93;1,0,74,-2,71;1,0,21,-55,0;1,0,30,-61,30;1,0,39,-19,4;1,0,67,-14,10;1,0,12,-65,12;1,0,0,-54,-35;1,0,44,-19,20;1,0,165,-40,144;1,0,48,-22,27;1,0,126,-18,91;1,0,64,-82,-33;1,0,15,-38,-12;1,0,105,-2,79;1,0,29,-69,-65;1,0,70,0,62;1,0,71,-75,-48;1,0,98,-13,61;1,0,48,-31,24;1,0,110,-1,76;1,0,93,-2,27;1,0,18,-83,-7;1,0,94,-4,63;1,0,12,-110,-100;1,0,3,-106,-43;1,0,10,-144,-137;1,0,11,-153,-77;1,0,79,-86,66;1,0,98,-72,-70;1,0,53,-19,-3;1,0,14,-142,-116;1,0,73,-8,7;1,0,4,-72,-71;1,0,30,-121,-64;1,0,169,-15,153;1,0,32,-86,30;1,0,75,0,32;1,0,78,-29,3;1,0,21,-184,-179;1,0,99,-106,-65;1,0,164,-30,158;1,0,38,-93,32;1,0,0,-168,-47;1,0,22,-50,-31;1,0,91,-53,-41;1,0,132,-19,70;1,0,101,-19,58;1,0,171,0,170;1,0,9,-107,-68;1,0,140,0,111;1,0,57,-14,-3;1,0,16,-127,-95;1,0,52,-44,47;1,0,51,-41,41;1,0,24,-107,-91;1,0,11,-99,-72;1,0,124,-14,108;1,0,157,-14,130;1,0,82,-1,47;1,0,104,-1,36;1,0,49,-41,49;1,0,1,-62,-39;1,0,1,-68,-40;1,0,7,-181,-179;1,0,56,-19,50;1,0,57,-8,55;1,0,49,-56,-12;1,0,28,-47,-11;1,0,68,-41,56;1,0,17,-23,-16;1,0,25,-17,-7;1,0,44,-12,22;1,0,66,-1,63;1,0,34,-23,-18;1,0,1,-103,-73;1,0,1,-45,-6;1,0,0,-45,-37;1,0,48,-19,26;1,0,40,0,40;1,0,30,-51,-32;1,0,37,-31,8;1,0,26,-44,-30;1,0,73,-6,55;1,0,3,-51,-15;1,0,0,-36,-14;1,0,27,-22,-10;1,0,31,-13,6;1,0,77,-5,69;1,0,16,-79,-69;1,0,36,-1,29;1,0,13,-30,-15;1,0,72,0,55;1,0,17,-48,-46;1,0,64,-14,63;1,0,67,-12,44;1,0,63,0,48;1,0,48,-62,-12;1,0,43,-68,-53;1,0,39,-47,-16;1,0,33,-84,-56;1,0,16,-69,-50;1,0,10,-85,-36;1,0,202,-35,93;1,0,0,-214,-194;1,0,50,-800,-602;1,0,309,-2,289;1,0,52,-49,-1;1,0,90,-19,19;1,0,74,-7,73;1,0,21,-85,-66;1,0,97,-5,92;1,0,16,-62,-4;1,0,5,-154,-131;1,0,75,-37,72;1,0,46,-3,19;1,0,57,-3,10;1,0,65,-2,45;1,0,0,-66,-20;1,0,30,-25,-3;1,0,29,-9,1;1,0,23,-25,-6;1,0,62,-4,54;1,0,13,-65,-35;1,0,61,-15,24;1,0,28,-21,22;1,0,32,-15,10;1,0,3,-28,-6;1,0,1,-24,-16;1,0,10,-102,-102;1,0,0,-32,-32;1,0,20,0,7;1,0,10,-8,-1;1,0,0,-51,-48;1,0,5,-4,-3;1,0,7,-121,-38;1,0,1,-40,-39;1,0,4,-108,3;1,0,28,-18,0;1,0,12,-14,10;1,0,0,-55,-42;1,0,41,-15,16;1,0,223,0,56;1,0,4,-154,-114;1,0,34,-14,3;1,0,10,-46,-30;1,0,13,-42,-29;1,0,15,-44,-43;1,0,26,-66,25;1,0,19,-18,-6;1,0,62,0,62;1,0,5,-41,-37;1,0,47,-13,46;1,0,33,-17,-17;1,0,2,-79,-30;1,0,9,-165,-150;1,0,20,-34,-29;1,0,0,-77,-63;1,0,107,-3,33;1,0,30,-8,21;1,0,70,-71,64;1,0,24,-45,-27;1,0,32,-134,-104;1,0,68,-77,-69;1,0,76,-14,24;1,0,51,-43,-9;1,0,38,-88,-39;1,0,32,-76,-35;1,0,3,-88,-62;1,0,23,-80,-67;1,0,163,-6,131;1,0,7,-78,-2;1,0,200,-3,169;1,0,123,-16,91;1,0,88,0,85;1,0,70,-56,36;1,0,120,-59,70;1,0,11,-144,-142;1,0,67,-5,44;1,0,154,-4,90;1,0,77,-39,51;1,0,0,-97,-44;1,0,138,0,128;1,0,17,-55,-23;1,0,11,-110,-96;1,0,7,-83,-77;1,0,31,-64,15;1,0,5,-116,-77;1,0,44,-9,-7;1,0,9,-74,-60;1,0,78,-18,69;1,0,37,-30,-21;1,0,12,-54,-31;1,0,50,-15,23;1,0,54,-30,14;1,0,88,-3,49;1,0,8,-87,-59;1,0,13,-56,-41;1,0,40,-23,-9;1,0,3,-46,-18;1,0,2,-66,-31;1,0,13,-59,10;1,0,21,-42,10;1,0,65,-11,50;1,0,24,-17,8;1,0,22,-33,0;1,0,16,-55,-25;1,0,28,-26,-19;1,0,6,-49,-45;1,0,0,-94,-79;1,0,3,-69,-65;1,0,75,-47,61;1,0,26,-45,11;1,0,30,-42,-20;1,0,32,-48,-33;1,0,22,-84,-75;1,0,30,-33,26;1,0,19,-50,-40;1,0,62,-12,16;1,0,31,-28,-9;1,0,39,-31,33;1,0,53,-7,51;1,0,48,-17,-16;1,0,97,-5,95;1,0,54,-2,50;1,0,21,-36,2;1,0,13,-67,-52;1,0,4,-77,-60;1,0,123,-14,103;1,0,17,-41,-37;1,0,10,-83,-72;1,0,28,-48,-39;1,0,44,-57,-3;1,0,34,-42,0;1,0,56,-33,36;1,0,40,-49,20;1,0,23,-57,-47;1,0,0,-120,-42;1,0,47,-164,-164;1,0,112,-24,73;1,0,2,-133,-121;1,0,92,-21,88;1,0,27,-232,-153;1,0,171,-22,171;1,0,153,-3,117;1,0,112,0,64;1,0,101,-66,93;1,0,39,-47,-25;1,0,26,-67,-59;1,0,99,-28,91;1,0,15,-201,-170;1,0,54,-46,-17;1,0,31,-64,24;1,0,159,-16,139;1,0,91,-11,58;1,0,6,-140,-66;1,0,60,-87,-18;1,0,15,-120,-115;1,0,54,-63,-10;1,0,16,-77,-32;1,0,54,-39,37;1,0,7,-181,-152;1,0,157,-9,143;1,0,66,-46,-45;1,0,88,-70,51;1,0,136,-6,67;1,0,79,-23,68;1,0,127,-27,102;1,0,169,-1,124;1,0,22,-42,-41;1,0,27,-45,-27;1,0,26,-62,-30;1,0,25,-38,25;1,0,84,-45,38;1,0,15,-87,-84;1,0,64,-36,62;1,0,12,-90,-87;1,0,67,-22,55;1,0,5,-82,-54;1,0,4,-61,-52;1,0,29,-51,-41;1,0,24,-22,15;1,0,7,-115,-113;1,0,89,-18,89;1,0,54,-3,28;1,0,63,-29,34;1,0,3,-65,-51;1,0,81,-2,70;1,0,20,-54,-2;1,0,78,-9,42;1,0,5,-117,-95;1,0,27,-69,-25;1,0,34,-46,-26;1,0,54,-6,45;1,0,92,-11,90;1,0,12,-90,-82;1,0,34,-81,-26;1,0,25,-26,-11;1,0,42,-64,-56;1,0,19,-46,-9;1,0,2,-52,-23;1,0,99,-5,79;1,0,86,-2,70;1,0,67,-17,61;1,0,19,-60,-31;1,0,16,-29,-6;1,0,56,-8,0;1,0,12,-75,-62;1,0,37,-72,-58;1,0,4,-85,-27;1,0,98,-17,22;1,0,100,-12,81;1,0,76,-55,-21;1,0,67,-13,-9;1,0,83,-22,37;1,0,104,-41,75;1,0,43,-9,5;1,0,5,-125,-108;1,0,27,-29,-27;1,0,12,-97,-70;1,0,28,-36,18;1,0,15,-44,-21;1,0,24,-29,17;1,0,12,-49,-18;1,0,31,-29,-3;1,0,14,-65,-64;1,0,88,-15,67;1,0,38,-9,16;1,0,95,-5,75;1,0,75,-24,-22;1,0,111,-9,97;1,0,36,-165,-113;1,0,34,-29,29;1,0,31,-46,-34;1,0,15,-184,-131;1,0,15,-53,-25;1,0,44,-28,-22;1,0,118,0,70;1,0,141,-14,141;1,0,39,-62,-34;1,0,30,-30,-3;1,0,6,-103,-53;1,0,110,-5,108;1,0,46,-56,-53;1,0,125,-32,7;1,0,38,-68,-42;1,0,277,-48,205;1,0,156,-6,79;1,0,172,-58,144;1,0,35,-78,-39;1,0,5,-161,-160;1,0,49,-64,3;1,0,20,-155,-127;1,0,4,-108,-57;1,0,92,-3,78;1,0,56,-64,44;1,0,46,-62,9;1,0,40,-97,36;1,0,39,-51,-30;1,0,78,-22,22;1,0,37,-15,6;1,0,169,-11,153;1,0,3,-78,-43;1,0,17,-49,-11;1,0,17,-63,-31;1,0,14,-64,-44;1,0,14,-20,14;1,0,15,-53,4;1,0,77,-8,47;1,0,35,-17,31;1,0,15,-44,-22;1,0,40,-14,17;1,0,6,-60,-25;1,0,70,-1,66;1,0,24,-43,22;1,0,24,-34,-24;1,0,34,-9,5;1,0,68,-3,33;1,0,9,-104,-87;1,0,42,-21,-9;1,0,30,-22,30;1,0,12,-53,-49;1,0,57,-5,47;1,0,11,-32,-25;1,0,17,-56,-18;1,0,10,-39,-19;1,0,13,-56,-41;1,0,27,-14,25;1,0,28,-17,-3;1,0,21,-15,5;1,0,70,-9,66;1,0,34,-11,15;1,0,11,-28,8;1,0,13,-91,-86;1,0,77,0,58;1,0,37,-5,12;1,0,63,-7,62;1,0,2,-56,-52;1,0,13,-32,-21;1,0,8,-49,-32;1,0,4,-59,-16;1,0,23,-21,14;1,0,22,-6,2;1,0,6,-22,4;1,0,20,-6,-3;1,0,36,-40,35;1,0,13,-26,12;1,0,22,-15,3;1,0,1,-41,-29;1,0,4,-38,-38;1,0,24,-4,7;1,0,21,-17,1;1,0,9,-17,-11;1,0,3,-29,-10;1,0,3,-48,-47;1,0,35,-8,23;1,0,12,-20,2;1,0,3,-106,-106;4,0,136,-7,59;1,0,49,-89,-30;1,0,24,-53,-36;1,0,75,-7,23;1,0,56,-7,20;1,0,10,-45,-22;1,0,19,-30,2;1,0,11,-19,4;1,0,34,-8,33;1,0,65,-34,31;1,0,1,-61,-48;1,0,29,-1,25;1,0,0,-50,-42;1,0,0,-76,-54;1,0,12,-30,-20;1,0,3,-94,-59;1,0,42,0,13;1,0,6,-45,-39;1,0,45,-2,25;1,0,10,-11,10;1,0,0,-32,-8;1,0,0,-45,-36;1,0,59,0,43;1,0,19,-14,-5;1,0,6,-26,-25;1,0,96,-4,78;1,0,4,-23,-4;1,0,5,-41,-26;1,0,19,-3,4;1,0,119,0,106;1,0,58,-9,36;1,0,83,-44,78;1,0,70,-35,-27;1,0,55,-13,25;1,0,51,-35,-12;1,0,20,-98,-47;1,0,77,-3,20;1,0,107,-28,94;1,0,13,-76,5;1,0,53,-45,-9;1,0,16,-28,-2;1,0,99,-23,57;1,0,8,-58,-57;1,0,93,0,77;1,0,53,-24,17;1,0,20,-66,-53;1,0,12,-59,-45;1,0,41,-27,16;1,0,31,-53,20;1,0,40,-26,-12;1,0,92,-1,88;1,0,54,-56,-22;1,0,3,-57,-16;1,0,97,0,92;1,0,20,-36,0;1,0,22,-259,-151;1,0,32,-117,-102;1,0,30,-166,-36;1,0,16,-86,-39;1,0,85,-7,77;1,0,38,-22,7;1,0,117,-6,91;1,0,28,-42,-4;1,0,47,-6,0;1,0,25,-90,-44;1,0,61,-7,60;1,0,12,-62,-40;1,0,4,-57,-41;1,0,29,-33,-22;1,0,5,-49,3;1,0,26,-12,12;1,0,10,-23,-12;1,0,27,-24,-17;1,0,24,-24,-16;1,0,11,-29,0;1,0,4,-40,-35;1,0,34,-4,20;1,0,24,-4,22;1,0,2,-104,-89;1,0,48,-6,47;1,0,1,-33,-24;1,0,30,-7,-5;1,0,0,-68,-64;1,0,16,-39,-6;1,0,64,-11,54;1,0,53,0,51;1,0,20,-7,17;1,0,8,-28,7;1,0,0,-54,-29;1,0,17,-7,-6;1,0,14,-14,11;1,0,33,-19,25;1,0,25,-16,22;1,0,29,-21,-17;1,0,32,-1,25;1,0,1,-44,-33;1,0,46,-1,36;1,0,28,-43,-27;1,0,26,-10,17;1,0,21,-54,-24;1,0,161,-37,161;1,0,116,-40,109;1,0,21,-100,-34;1,0,32,-65,-35;1,0,70,-32,65;1,0,20,-126,-103;1,0,28,-67,-53;1,0,79,-19,62;1,0,22,-73,-51;1,0,31,-24,8;1,0,12,-55,9;1,0,19,-29,12;1,0,76,-3,29;1,0,55,-14,53;1,0,20,-64,-45;1,0,22,-89,-83;1,0,35,-108,-95;1,0,67,-11,38;1,0,72,-8,-8;1,0,92,-24,79;1,0,1,-101,-48;1,0,8,-75,-72;1,0,0,-94,-63;1,0,46,-47,-33;1,0,36,-55,24;1,0,69,-1,43;1,0,41,-36,-25;1,0,6,-52,-32;1,0,18,-58,8;1,0,90,-4,82;1,0,73,-25,70;1,0,47,-14,13;1,0,46,-6,14;1,0,40,-40,13;1,0,32,-30,-17;1,0,43,-19,35;1,0,81,-2,65;1,0,39,-8,18;1,0,72,-25,69;1,0,4,-79,-72;1,0,82,-63,67;1,0,7,-109,-104;1,0,79,-21,77;1,0,15,-38,12;1,0,43,-6,39;1,0,20,-34,-2;1,0,44,-25,-5;1,0,33,-26,20;1,0,0,-82,-63;1,0,8,-104,-104;1,0,34,-6,22;1,0,51,-16,46;1,0,66,-5,56;1,0,14,-28,12;1,0,36,-24,16;1,0,36,-38,-3;1,0,18,-46,-35;1,0,76,-1,54;1,0,76,0,73;1,0,34,-53,29;1,0,165,-13,126;1,0,138,-8,126;1,0,3,-80,-21;1,0,79,-33,61;1,0,4,-96,-91;1,0,0,-59,-59;1,0,34,-43,24;1,0,81,-23,39;1,0,23,-64,-58;1,0,57,-22,31;1,0,4,-53,-49;1,0,30,-21,20;1,0,47,-6,16;1,0,9,-81,-71;1,0,54,-11,47;1,0,38,-13,-5;1,0,30,-10,14;1,0,32,-33,-31;1,0,3,-93,-72;1,0,187,-14,165;1,0,21,-93,-53;1,0,160,0,42;1,0,150,-8,120;1,0,155,-84,83;1,0,8,-358,-351;1,0,50,-33,18;1,0,82,-2,62;1,0,0,-127,-127;1,0,138,-57,136;1,0,9,-208,-146;1,0,13,-136,-118;1,0,28,-102,-71;1,0,142,-10,122;1,0,7,-85,-54;1,0,3,-100,-66;1,0,41,-42,36;1,0,44,-10,31;1,0,94,-1,61;1,0,1,-186,-141;1,0,114,-19,71;1,0,33,-75,-71;1,0,36,-71,-65;1,0,6,-193,-148;1,0,60,-40,6;1,0,122,-2,120;1,0,70,-79,-20;1,0,92,-21,42;1,0,61,-82,-71;1,0,184,0,135;1,0,101,-10,92;1,0,92,-1,8;1,0,25,-70,-22;1,0,27,-140,-58;1,0,41,-59,-25;1,0,118,-6,93;1,0,47,-48,-29;1,0,6,-64,-7;1,0,60,-7,51;1,0,64,-6,64;1,0,48,-31,40;1,0,55,-4,46;1,0,7,-39,5;1,0,11,-40,10;1,0,47,-43,-19;1,0,37,-6,14;1,0,84,-7,76;1,0,31,-40,25;1,0,28,-14,17;1,0,56,-2,46;1,0,106,-2,52;1,0,73,-14,56;1,0,29,-37,-8;1,0,55,-15,25;1,0,24,-33,-23;1,0,57,-4,20;1,0,1,-98,-79;1,0,38,-39,-38;1,0,56,-36,23;1,0,42,-6,20;1,0,47,-27,34;1,0,16,-29,-7;1,0,2,-67,-28;1,0,38,-4,28;1,0,23,-9,14;1,0,16,-60,13;1,0,27,-25,-23;1,0,1,-53,-37;1,0,1,-80,-69;1,0,20,-40,-29;1,0,43,-31,26;1,0,37,-11,24;1,0,7,-44,-8;1,0,27,-22,23;1,0,4,-70,-56;1,0,37,-15,26;1,0,16,-44,-40;1,0,23,-14,-1;1,0,33,-13,-11;1,0,29,-6,12;1,0,8,-34,-27;1,0,22,-10,-3;1,0,15,-20,-1;1,0,2,-27,-13;1,0,34,-5,31;1,0,14,-38,-28;1,0,17,-34,-28;1,0,37,-2,27;1,0,15,-23,14;1,0,7,-28,-21;1,0,5,-27,2;1,0,0,-43,-25;1,0,20,-14,10;1,0,10,-19,6;1,0,5,-22,2;1,0,43,-4,27;1,0,29,-7,25;1,0,14,-29,-15;1,0,6,-30,-17;1,0,37,-2,33;1,0,50,-3,47;1,0,32,0,18;1,0,11,-18,-18;1,0,46,-4,40;1,0,56,-3,42;1,0,44,-109,-105;1,0,0,-26,-26;1,0,0,-104,-104;1,0,0,-36,-12;5,0,46,0,46;1,0,34,-14,31;1,0,15,-15,8;1,0,13,-52,-52;1,0,5,-25,-24;1,0,281,0,226;1,0,24,-32,21;1,0,82,-2,81;1,0,3,-56,-52;1,0,1,-53,-52;1,0,11,-10,-8;1,0,8,-67,-61;1,0,30,-9,11;1,0,9,-25,2;1,0,0,-34,-18;1,0,23,-4,-1;1,0,5,-22,-18;1,0,90,-9,84;1,0,0,-58,-36;1,0,13,-8,-2;1,0,23,-7,23;1,0,64,-13,59;1,0,56,0,49;1,0,78,-13,73;1,0,19,-38,-7;1,0,42,-24,-20;1,0,8,-116,-100;1,0,66,-25,13;1,0,15,-66,-42;1,0,31,-91,-34;1,0,4,-99,-61;1,0,95,-18,89;1,0,28,-54,-54;1,0,127,-17,120;1,0,55,-6,44;1,0,71,-16,50;1,0,1,-81,-72;1,0,50,-10,47;1,0,63,-10,31;1,0,59,-84,54;1,0,20,-84,-78;1,0,18,-125,-114;1,0,38,-82,-61;1,0,13,-127,-45;1,0,28,-105,-97;1,0,86,-9,79;1,0,3,-78,-50;1,0,16,-66,-25;1,0,17,-107,-37;1,0,50,-10,31;1,0,70,-32,59;1,0,10,-60,-11;1,0,22,-66,-39;1,0,14,-40,10;1,0,115,-13,107;1,0,28,-25,-22;1,0,53,-5,19;1,0,39,-55,-50;1,0,36,-19,17;1,0,22,-50,12;1,0,32,-26,2;1,0,32,-19,20;1,0,11,-30,-21;1,0,5,-89,-75;1,0,7,-67,-48;1,0,42,-15,-15;1,0,68,0,22;1,0,0,-113,-81;1,0,30,-18,4;1,0,37,-2,34;1,0,73,0,67;1,0,5,-31,-15;1,0,29,-39,5;1,0,3,-41,-19;1,0,42,-2,34;1,0,7,-116,-95;1,0,27,-34,14;1,0,10,-62,-14;1,0,31,-10,-1;1,0,14,-36,13;1,0,7,-42,-32;1,0,49,-28,45;1,0,24,-14,0;1,0,48,-6,19;1,0,46,-59,-56;1,0,19,-38,-19;1,0,42,-19,20;1,0,10,-88,-3;1,0,11,-34,9;1,0,6,-49,-12;1,0,20,-84,-78;1,0,13,-72,-70;1,0,53,-13,31;1,0,10,-51,-36;1,0,56,-6,5;1,0,46,-16,19;1,0,4,-72,-45;1,0,53,-13,-13;1,0,6,-116,-109;1,0,73,-8,31;1,0,30,-45,0;1,0,103,-5,62;1,0,104,-2,79;1,0,13,-67,10;1,0,9,-69,-7;1,0,62,-5,49;1,0,69,-12,60;1,0,64,-14,60;1,0,30,-39,30;1,0,1,-84,-55;1,0,127,-11,121;1,0,23,-37,-35;1,0,41,-3,8;1,0,8,-170,-161;1,0,132,0,114;1,0,13,-45,-21;1,0,26,-46,-17;1,0,112,-11,59;1,0,32,-64,1;1,0,21,-47,-32;1,0,18,-40,-17;1,0,89,-22,77;1,0,13,-72,-68;1,0,80,-13,21;1,0,26,-52,-24;1,0,15,-44,5;1,0,69,-34,24;1,0,77,-19,58;1,0,9,-91,-48;1,0,80,-30,28;1,0,17,-51,-47;1,0,34,-151,-133;1,0,0,-161,-140;1,0,79,-35,-17;1,0,63,-8,29;1,0,4,-109,-106;1,0,49,-3,21;1,0,34,-43,-28;1,0,67,-6,13;1,0,68,-18,32;1,0,13,-44,-13;1,0,119,-18,101;1,0,40,-8,13;1,0,28,-36,7;1,0,42,-13,36;1,0,28,-77,-46;1,0,26,-109,-82;1,0,35,-82,-82;1,0,98,-37,98;1,0,57,-42,-30;1,0,65,-9,32;1,0,5,-53,-3;1,0,33,-9,10;1,0,11,-30,-8;1,0,11,-40,-28;1,0,16,-92,-90;1,0,18,-46,13;1,0,19,-57,-12;1,0,55,-17,50;1,0,11,-125,-122;1,0,42,-74,-43;1,0,20,-73,-14;1,0,60,-34,25;1,0,54,-32,31;1,0,99,-1,94;1,0,58,-3,25;1,0,3,-74,-46;1,0,30,-24,30;1,0,3,-79,-57;1,0,15,-199,-176;1,0,81,-32,56;1,0,33,-14,23;1,0,58,-13,58;1,0,88,-2,74;1,0,99,0,15;1,0,17,-85,-14;1,0,50,-38,38;1,0,61,-47,35;1,0,11,-200,-200;1,0,377,-72,73;1,0,31,-160,-62;1,0,37,-456,-372;1,0,170,-147,167;1,0,31,-263,-108;1,0,41,-132,-103;1,0,22,-242,-93;1,0,86,-96,48;1,0,133,-24,114;1,0,72,-28,29;1,0,0,-133,-108;1,0,70,-42,15;1,0,20,-144,-65;1,0,2,-117,-112;1,0,163,0,122;1,0,45,-22,42;1,0,149,-8,145;1,0,35,-94,-54;1,0,37,-50,-11;1,0,48,-16,18;1,0,37,-51,15;1,0,75,-40,-37;1,0,103,-4,89;1,0,51,-19,22;1,0,94,-9,16;1,0,39,-38,19;1,0,57,-12,19;1,0,33,-80,-67;1,0,16,-54,-26;1,0,51,-45,-31;1,0,65,-80,65;1,0,70,-13,52;1,0,20,-47,-46;1,0,33,-15,-2;1,0,44,-40,1;1,0,11,-28,-10;1,0,25,-37,17;1,0,44,-47,28;1,0,36,-11,31;1,0,16,-27,-25;1,0,18,-28,17;1,0,63,-1,52;1,0,47,-9,0;1,0,33,-23,-16;1,0,42,-17,30;1,0,7,-35,2;1,0,13,-16,-2;1,0,2,-35,-3;1,0,2,-55,-29;1,0,13,-28,-22;1,0,21,-22,10;1,0,46,-12,38;1,0,15,-9,10;1,0,36,-6,26;1,0,19,-28,-17;1,0,0,-49,-42;1,0,8,-43,2;1,0,31,-4,21;1,0,1,-27,-14;1,0,32,-17,31;1,0,20,-17,7;1,0,26,-1,8;1,0,36,-13,33;1,0,8,-22,-12;1,0,21,-11,18;1,0,0,-50,-40;1,0,40,-17,40;1,0,15,-12,-9;1,0,24,-13,-7;1,0,46,0,43;1,0,2,-32,-24;1,0,11,-14,10;1,0,1,-50,-46;1,0,1,-41,-29;1,0,22,-16,16;1,0,36,-8,29;1,0,18,-7,9;1,0,19,-6,15;1,0,55,-1,46;1,0,15,-13,3;1,0,9,-28,-17;1,0,27,-8,16;1,0,12,-33,-20;1,0,4,-36,-27;1,0,0,-38,-28;1,0,19,-2,6;1,0,18,-9,13;1,0,21,-3,6;1,0,12,-16,8;1,0,11,-29,-27;1,0,18,-19,-3;1,0,22,-6,2;1,0,10,-23,-20;1,0,9,-34,-8;1,0,28,-8,22;1,0,7,-29,-23;1,0,41,-6,28;1,0,12,-6,6;1,0,56,-6,18;1,0,9,-57,-48;1,0,17,-224,-216;1,0,0,-86,-57;589,0,31,-120,-27;1,0,11,-142,-83;1,0,111,-5,79;1,0,94,-9,94;1,0,81,-11,55;1,0,71,-19,38;1,0,130,-21,129;1,0,24,-74,24;1,0,17,-113,-100;1,0,23,-72,-62;1,0,126,-1,98;1,0,36,-20,-17;1,0,25,-69,-69;1,0,64,0,39;1,0,23,-27,21;1,0,44,-3,36;1,0,12,-105,-76;1,0,21,-65,-57;1,0,28,-69,-46;1,0,45,-7,13;1,0,2,-146,-144;1,0,80,-55,41;1,0,10,-63,-39;1,0,13,-49,-31;1,0,78,-53,43;1,0,179,-25,175;1,0,6,-127,-96;1,0,57,-63,-38;1,0,115,-60,72;1,0,75,-27,57;1,0,34,-61,9;1,0,49,-20,-19;1,0,61,-14,49;1,0,6,-64,-33;1,0,53,-73,-29;1,0,129,-14,7;1,0,123,-25,118;1,0,119,-36,96;1,0,15,-108,-40;1,0,48,-15,27;1,0,10,-122,-103;1,0,7,-77,-69;1,0,36,-54,-25;1,0,37,-49,28;1,0,34,-16,18;1,0,35,-16,19;1,0,30,-10,20;1,0,27,-17,8;1,0,58,0,45;1,0,69,-5,41;1,0,75,-4,74;1,0,47,-24,41;1,0,1,-70,-35;1,0,80,0,31;1,0,58,0,52;1,0,109,-1,74;1,0,48,-54,47;1,0,5,-71,-12;1,0,33,-34,10;1,0,6,-42,-34;1,0,57,-2,55;1,0,2,-33,-2;1,0,4,-52,-24;1,0,11,-90,-74;1,0,7,-70,-31;1,0,42,-3,3;1,0,78,-26,60;1,0,17,-40,-8;1,0,30,-60,-57;1,0,47,-11,5;1,0,25,-8,-1;1,0,14,-22,-4;1,0,14,-76,-73;1,0,63,-6,26;1,0,47,-17,29;1,0,37,-11,18;1,0,22,-12,2;1,0,3,-65,-56;1,0,42,-10,-6;1,0,2,-80,-68;1,0,69,-31,61;1,0,30,-36,-22;1,0,1,-48,-46;1,0,79,-4,64;1,0,9,-42,-12;1,0,14,-29,-13;1,0,1,-19,-9;1,0,14,-54,-49;1,0,47,-13,37;1,0,36,-32,4;1,0,23,-22,-9;1,0,29,-9,28;1,0,81,-8,68;1,0,44,-26,41;1,0,36,-19,4;1,0,12,-81,-56;1,0,43,-46,-41;1,0,4,-71,-48;1,0,74,-48,71;1,0,21,-33,-7;1,0,25,-49,18;1,0,102,-6,80;1,0,109,-16,69;1,0,30,-15,11;1,0,137,-8,85;1,0,4,-119,-97;1,0,72,-24,-22;1,0,40,-26,3;1,0,9,-70,-13;1,0,86,0,29;1,0,58,-15,49;1,0,94,-1,79;1,0,79,-3,76;1,0,6,-87,-52;1,0,49,-22,-4;1,0,17,-55,-12;1,0,1,-101,-94;1,0,113,-2,97;1,0,68,-55,-41;1,0,61,-56,57;1,0,23,-77,-41;1,0,45,-35,-32;1,0,68,-27,34;1,0,64,-6,45;1,0,21,-93,-75;1,0,74,-32,59;1,0,69,0,24;1,0,13,-51,-2;1,0,89,-2,59;1,0,49,-21,33;1,0,36,-40,8;1,0,27,-42,-27;1,0,7,-64,-56;1,0,29,-40,-37;1,0,15,-110,-96;1,0,89,-3,61;1,0,51,-29,47;1,0,23,-50,-10;1,0,94,-11,36;1,0,34,-27,6;1,0,28,-32,26;1,0,16,-26,-20;1,0,123,-4,119;1,0,7,-30,-22;1,0,176,-49,140;1,0,30,-70,-38;1,0,10,-43,5;1,0,4,-109,-95;1,0,20,-50,-1;1,0,8,-46,-28;1,0,97,-1,79;1,0,31,-17,6;1,0,11,-29,-10;1,0,30,-6,19;1,0,18,-42,-5;1,0,2,-113,-64;1,0,26,-39,-3;1,0,43,-19,5;1,0,12,-30,-18;1,0,70,-1,52;1,0,7,-112,-111;1,0,81,-1,57;1,0,60,-29,48;1,0,89,-5,89;1,0,16,-70,-69;1,0,14,-79,-66;1,0,137,-6,117;1,0,15,-34,-21;1,0,54,-13,10;1,0,37,-12,16;1,0,39,-24,1;1,0,0,-86,-62;1,0,41,-25,34;1,0,96,-2,86;1,0,33,-41,-11;1,0,64,-14,0;1,0,74,-2,13;1,0,8,-99,-66;1,0,94,0,27;1,0,26,-40,-3;1,0,43,-56,-43;1,0,29,-25,27;1,0,40,-27,21;1,0,71,-6,53;1,0,11,-28,1;1,0,66,-4,64;1,0,19,-31,-16;1,0,20,-70,-53;1,0,70,-51,35;1,0,68,-19,53;1,0,27,-46,2;1,0,40,-149,-92;1,0,67,-38,-20;1,0,52,-3,14;1,0,23,-90,-50;1,0,81,0,12;1,0,21,-84,-46;1,0,92,-15,81;1,0,10,-73,-73;1,0,23,-40,-16;1,0,46,-28,-28;1,0,45,-74,-73;1,0,23,-42,-24;1,0,79,0,73;1,0,22,-75,-18;1,0,70,-56,45;1,0,10,-123,-79;1,0,57,-11,24;1,0,17,-106,-106;1,0,48,-19,21;1,0,24,-86,-68;1,0,4,-114,-97;1,0,37,-20,28;1,0,78,-3,45;1,0,91,-3,84;1,0,9,-30,-10;1,0,42,-25,8;1,0,8,-77,-75;1,0,9,-83,-29;1,0,68,-20,44;1,0,31,-5,16;1,0,36,-13,26;1,0,38,-23,33;1,0,55,-6,43;1,0,69,-19,65;1,0,25,-94,-51;1,0,22,-56,-34;1,0,30,-16,9;1,0,57,-20,53;1,0,49,-6,27;1,0,18,-30,4;1,0,21,-6,12;1,0,52,0,27;1,0,30,-6,19;1,0,13,-28,-5;1,0,27,-10,3;1,0,8,-28,-8;1,0,17,-10,1;1,0,19,-27,-22;1,0,49,-5,41;1,0,7,-40,-12;1,0,24,-22,20;1,0,24,-10,-1;1,0,19,-4,8;1,0,9,-56,-55;1,0,19,-84,-75;1,0,4,-92,-55;1,0,33,-30,-17;1,0,16,-50,-44;1,0,12,-25,-2;1,0,40,-71,-62;1,0,11,-212,-152;1,0,109,0,73;1,0,70,-1,49;1,0,70,-5,45;1,0,40,-30,32;1,0,38,-21,9;1,0,31,-5,17;1,0,10,-35,4;1,0,21,-46,-35;1,0,53,-11,40;1,0,34,-5,18;1,0,16,-7,8;1,0,19,-28,2;1,0,49,-6,2;1,0,34,-14,21;1,0,1,-34,-19;1,0,17,-11,4;1,0,26,-6,23;1,0,12,-22,-17;1,0,36,0,19;1,0,18,-7,9;1,0,16,-12,-1;1,0,6,-26,-22;1,0,0,-29,-18;1,0,2,-100,-100;1,0,0,-39,-21;1,0,21,0,20;1,0,16,-7,3;1,0,22,-44,17;1,0,3,-21,-11;1,0,5,-17,-16;1,0,31,-5,23;1,0,20,-7,20;1,0,5,-17,-15;1,0,2,-14,-6;1,0,29,-14,11;1,0,17,-28,-24;1,0,98,0,89;1,0,21,-28,15;1,0,3,-39,-11;1,0,32,-25,15;1,0,17,-31,2;1,0,5,-10,1;1,0,26,-15,-15;1,0,9,-29,-26;1,0,15,-9,10;1,0,0,-26,-7;1,0,3,-21,-17;1,0,10,-16,-15;1,0,5,-57,-50;1,0,59,-25,48;1,0,44,-16,35;1,0,42,-1,37;1,0,45,-1,32;1,0,19,-9,10;1,0,57,-27,49;1,0,0,-54,-43;1,0,34,-34,-14;1,0,16,-44,-37;1,0,75,0,70;1,0,18,-44,16;1,0,103,-28,88;1,0,12,-71,-39;1,0,87,-6,47;1,0,57,-25,50;1,0,54,-26,-25;1,0,51,0,18;1,0,38,-19,37;1,0,50,-12,8;1,0,25,-5,3;1,0,5,-58,-37;1,0,99,-21,79;1,0,27,-34,20;1,0,10,-41,-7;1,0,39,-39,-33;1,0,15,-50,-28;1,0,23,-14,23;1,0,34,-9,-5;1,0,34,-4,1;1,0,42,-22,28;1,0,38,-12,21;1,0,16,-38,-36;1,0,30,-12,15;1,0,33,-6,12;1,0,10,-22,-14;1,0,51,-27,47;1,0,13,-57,-11;1,0,69,-5,65;1,0,26,-32,-25;1,0,27,-16,14;1,0,43,-15,33;1,0,29,-52,17;1,0,20,-22,-1;1,0,17,-18,-2;1,0,6,-28,-14;1,0,7,-17,-2;1,0,24,-41,-33;1,0,7,-54,-48;1,0,33,-13,-12;1,0,29,-24,26;1,0,4,-83,-74;1,0,18,-27,14;1,0,15,-32,-12;1,0,3,-29,-3;1,0,30,-5,19;1,0,2,-81,-61;1,0,18,-77,-63;1,0,20,-22,2;1,0,23,-27,-21;1,0,30,-11,14;1,0,29,-19,-14;1,0,24,-32,1;1,0,46,-13,38;1,0,61,-8,20;1,0,34,-6,31;1,0,14,-38,-31;1,0,1,-76,-53;1,0,33,-19,13;1,0,48,-10,41;1,0,15,-8,13;1,0,22,-47,18;1,0,18,-15,11;1,0,24,-34,-20;1,0,11,-75,-17;1,0,131,-16,118;1,0,87,-3,79;1,0,56,-14,-7;1,0,24,-21,16;1,0,33,-26,-19;1,0,10,-68,-44;1,0,1,-71,-29;1,0,29,-34,-23;1,0,23,-37,4;1,0,20,-106,-59;1,0,2,-72,-64;1,0,17,-50,-11;1,0,19,-47,-19;1,0,19,-74,-57;1,0,44,-14,20;1,0,83,-33,41;1,0,46,-13,33;1,0,8,-38,-24;1,0,32,-48,-48;1,0,112,-24,99;1,0,70,-8,26;1,0,17,-134,-76;1,0,40,-27,33;1,0,87,-16,76;1,0,8,-47,-25;1,0,85,-4,60;1,0,35,-53,-16;1,0,0,-112,-12;1,0,23,-78,-73;1,0,54,-18,33;1,0,11,-68,7;1,0,71,0,51;1,0,105,-120,70;1,0,17,-100,5;1,0,295,-7,231;1,0,82,-35,-32;1,0,19,-200,-197;1,0,2,-160,-135;1,0,86,-18,83;1,0,84,-70,84;1,0,90,-32,71;1,0,48,-29,27;1,0,13,-70,-44;1,0,45,-33,-2;1,0,30,-75,-20;1,0,13,-66,-63;1,0,6,-60,-1;1,0,13,-41,-9;1,0,31,-31,-25;1,0,103,-11,51;1,0,80,-9,50;1,0,16,-24,-18;1,0,22,-64,-24;1,0,11,-44,6;1,0,47,-33,22;1,0,35,-35,-18;1,0,22,-38,-31;1,0,0,-71,-62;1,0,2,-110,-96;1,0,1,-52,-8;1,0,41,-14,38;1,0,3,-88,-64;1,0,45,-16,15;1,0,46,-16,41;1,0,17,-12,6;1,0,0,-67,-45;1,0,28,-27,25;1,0,4,-36,-27;1,0,55,-53,45;1,0,7,-46,-37;1,0,34,-4,6;1,0,113,0,98;1,0,47,-2,46;1,0,10,-25,-13;1,0,32,-13,17;1,0,39,-75,-60;1,0,20,-54,18;1,0,72,-5,35;1,0,9,-42,-12;1,0,43,-26,28;1,0,81,-22,69;1,0,65,-11,51;1,0,110,0,89;1,0,12,-42,-30;1,0,77,-2,64;1,0,35,-39,-31;1,0,44,-28,-9;1,0,19,-37,-19;1,0,2,-66,-8;1,0,52,0,45;1,0,17,-173,-123;1,0,40,-24,26;1,0,43,-24,19;1,0,13,-41,-13;1,0,36,-16,-6;1,0,54,0,51;1,0,3,-81,-80;1,0,152,-6,130;1,0,86,-2,75;1,0,99,-8,82;1,0,13,-85,-38;1,0,21,-48,-29;1,0,56,-23,39;1,0,34,-48,-15;1,0,4,-73,-5;1,0,54,-26,-2;1,0,19,-37,2;1,0,47,-46,-26;1,0,51,-19,17;1,0,0,-87,-82;1,0,51,-34,48;1,0,72,-46,-39;1,0,63,-19,45;1,0,87,-4,73;1,0,44,-35,38;1,0,0,-87,-56;1,0,79,-1,37;1,0,52,-35,-20;1,0,8,-36,-17;1,0,92,-1,51;1,0,17,-27,-10;1,0,38,-16,0;1,0,7,-44,2;1,0,9,-36,-15;1,0,2,-188,-183;1,0,18,-58,-22;1,0,70,-65,64;1,0,9,-139,-70;1,0,102,-21,91;1,0,19,-22,4;1,0,33,-63,-48;1,0,29,-33,27;1,0,6,-46,-27;1,0,1,-90,-87;1,0,33,-1,33;1,0,26,-16,21;1,0,35,-10,22;1,0,30,-10,12;1,0,10,-47,-32;1,0,30,-8,27;1,0,59,-5,56;1,0,17,-38,16;1,0,19,-23,-13;1,0,5,-39,-19;1,0,21,-40,19;1,0,58,-2,56;1,0,22,-6,4;1,0,12,-12,12;1,0,11,-29,10;1,0,0,-24,-19;1,0,4,-38,-18;1,0,14,-14,-5;1,0,16,-19,-19;1,0,29,-13,24;1,0,3,-34,-13;1,0,12,-30,-4;1,0,12,-9,-5;1,0,7,-14,7;1,0,20,-10,9;1,0,18,-12,1;1,0,22,-26,12;1,0,2,-58,-29;1,0,11,-27,7;1,0,10,-34,-12;1,0,24,-16,-3;1,0,16,-49,-43;1,0,10,-29,-12;1,0,37,-5,22;1,0,25,-6,14;1,0,14,-7,-2;1,0,28,-1,13;1,0,4,-27,-17;1,0,12,-15,-14;1,0,27,-2,21;1,0,9,-38,-28;1,0,12,-29,-26;1,0,20,-25,17;1,0,11,-12,1;1,0,2,-29,-13;1,0,14,-3,-3;1,0,1,-15,-1;1,0,15,-10,-1;1,0,22,-8,9;1,0,13,-17,0;1,0,9,-18,-9;1,0,17,-11,16;1,0,14,-11,-2;1,0,20,-5,17;1,0,4,-20,-8;4,0,0,-85,-67;1,0,20,0,20;1,0,0,-45,-44;1,0,18,-16,2;1,0,22,-13,17;1,0,9,-11,-2;1,0,15,-31,1;1,0,8,-38,-24;1,0,17,-48,-40;1,0,149,0,137;1,0,12,-51,-18;1,0,46,0,38;1,0,9,-38,-31;1,0,5,-24,-2;1,0,0,-18,-10;1,0,20,-15,9;1,0,0,-48,-38;1,0,8,-31,-6;1,0,4,-32,4;1,0,45,0,24;1,0,41,-11,41;1,0,70,-13,41;1,0,45,-1,17;1,0,24,-50,-3;1,0,28,-38,-24;1,0,4,-44,-34;1,0,65,-4,24;1,0,16,-37,6;1,0,254,-8,233;1,0,58,-36,33;1,0,1,-79,-78;1,0,49,-86,-80;1,0,53,-11,2;1,0,34,-93,-51;1,0,18,-60,-3;1,0,0,-105,-31;1,0,1,-97,-72;1,0,74,-8,39;1,0,47,-8,25;1,0,86,-4,57;1,0,44,-6,27;1,0,29,-39,26;1,0,29,-19,19;1,0,92,-7,59;1,0,54,-26,6;1,0,52,-54,-16;1,0,36,-59,-49;1,0,27,-36,-1;1,0,77,-5,76;1,0,48,-28,27;1,0,48,-33,44;1,0,38,-19,33;1,0,12,-41,-36;1,0,13,-31,-7;1,0,32,-35,-31;1,0,7,-29,-12;1,0,8,-26,-6;1,0,39,-19,12;1,0,32,-88,-71;1,0,30,-16,18;1,0,1,-43,-23;1,0,54,-1,45;1,0,33,-7,33;1,0,25,-14,8;1,0,14,-63,-61;1,0,59,-2,42;1,0,7,-38,-21;1,0,32,-6,30;1,0,13,-56,-37;1,0,66,-23,60;1,0,31,-27,-13;1,0,28,-10,-7;1,0,35,-15,33;1,0,43,-4,37;1,0,27,-6,22;1,0,20,-8,0;1,0,4,-54,-31;1,0,37,-14,27;1,0,44,-8,33;1,0,39,-5,28;1,0,22,-23,-20;1,0,12,-22,-17;1,0,10,-35,3;1,0,18,-28,17;1,0,7,-26,-6;1,0,15,-22,14;1,0,6,-45,-26;1,0,31,-12,31;1,0,7,-31,-16;1,0,11,-29,-5;1,0,25,-12,25;1,0,9,-19,-18;1,0,18,-24,-16;1,0,6,-29,6;1,0,30,-7,5;1,0,7,-42,5;1,0,25,-10,8;1,0,20,-18,-12;1,0,17,-28,-21;1,0,5,-58,-48;1,0,53,-8,51;1,0,13,-17,-14;1,0,12,-32,-4;1,0,18,-33,-20;1,0,17,-31,-6;1,0,71,-163,-144;1,0,33,-67,-2;1,0,16,-127,-122;1,0,34,-87,-53;1,0,50,-32,46;1,0,18,-26,-25;1,0,21,-52,-25;1,0,39,-34,-15;1,0,63,-1,13;1,0,14,-56,-34;1,0,18,-57,-47;1,0,50,-70,-55;1,0,50,-50,29;1,0,81,-24,38;1,0,3,-130,-110;1,0,48,-5,34;1,0,8,-126,-110;1,0,71,-15,50;1,0,86,-9,54;1,0,33,-34,9;1,0,2,-84,-60;1,0,20,-34,-32;1,0,5,-79,-67;1,0,44,-25,44;1,0,21,-32,-12;1,0,25,-58,-1;1,0,44,-6,41;1,0,60,-6,26;1,0,17,-70,5;1,0,27,-16,-6;1,0,38,-23,30;1,0,12,-53,-52;1,0,38,-5,1;1,0,54,-7,54;1,0,69,-2,55;1,0,26,-32,11;1,0,26,-33,-28;1,0,8,-38,-24;1,0,55,-21,51;1,0,11,-29,-26;1,0,30,-13,-5;1,0,1,-57,-20;1,0,57,-11,-7;1,0,27,-19,-5;1,0,9,-32,-3;1,0,77,-6,76;1,0,18,-32,4;1,0,28,-38,-31;1,0,28,-28,27;1,0,0,-49,-46;1,0,49,0,14;1,0,24,-26,-13;1,0,54,-2,44;1,0,55,-6,50;1,0,9,-37,2;1,0,7,-47,-29;1,0,11,-23,-8;1,0,10,-29,-14;1,0,9,-18,-10;1,0,31,-21,4;1,0,38,-14,4;1,0,1,-87,-86;1,0,12,-63,-7;1,0,35,-19,15;1,0,8,-80,-71;1,0,5,-84,-52;1,0,3,-120,-118;1,0,26,-30,-6;1,0,76,-7,63;1,0,23,-29,-4;1,0,7,-67,-44;1,0,0,-68,-15;1,0,30,-18,27;1,0,30,-42,-21;1,0,18,-31,16;1,0,10,-31,-14;1,0,44,-5,40;1,0,36,-40,-40;1,0,108,-24,87;1,0,36,-28,29;1,0,36,-6,18;1,0,33,-14,13;1,0,107,-14,103;1,0,36,-3,6;1,0,29,-26,22;1,0,32,-7,-6;1,0,41,-13,4;1,0,56,-23,48;1,0,24,-23,14;1,0,25,-13,-6;1,0,4,-78,-29;1,0,14,-45,-21;1,0,31,-21,-14;1,0,20,-57,-28;1,0,32,-32,23;1,0,20,-44,-44;1,0,34,-45,-36;1,0,14,-26,2;1,0,52,-2,38;1,0,5,-108,-104;1,0,37,-2,27;1,0,5,-30,2;1,0,10,-23,-5;1,0,45,-16,29;1,0,0,-87,-60;1,0,35,-9,32;1,0,88,-6,87;1,0,4,-222,-217;1,0,14,-53,-35;1,0,27,-13,13;1,0,8,-52,-47;1,0,47,-7,27;1,0,32,-9,-6;1,0,21,-28,-23;1,0,1,-33,-7;1,0,17,-25,-1;1,0,3,-46,-43;1,0,22,-57,12;1,0,35,-2,0;1,0,27,-22,-20;1,0,196,-3,180;1,0,1,-47,-21;1,0,33,-14,-12;1,0,58,-3,45;1,0,43,0,34;1,0,10,-63,-42;1,0,10,-64,-41;1,0,22,-10,6;1,0,6,-69,-66;1,0,9,-35,-16;1,0,4,-54,-26;1,0,18,-22,-2;1,0,9,-43,-42;1,0,32,-4,-4;1,0,14,-17,-15;1,0,67,-4,50;1,0,17,-21,-21;1,0,10,-33,-30;1,0,44,-12,29;1,0,27,-2,15;1,0,43,-4,40;1,0,17,-30,-7;1,0,6,-46,-42;1,0,28,-140,-138;1,0,166,-58,31;1,0,67,-42,3;1,0,61,-13,34;1,0,145,-28,74;1,0,77,-1,65;1,0,2,-67,-57;1,0,207,-4,153;1,0,49,-39,-19;1,0,40,-71,-43;1,0,41,-55,-22;1,0,53,-38,47;1,0,43,-28,-13;1,0,35,-63,-22;1,0,89,-3,89;1,0,37,-24,-7;1,0,109,-31,72;1,0,96,-38,58;1,0,103,-27,96;1,0,59,-43,55;1,0,25,-39,-10;1,0,60,-30,-6;1,0,77,-12,69;1,0,6,-82,-67;1,0,91,-6,87;1,0,44,-43,-24;1,0,25,-28,7;1,0,64,-21,59;1,0,139,-17,135;1,0,2,-75,-55;1,0,31,-12,13;1,0,35,-30,15;1,0,38,-11,6;1,0,40,-27,-3;1,0,10,-92,-64;1,0,22,-18,-8;1,0,23,-140,-140;1,0,18,-5,18;1,0,23,0,16;1,0,3,-14,-12;1,0,0,-80,-56;1,0,32,-4,17;1,0,1,-13,-13;1,0,33,-6,7;1,0,53,-6,50;1,0,25,-15,21;1,0,3,-67,-60;1,0,96,-9,46;1,0,6,-80,-24;1,0,62,-17,6;1,0,46,-1,1;1,0,90,0,69;1,0,0,-57,-52;1,0,23,-17,-3;1,0,10,-21,4;1,0,55,-1,17;1,0,22,-8,11;1,0,8,-33,-32;1,0,51,-2,34;1,0,2,-20,-6;1,0,8,-18,7;1,0,26,-40,-18;1,0,7,-27,-27;1,0,3,-37,-28;1,0,31,-12,28;1,0,5,-50,-27;1,0,30,-1,3;1,0,21,-40,-21;1,0,21,-16,15;1,0,17,-34,-13;1,0,37,-49,-39;1,0,15,-82,-64;1,0,13,-82,-60;1,0,32,-87,-64;1,0,42,-47,-10;1,0,6,-80,-47;1,0,98,-4,97;1,0,81,-47,74;1,0,8,-80,-59;1,0,102,-9,74;1,0,3,-58,-10;1,0,0,-108,-81;1,0,16,-83,-63;1,0,105,-45,89;1,0,83,-37,79;1,0,70,-78,-58;1,0,60,-24,17;1,0,78,-15,57;1,0,3,-121,-117;1,0,81,-12,61;1,0,2,-92,-89;1,0,0,-39,-22;1,0,16,-47,-37;1,0,76,-5,75;1,0,4,-45,-28;1,0,60,-11,29;1,0,61,-5,30;1,0,12,-33,-12;1,0,79,0,79;1,0,4,-55,-29;1,0,21,-27,8;1,0,67,-6,62;1,0,3,-33,-14;1,0,43,-31,38;1,0,21,-38,-24;1,0,64,0,34;1,0,3,-61,-61;1,0,18,-17,-7;1,0,5,-59,-42;1,0,16,-65,-49;1,0,7,-54,-43;1,0,24,-69,-41;1,0,34,-26,17;1,0,60,-24,35;1,0,27,-11,-11;1,0,2,-38,-36;1,0,53,-10,-4;1,0,43,-4,23;1,0,41,-3,34;1,0,26,-10,6;1,0,28,-3,21;1,0,1,-39,-31;1,0,26,-12,-4;1,0,41,-1,38;1,0,34,-6,26;1,0,7,-53,-12;1,0,18,-34,-31;1,0,15,-17,12;1,0,15,-40,-2;1,0,33,-20,-14;1,0,10,-22,-17;1,0,48,-5,41;1,0,14,-34,-17;1,0,3,-62,-54;1,0,9,-31,-11;1,0,5,-25,-24;1,0,22,-36,-31;1,0,23,-6,5;1,0,41,-4,30;1,0,14,-15,13;1,0,10,-39,-2;1,0,19,-174,-159;1,0,20,-81,-77;1,0,30,-136,-128;1,0,44,-48,17;1,0,35,-50,27;1,0,86,-10,68;1,0,37,-44,-4;1,0,56,-151,-137;1,0,121,-87,120;1,0,21,-83,-70;1,0,24,-89,-41;1,0,76,-23,73;1,0,67,-7,38;1,0,81,-9,37;1,0,87,-19,19;1,0,54,-63,54;1,0,66,-44,9;1,0,12,-172,-150;1,0,60,-67,-17;1,0,58,-18,30;1,0,66,-38,40;1,0,29,-36,-33;1,0,77,-3,45;1,0,61,-26,23;1,0,89,-7,16;1,0,10,-94,-65;1,0,58,-36,58;1,0,11,-88,-64;1,0,39,-46,18;1,0,135,-1,124;1,0,15,-81,-73;1,0,29,-20,-15;1,0,50,-5,34;1,0,19,-24,-15;1,0,31,-29,14;1,0,55,-6,11;1,0,57,-19,21;1,0,64,-1,18;1,0,14,-74,-70;1,0,172,-8,145;1,0,38,-38,-19;1,0,35,-27,-20;1,0,9,-51,-51;1,0,31,-78,-75;1,0,23,-102,-90;1,0,64,-19,61;1,0,92,-28,87;1,0,28,-14,-4;1,0,14,-119,-84;1,0,73,-8,43;1,0,110,0,107;1,0,29,-8,15;1,0,0,-87,-54;1,0,2,-61,-32;1,0,92,-4,91;1,0,95,-10,93;1,0,9,-86,-84;1,0,9,-46,-33;1,0,12,-31,6;1,0,27,-38,0;1,0,2,-101,-98;1,0,77,0,47;1,0,19,-34,-4;1,0,100,0,82;1,0,6,-454,-432;1,0,15,-245,-209;1,0,117,-30,40;1,0,16,-116,-90;1,0,215,-2,214;1,0,140,-4,109;1,0,23,-71,2;1,0,37,-29,25;1,0,148,-17,37;1,0,43,-39,-11;1,0,59,-41,36;1,0,54,-32,51;1,0,87,-16,1;1,0,10,-204,-178;1,0,102,-63,78;1,0,29,-35,7;1,0,5,-324,-200;1,0,74,-47,-31;1,0,161,-20,137;1,0,51,-7,13;1,0,119,-8,111;1,0,26,-53,-53;1,0,18,-118,-104;1,0,115,-4,82;1,0,83,-45,7;1,0,32,-47,4;1,0,35,-106,-99;1,0,30,-54,-6;1,0,73,-9,73;1,0,97,-12,91;1,0,16,-86,-81;1,0,99,-2,76;1,0,44,-39,-34;1,0,28,-90,-31;1,0,11,-79,-77;1,0,35,-51,3;1,0,10,-83,6;1,0,48,-43,47;1,0,39,-49,-32;1,0,50,-39,-24;1,0,56,-42,29;1,0,7,-146,-134;1,0,51,-48,-16;1,0,7,-84,-63;1,0,6,-121,-120;1,0,97,-14,89;1,0,43,-63,-63;1,0,54,-45,40;1,0,73,-24,8;1,0,40,-39,36;1,0,21,-28,-5;1,0,74,-3,69;1,0,45,-18,22;1,0,14,-83,-52;1,0,16,-84,-57;1,0,34,-37,-37;1,0,31,-31,-17;1,0,32,-27,18;1,0,59,-14,57;1,0,28,-15,-7;1,0,14,-38,-32;1,0,1,-49,-6;1,0,72,-26,67;1,0,20,-15,14;1,0,72,-4,56;1,0,79,-8,79;1,0,68,-2,61;1,0,1,-100,-45;1,0,50,-8,23;1,0,54,-22,43;1,0,30,-3,6;1,0,72,-7,62;1,0,41,-17,20;1,0,33,-12,-5;1,0,61,-10,33;1,0,47,-10,27;1,0,9,-34,-24;1,0,0,-49,-39;1,0,0,-43,-37;1,0,10,-24,3;1,0,8,-44,-35;1,0,6,-54,-46;1,0,11,-19,9;1,0,44,-9,39;1,0,79,0,74;1,0,25,-16,20;1,0,15,-26,3;1,0,30,-15,29;1,0,15,-11,3;1,0,4,-22,-13;1,0,20,-19,-4;1,0,19,-8,6;1,0,9,-30,-26;1,0,37,0,30;1,0,12,-39,-21;1,0,7,-36,-11;1,0,45,-11,14;1,0,13,-35,-18;1,0,6,-34,-13;1,0,11,-22,9;1,0,29,-1,22;1,0,12,-29,-10;1,0,3,-36,-22;1,0,5,-17,-13;1,0,17,-20,-1;1,0,26,-13,16;1,0,1,-18,-4;1,0,34,-9,28;1,0,9,-35,-21;1,0,23,-8,-5;1,0,26,0,24;1,0,2,-20,0;1,0,1,-35,-31;1,0,11,-17,-13;1,0,16,-18,5;1,0,3,-16,-13;1,0,9,-19,-4;1,0,35,0,17;1,0,30,-2,7;1,0,23,-9,2;1,0,0,-69,-67;1,0,18,-20,-11;1,0,21,-7,14;1,0,17,-19,-2;1,0,39,-8,39;1,0,5,-25,-22;1,0,48,-14,2;1,0,78,-7,61;1,0,28,-56,-6;1,0,18,-18,8;1,0,1,-151,-111;1,0,40,-26,-5;1,0,180,0,111;1,0,36,-24,3;1,0,67,0,65;1,0,0,-28,-17;1,0,38,-7,28;1,0,11,-15,-11;1,0,20,-1,16;1,0,6,-49,-42;1,0,15,-5,11;1,0,17,-45,-44;1,0,9,-24,-23;1,0,12,0,3;1,0,19,-1,2;1,0,6,-36,-36;1,0,10,-52,-44;1,0,52,-5,49;1,0,53,-6,44;1,0,38,-12,34;1,0,55,-1,43;1,0,83,-17,55;1,0,29,-21,-15;1,0,50,-83,21;1,0,80,-5,66;1,0,26,-30,8;1,0,76,-12,50;1,0,50,-1,41;1,0,51,-23,29;1,0,20,-68,-60;1,0,61,-21,43;1,0,22,-22,15;1,0,36,-11,-1;1,0,2,-55,-22;1,0,99,-11,82;1,0,31,-30,-9;1,0,21,-32,-9;1,0,15,-62,-34;1,0,72,-18,70;1,0,5,-108,-97;1,0,50,-22,27;1,0,121,-6,45;1,0,10,-59,-30;1,0,86,-10,82;1,0,22,-52,-15;1,0,33,-28,8;1,0,20,-19,6;1,0,35,-11,4;1,0,7,-31,-28;1,0,45,-4,1;1,0,16,-26,0;1,0,49,-9,40;1,0,19,-30,-21;1,0,43,-38,-37;1,0,3,-62,-54;1,0,3,-54,-29;1,0,25,-63,-58;1,0,37,-12,30;1,0,31,-42,-9;1,0,47,-16,30;1,0,545,-39,520;1,0,372,-11,136;1,0,54,-134,53;1,0,284,-11,220;1,0,206,-3,71;1,0,110,-13,40;1,0,211,-26,101;1,0,93,-28,-27;1,0,84,-56,8;1,0,197,-28,167;1,0,159,-31,138;1,0,38,-103,-39;1,0,57,-30,1;1,0,39,-49,-24;1,0,80,-44,73;1,0,5,-146,-138;1,0,70,-71,37;1,0,12,-163,-113;1,0,74,-18,72;1,0,1,-46,-24;1,0,134,-39,108;1,0,98,-17,61;1,0,36,-64,-28;1,0,46,-27,24;1,0,49,-96,-74;1,0,80,-14,72;1,0,84,-14,38;1,0,44,-9,23;1,0,95,-20,54;1,0,34,-34,-5;1,0,73,-20,27;1,0,27,-44,6;1,0,11,-36,-14;1,0,11,-90,-64;1,0,0,-167,-162;1,0,31,-82,12;1,0,37,-67,37;1,0,77,-14,-7;1,0,124,-11,95;1,0,18,-61,-34;1,0,28,-42,11;1,0,17,-48,0;1,0,1,-99,-51;1,0,83,-57,63;1,0,49,-54,-15;1,0,68,-101,1;1,0,250,-810,-434;1,0,136,-199,-80;1,0,497,-4,361;1,0,92,-322,-194;1,0,112,-27,15;1,0,29,-173,-57;1,0,250,-21,229;1,0,59,-153,5;1,0,201,-32,134;1,0,211,-2,172;1,0,29,-124,-67;1,0,314,-37,312;1,0,134,-57,56;1,0,21,-246,-63;1,0,47,-58,17;1,0,40,-101,28;1,0,143,0,87;1,0,55,-41,34;1,0,192,-11,173;1,0,163,-11,53;1,0,130,-55,107;1,0,57,-26,19;1,0,33,-63,-58;1,0,37,-68,-37;1,0,127,-7,88;1,0,33,-66,10;1,0,64,-64,-41;1,0,98,-45,17;1,0,71,-89,-31;1,0,15,-53,-50;1,0,19,-96,-66;1,0,18,-133,-130;1,0,158,-7,152;1,0,210,-4,195;1,0,52,-57,-3;1,0,91,-42,52;1,0,106,-12,100;1,0,73,-127,-13;1,0,39,-74,-2;1,0,92,-18,9;1,0,4,-112,-77;1,0,1,-96,-30;1,0,23,-69,-2;1,0,90,-47,72;1,0,43,-49,34;1,0,34,-130,-121;1,0,40,-72,-63;1,0,46,-40,31;1,0,34,-80,-60;1,0,14,-145,-142;1,0,27,-41,3;1,0,2,-160,-104;1,0,127,-15,104;1,0,72,-20,13;1,0,20,-118,-114;1,0,81,-43,77;1,0,3,-72,-56;1,0,13,-99,-99;1,0,19,-102,-55;1,0,75,-33,-8;1,0,87,-44,83;1,0,46,-42,12;1,0,17,-56,-4;1,0,12,-56,-17;1,0,17,-98,-84;1,0,93,-22,76;1,0,46,-25,41;1,0,15,-143,-134;1,0,73,-29,57;1,0,28,-51,-25;1,0,88,-28,-25;1,0,73,-32,67;1,0,12,-39,-1;1,0,36,-37,-37;1,0,63,-53,-43;1,0,27,-45,-45;1,0,6,-124,-110;1,0,83,-5,31;1,0,46,-5,26;1,0,42,-30,37;1,0,79,-13,74;1,0,84,-10,80;1,0,25,-70,-70;1,0,27,-64,-48;1,0,69,-60,69;1,0,77,-2,73;1,0,25,-63,-56;1,0,14,-63,-26;1,0,41,-57,-25;1,0,5,-99,-33;1,0,143,-4,143;1,0,28,-69,19;1,0,14,-89,-17;1,0,85,-16,64;1,0,6,-109,-103;1,0,35,-22,13;1,0,80,-23,61;1,0,18,-158,-147;1,0,15,-846,-530;1,0,329,-58,310;1,0,59,-369,-253;1,0,51,-199,31;1,0,57,-541,-196;1,0,100,-229,-122;1,0,248,-5,147;1,0,102,-144,-24;1,0,36,-189,-184;1,0,82,-84,66;1,0,88,-215,-18;1,0,157,-137,-9;1,0,167,-16,84;1,0,42,-136,-119;1,0,25,-140,-103;1,0,134,-1,57;1,0,95,-37,81;1,0,101,-22,20;1,0,89,-60,2;1,0,15,-202,-155;1,0,99,0,92;1,0,37,-45,-12;1,0,69,-9,38;1,0,64,-12,54;1,0,41,-32,7;1,0,17,-44,-5;1,0,4,-97,-16;1,0,40,-63,4;1,0,44,-115,-44;1,0,138,-4,77;1,0,29,-52,-39;1,0,82,-16,56;1,0,19,-90,-49;1,0,70,-30,69;1,0,5,-32,-19;1,0,52,-60,-49;1,0,34,-38,-31;1,0,31,-19,-4;1,0,43,-27,17;1,0,47,-17,18;1,0,41,-11,19;1,0,20,-46,7;1,0,37,-12,-12;1,0,30,-11,-4;1,0,2,-45,-37;1,0,34,-30,-3;1,0,106,-10,100;1,0,65,-27,43;1,0,8,-93,-69;1,0,6,-68,-67;1,0,52,0,27;1,0,51,-6,51;1,0,17,-36,-33;1,0,5,-34,-4;1,0,41,-42,35;1,0,21,-22,3;1,0,14,-33,0;1,0,90,-1,66;1,0,28,-13,23;1,0,12,-18,2;1,0,16,-43,-37;1,0,30,-12,-3;1,0,32,-21,28;1,0,68,-5,53;1,0,8,-57,-19;1,0,39,-11,36;1,0,0,-22,-8;1,0,35,-7,8;1,0,67,-9,45;1,0,2,-34,-24;1,0,86,-4,72;1,0,43,-38,-24;1,0,54,0,15;1,0,12,-35,-27;584,-213,31,0,31;1,0,17,-16,3;1,0,48,-19,15;1,0,37,-27,31;1,0,3,-77,-77;1,0,175,-6,42;1,0,146,-15,145;1,0,50,-20,25;1,0,51,-1,42;1,0,54,-6,51;1,0,12,-53,-27;1,0,40,-53,40;1,0,40,-34,34;1,0,2,-31,-16;1,0,34,-11,34;1,0,19,-25,-12;1,0,69,-13,66;1,0,47,-24,31;1,0,2,-116,-61;1,0,11,-184,-184;1,0,102,-1,36;1,0,72,0,52;1,0,94,-31,35;1,0,73,-30,65;1,0,19,-40,5;1,0,23,-33,6;1,0,52,-29,44;1,0,30,-73,-32;1,0,19,-110,-99;1,0,81,-40,-18;1,0,6,-58,-49;1,0,46,-83,-20;1,0,57,-11,51;1,0,19,-108,-95;1,0,50,-6,38;1,0,25,-33,3;1,0,52,-29,-29;1,0,7,-243,-142;1,0,48,-96,12;1,0,2,-103,-10;1,0,88,-17,78;1,0,70,-17,0;1,0,19,-70,-51;1,0,27,-89,-78;1,0,33,-78,-36;1,0,13,-137,-128;1,0,56,-41,44;1,0,53,-22,51;1,0,51,-15,23;1,0,35,-33,-20;1,0,30,-59,-37;1,0,56,-19,52;1,0,9,-87,0;1,0,64,-14,11;1,0,70,-21,45;1,0,28,-53,26;1,0,25,-43,6;1,0,63,-24,40;1,0,8,-51,-30;1,0,43,-45,-18;1,0,3,-63,-4;1,0,12,-26,-11;1,0,33,-21,30;1,0,5,-29,-14;1,0,53,0,52;1,0,64,-2,14;1,0,51,-1,36;1,0,40,-27,9;1,0,26,-17,2;1,0,27,-14,1;1,0,3,-60,-10;1,0,11,-42,9;1,0,5,-51,-46;1,0,60,-19,28;1,0,45,-6,27;1,0,30,-13,5;1,0,13,-17,-4;1,0,81,-1,77;1,0,79,0,64;1,0,28,-28,7;1,0,0,-57,-23;1,0,12,-49,-35;1,0,3,-105,-97;1,0,50,-20,48;1,0,19,-53,-37;1,0,16,-27,-14;1,0,35,-3,27;1,0,37,-15,13;1,0,11,-23,-5;1,0,15,-34,8;1,0,27,-15,24;1,0,7,-25,-13;1,0,12,-49,-33;1,0,4,-45,-1;1,0,10,-26,-9;1,0,23,-15,0;1,0,47,0,41;1,0,42,-11,29;1,0,71,-6,-1;1,0,21,-36,-31;1,0,18,-35,-3;1,0,60,-29,-29;1,0,27,-20,6;1,0,29,-27,-10;1,0,41,-8,15;1,0,39,-15,20;1,0,18,-17,-17;1,0,22,-39,12;1,0,31,-7,7;1,0,37,-24,16;1,0,68,-4,67;1,0,24,-25,-6;1,0,20,-75,-39;1,0,23,-76,-74;1,0,84,0,74;1,0,82,-31,75;1,0,136,-11,130;1,0,37,-28,25;1,0,7,-62,-54;1,0,63,-36,33;1,0,66,-18,66;1,0,16,-37,4;1,0,23,-52,-4;1,0,17,-10,9;1,0,39,-29,26;1,0,4,-50,-26;1,0,26,-31,-2;1,0,23,-47,-46;1,0,56,-10,16;1,0,28,-45,-23;1,0,9,-40,-21;1,0,32,-6,16;1,0,59,-27,41;1,0,31,-7,19;1,0,73,-7,70;1,0,26,-35,-24;1,0,9,-29,0;1,0,23,-19,-17;1,0,34,-15,10;1,0,1,-70,-33;1,0,65,-11,60;1,0,14,-22,1;1,0,0,-35,-32;1,0,39,-15,39;1,0,74,-6,52;1,0,31,-28,-26;1,0,11,-61,-44;1,0,20,-31,18;1,0,9,-33,-8;1,0,7,-38,-28;1,0,47,0,39;1,0,16,-27,-27;1,0,7,-28,-25;1,0,33,-5,19;1,0,2,-49,-27;1,0,0,-71,-40;1,0,21,-27,20;1,0,1,-33,-20;1,0,39,-15,19;1,0,4,-44,-18;1,0,70,-2,70;1,0,53,0,19;1,0,54,-1,45;1,0,4,-33,-5;1,0,30,-6,16;1,0,4,-24,-15;1,0,11,-24,10;1,0,13,-39,-1;1,0,33,-22,26;1,0,25,-25,3;1,0,35,-7,-4;1,0,29,-2,18;1,0,32,-5,27;1,0,74,-18,47;1,0,8,-43,3;1,0,0,-35,-31;1,0,67,-7,63;1,0,94,-1,41;1,0,53,-3,36;1,0,22,-28,-15;1,0,13,-64,-62;1,0,14,-51,-51;1,0,76,0,69;1,0,17,-6,15;1,0,18,-39,-8;1,0,2,-64,-16;1,0,28,-10,5;1,0,15,-23,11;1,0,34,-4,11;1,0,18,-19,-3;1,0,2,-47,-27;1,0,9,-69,-40;1,0,28,-18,-18;1,0,71,-13,70;1,0,0,-73,-23;1,0,60,-17,-10;1,0,15,-37,-15;1,0,0,-94,-85;1,0,16,-40,6;1,0,0,-71,-60;1,0,22,-13,0;1,0,20,-23,-4;1,0,32,-15,28;1,0,28,-65,-52;1,0,48,0,18;1,0,64,-9,31;1,0,36,-34,20;1,0,122,-10,121;1,0,46,-90,-80;1,0,53,-12,24;1,0,16,-29,-23;1,0,21,-36,-33;1,0,22,-24,-22;1,0,52,-3,41;1,0,12,-34,6;1,0,43,-3,-3;1,0,16,-46,-15;1,0,50,-3,24;1,0,10,-15,-7;1,0,8,-66,-49;1,0,50,-8,46;1,0,9,-61,-40;1,0,7,-71,-66;1,0,2,-53,-52;1,0,25,-17,7;1,0,44,-29,30;1,0,16,-9,14;1,0,12,-10,6;1,0,39,-10,-7;1,0,34,-14,29;1,0,36,0,21;1,0,5,-45,-38;1,0,7,-38,-9;1,0,3,-41,-19;1,0,21,-8,21;1,0,39,0,34;1,0,8,-11,-6;1,0,30,-9,15;1,0,12,-5,0;1,0,35,-8,33;1,0,1,-27,-17;1,0,15,-26,-10;1,0,2,-21,0;1,0,33,-1,21;1,0,26,-7,-2;1,0,27,-6,0;1,0,32,0,27;1,0,24,0,20;1,0,29,-4,26;1,0,8,-17,-4;1,0,1,-44,-39;1,0,1,-79,-76;1,0,5,-51,-28;1,0,50,0,48;1,0,12,-18,-6;1,0,5,-24,-15;1,0,34,-4,2;1,0,69,-6,29;1,0,32,-2,16;1,0,2,-51,-50;1,0,12,-15,3;1,0,12,-25,12;1,0,13,-18,-1;1,0,0,-63,-40;1,0,5,-32,-15;1,0,14,-15,-3;1,0,17,-14,-12;1,0,22,-13,7;1,0,22,-10,-2;1,0,13,-9,-5;1,0,19,-8,15;1,0,7,-9,-1;1,0,23,-5,9;1,0,11,-7,1;1,0,12,-41,6;1,0,15,-18,-10;1,0,1,-48,-32;1,0,25,-10,-2;1,0,0,-48,-39;1,0,15,-20,14;1,0,16,-177,-177;2,0,0,-114,-70;1,0,47,-3,46;1,0,54,-12,40;1,0,67,-21,44;1,0,44,-10,11;1,0,27,-91,-69;1,0,32,-12,20;1,0,43,-31,30;1,0,45,0,28;1,0,15,-12,-7;1,0,35,-101,-72;1,0,183,0,183;1,0,78,-37,70;1,0,0,-151,-131;1,0,16,-10,15;1,0,30,0,27;1,0,35,-6,3;1,0,4,-41,-17;1,0,10,-15,-10;1,0,3,-41,-16;1,0,3,-24,-22;1,0,16,-10,13;1,0,22,-21,-7;1,0,20,-19,16;1,0,9,-14,6;1,0,47,-1,42;1,0,9,-27,-20;1,0,44,-5,40;1,0,4,-15,-3;1,0,11,-37,-32;1,0,1,-26,-6;1,0,2,-41,-24;1,0,39,-6,38;1,0,44,-12,28;1,0,6,-30,-29;1,0,46,-7,41;1,0,23,-16,15;1,0,42,-38,18;1,0,12,-26,-19;1,0,18,-29,-25;1,0,19,-4,1;1,0,31,-36,-26;1,0,37,-28,-25;1,0,12,-33,8;1,0,46,-5,32;1,0,37,-16,18;1,0,49,-22,35;1,0,15,-25,-5;1,0,20,-10,4;1,0,23,-11,9;1,0,53,-28,33;1,0,31,-26,30;1,0,12,-22,11;1,0,2,-47,-28;1,0,23,-6,-4;1,0,0,-54,-20;1,0,20,-17,-1;1,0,74,-10,71;1,0,39,-35,-34;1,0,26,-22,22;1,0,12,-38,-9;1,0,0,-37,-21;1,0,25,-8,-3;1,0,42,-13,37;1,0,16,-9,14;1,0,16,-17,5;1,0,23,-2,15;1,0,4,-18,0;1,0,6,-37,-27;1,0,51,-8,42;1,0,55,0,55;1,0,26,-18,21;1,0,9,-34,-32;1,0,41,-5,33;1,0,27,-19,-4;1,0,31,-6,26;1,0,4,-31,-7;1,0,2,-71,-57;1,0,64,-9,64;1,0,44,-9,35;1,0,25,-14,17;1,0,35,-7,2;1,0,35,-2,17;1,0,18,-12,11;1,0,27,-4,15;1,0,43,-2,25;1,0,4,-36,-28;1,0,21,-28,-21;1,0,1,-33,-26;1,0,23,-3,8;1,0,18,-18,11;1,0,40,0,36;1,0,14,-14,-12;1,0,22,-10,2;1,0,23,0,7;1,0,14,-17,-2;1,0,10,-31,-19;1,0,12,-9,-6;1,0,8,-26,-5;1,0,7,-38,-13;1,0,17,-9,-3;1,0,19,-8,15;1,0,10,-30,-9;1,0,8,-21,-6;1,0,1,-37,-22;1,0,25,-11,0;1,0,6,-23,-13;1,0,56,-34,37;1,0,65,-14,21;1,0,39,-3,39;1,0,1,-64,-59;1,0,34,-57,29;1,0,27,-18,12;1,0,30,-29,-12;1,0,2,-45,-34;1,0,64,-7,27;1,0,26,-17,-6;1,0,51,-10,42;1,0,0,-46,-18;1,0,28,-19,6;1,0,70,-4,66;1,0,13,-45,-23;1,0,32,-22,2;1,0,63,0,50;1,0,6,-38,-27;1,0,15,-161,-109;1,0,68,-8,53;1,0,13,-71,-53;1,0,11,-49,-12;1,0,24,-26,-17;1,0,12,-80,-71;1,0,15,-59,-25;1,0,51,-33,51;1,0,2,-93,-86;1,0,11,-107,-81;1,0,11,-156,-145;1,0,19,-72,-19;1,0,12,-191,-159;1,0,34,-41,-32;1,0,46,-537,-359;1,0,87,-180,-118;1,0,31,-166,-1;1,0,259,-74,257;1,0,4,-106,-25;1,0,86,-29,26;1,0,132,-6,102;1,0,13,-60,2;1,0,58,-20,-6;1,0,25,-176,-165;1,0,89,0,30;1,0,47,-21,6;1,0,0,-94,-74;1,0,31,-57,-25;1,0,78,-88,-2;1,0,62,-64,-51;1,0,53,-65,20;1,0,73,-38,25;1,0,109,0,109;1,0,71,-27,5;1,0,55,-11,6;1,0,55,-7,-2;1,0,75,-30,8;1,0,54,-27,-16;1,0,0,-90,-64;1,0,77,0,44;1,0,7,-80,-59;1,0,33,-38,31;1,0,64,0,42;1,0,50,-5,41;1,0,90,-1,90;1,0,20,-56,-44;1,0,2,-114,-97;1,0,40,-28,-18;1,0,52,-8,44;1,0,50,-9,49;1,0,34,-29,12;1,0,25,-46,-10;1,0,26,-31,23;1,0,12,-43,-6;1,0,46,-19,33;1,0,27,-25,3;1,0,84,-6,64;1,0,70,-2,44;1,0,34,-16,28;1,0,10,-54,-36;1,0,36,-19,17;1,0,0,-98,-86;1,0,23,-56,19;1,0,41,-34,-25;1,0,130,-2,121;1,0,2,-93,-88;1,0,46,-7,23;1,0,25,-41,-33;1,0,47,-10,39;1,0,23,-33,19;1,0,39,-24,-1;1,0,21,-23,4;1,0,34,-15,34;1,0,20,-20,6;1,0,12,-114,-83;1,0,95,-5,87;1,0,0,-100,-85;1,0,28,-17,17;1,0,80,-40,72;1,0,5,-94,-91;1,0,50,-44,-38;1,0,16,-72,-72;1,0,46,-7,10;1,0,48,-2,6;1,0,5,-55,-31;1,0,49,-12,42;1,0,82,-10,15;1,0,16,-84,-83;1,0,60,-44,-35;1,0,54,-21,17;1,0,33,-32,-20;1,0,31,-64,-7;1,0,9,-58,-26;1,0,85,-5,65;1,0,53,-13,22;1,0,45,-11,27;1,0,14,-32,-32;1,0,41,-46,-26;1,0,41,-24,-18;1,0,33,-28,-11;1,0,53,-23,24;1,0,33,-16,14;1,0,32,-12,25;1,0,45,-4,33;1,0,36,-5,20;1,0,9,-63,-52;1,0,31,-13,-6;1,0,23,0,17;1,0,0,-75,-54;1,0,18,-57,-39;1,0,54,-6,36;1,0,2,-53,-41;1,0,45,-10,18;1,0,52,0,20;1,0,20,-11,8;1,0,30,-9,-6;1,0,38,-4,14;1,0,0,-34,-27;1,0,26,-4,26;1,0,5,-31,-30;1,0,23,-6,12;1,0,8,-16,-10;1,0,4,-34,1;1,0,43,-5,43;1,0,10,-85,-78;1,0,7,-38,6;1,0,5,-48,-16;1,0,14,-27,-22;1,0,59,-4,49;1,0,30,-4,-3;1,0,66,-2,66;1,0,38,-13,34;1,0,44,-4,38;1,0,12,-17,-13;1,0,28,-6,24;1,0,19,-8,16;1,0,5,-22,-19;1,0,6,-21,2;1,0,21,-10,18;1,0,19,-7,16;1,0,3,-16,-8;1,0,19,-12,-7;1,0,27,0,18;1,0,0,-41,-41;1,0,4,-118,-114;1,0,35,-21,33;1,0,76,-6,67;1,0,3,-41,-35;1,0,42,0,24;1,0,59,-3,47;1,0,3,-39,-17;1,0,36,-6,14;1,0,3,-37,-35;1,0,4,-20,-1;1,0,8,-24,1;1,0,23,-10,-5;1,0,20,-10,9;1,0,8,-38,-21;1,0,23,-4,22;1,0,36,-24,25;1,0,0,-38,-15;1,0,15,-79,-79;2,0,0,-70,-28;1,0,18,-11,9;1,0,99,-16,93;1,0,17,-40,-1;1,0,0,-17,-11;1,0,88,-24,76;1,0,9,-48,-31;1,0,22,-6,12;1,0,11,-126,-80;1,0,28,-44,-5;1,0,19,-71,-64;1,0,101,0,83;1,0,33,-25,16;1,0,85,-4,85;1,0,68,0,43;1,0,4,-9,-3;1,0,6,-19,-2;1,0,11,-23,-21;1,0,0,-31,-30;1,0,14,-6,9;1,0,28,0,28;1,0,13,-27,-19;1,0,13,-16,-12;1,0,25,-10,7;1,0,23,-15,-14;1,0,13,-4,4;1,0,21,-20,20;1,0,26,-16,17;1,0,44,-2,5;1,0,25,-7,-5;1,0,6,-35,-29;1,0,39,-1,19;1,0,59,-6,59;1,0,3,-45,-15;1,0,0,-75,-47;1,0,50,-27,44;1,0,31,-27,-10;1,0,17,-32,-19;1,0,53,-8,50;1,0,4,-66,-49;1,0,16,-38,-25;1,0,37,-11,1;1,0,33,-40,-35;1,0,54,-3,47;1,0,3,-23,-9;1,0,18,-14,15;1,0,63,0,62;1,0,4,-57,-39;1,0,18,-24,-7;1,0,2,-37,-36;1,0,10,-39,-17;1,0,16,-21,14;1,0,16,-22,3;1,0,28,-25,5;1,0,1,-47,-18;1,0,30,-9,22;1,0,17,-39,-22;1,0,10,-50,-47;1,0,9,-33,-13;1,0,31,-6,-1;1,0,25,-4,6;1,0,9,-24,-9;1,0,30,-5,27;1,0,5,-34,-22;1,0,24,-12,23;1,0,26,-15,25;1,0,2,-37,-14;1,0,20,-21,5;1,0,7,-28,-4;1,0,3,-29,-16;1,0,4,-32,-12;1,0,17,-30,-3;1,0,1,-30,-28;1,0,4,-20,-1;1,0,7,-83,-83;1,0,46,-2,40;1,0,6,-35,-14;1,0,29,-11,19;1,0,20,-18,-18;1,0,5,-18,-5;1,0,17,-2,6;1,0,0,-42,-11;1,0,24,-11,18;1,0,15,-44,-39;1,0,20,-6,18;1,0,3,-37,-33;1,0,29,-12,12;1,0,1,-41,-18;1,0,2,-112,-101;1,0,40,0,21;1,0,34,-15,19;1,0,6,-38,-33;1,0,20,-4,12;1,0,15,-11,6;1,0,47,-9,41;1,0,17,-13,-1;1,0,34,0,22;1,0,5,-34,-32;1,0,22,-12,2;1,0,26,-2,19;1,0,30,-4,23;1,0,39,-5,16;1,0,37,-9,29;1,0,0,-37,-37;1,0,9,-31,-25;1,0,48,-2,17;1,0,10,-31,0;1,0,12,-45,-30;1,0,39,-12,35;1,0,4,-27,-3;1,0,44,-7,29;1,0,23,-12,18;1,0,27,-2,3;1,0,31,-19,18;1,0,16,-20,16;1,0,36,-3,16;1,0,59,-2,57;1,0,22,-51,-40;1,0,18,-18,13;1,0,33,-16,16;1,0,13,-51,-29;1,0,23,-27,-4;1,0,62,0,9;1,0,76,-1,66;1,0,4,-79,-42;1,0,97,0,68;1,0,18,-53,-9;1,0,3,-61,-30;1,0,0,-69,-58;1,0,12,-50,-31;1,0,0,-130,-114;1,0,35,-35,-33;1,0,40,-30,34;1,0,23,-47,-23;1,0,14,-35,-10;1,0,75,-2,73;1,0,84,-9,84;1,0,27,-35,-31;1,0,66,-2,66;1,0,26,-31,-28;1,0,33,-9,19;1,0,16,-38,-38;1,0,33,-8,22;1,0,17,-66,-64;1,0,36,-42,3;1,0,11,-67,-49;1,0,20,-49,-23;1,0,6,-35,-24;1,0,27,-29,-1;1,0,42,-21,14;1,0,3,-72,-50;1,0,15,-86,-60;1,0,5,-55,-16;1,0,0,-79,-68;1,0,27,-44,-37;1,0,114,-28,63;1,0,22,-41,-4;1,0,15,-57,-12;1,0,5,-115,-95;1,0,35,-7,3;1,0,68,-3,56;1,0,0,-40,-26;1,0,11,-37,-13;1,0,12,-33,-9;1,0,53,-9,17;1,0,58,-9,56;1,0,131,-1,130;1,0,33,-70,-36;1,0,24,-16,19;1,0,141,-3,135;1,0,21,-37,-13;1,0,5,-73,-71;1,0,45,-32,-32;1,0,23,-23,-22;1,0,9,-47,-47;1,0,32,-47,-35;1,0,78,-28,57;1,0,6,-57,-39;1,0,46,-21,9;1,0,13,-46,-46;1,0,38,-15,-14;1,0,16,-12,7;1,0,41,-13,23;1,0,16,-30,-8;1,0,9,-71,-65;1,0,2,-71,-65;1,0,14,-28,-11;1,0,67,-17,-10;1,0,56,-32,45;1,0,19,-22,-10;1,0,59,-6,52;1,0,50,-37,48;1,0,38,-28,-22;1,0,0,-81,-70;1,0,39,-9,14;1,0,41,-11,11;1,0,122,-39,96;1,0,39,-68,-23;1,0,79,-10,79;1,0,41,-28,-14;1,0,113,-68,-61;1,0,72,-95,-30;1,0,227,0,198;1,0,14,-82,-66;1,0,37,-60,-2;1,0,78,-2,49;1,0,56,-20,8;1,0,22,-50,3;1,0,30,-49,-14;1,0,125,-18,119;1,0,1,-137,-129;1,0,51,-19,-19;1,0,38,-50,-19;1,0,13,-100,-43;1,0,132,-18,107;1,0,39,-48,-19;1,0,104,0,89;1,0,13,-21,6;1,0,26,-21,-13;1,0,6,-58,-27;1,0,55,-1,49;1,0,8,-66,-32;1,0,59,0,44;1,0,6,-73,-73;1,0,3,-31,-14;1,0,18,-70,-46;1,0,62,-36,-32;1,0,20,-13,13;1,0,9,-62,-44;1,0,30,-12,20;1,0,10,-42,-14;1,0,30,-30,-6;1,0,4,-66,-63;1,0,0,-70,-70;1,0,62,-54,50;1,0,42,-16,-9;1,0,5,-104,-64;1,0,8,-52,-34;1,0,69,-14,28;1,0,1,-122,-116;1,0,35,-20,-15;1,0,31,-10,4;1,0,59,-18,57;1,0,60,-10,55;1,0,36,-18,12;1,0,71,-6,45;1,0,0,-35,-35;1,0,48,-98,-10;1,0,92,-37,75;1,0,26,-54,-9;1,0,17,-31,-6;1,0,20,-35,-24;1,0,3,-35,-19;1,0,31,-11,11;1,0,15,-20,11;1,0,12,-23,-10;1,0,24,-2,6;1,0,16,-19,-9;1,0,33,0,8;1,0,20,-11,16;1,0,10,-31,-14;1,0,16,-6,11;1,0,4,-38,-26;1,0,43,-10,37;1,0,0,-26,-19;1,0,6,-19,-9;1,0,10,-22,2;1,0,48,-3,36;1,0,9,-18,-15;1,0,5,-51,-14;1,0,11,-20,11;1,0,37,-6,37;1,0,18,-4,12;1,0,16,-10,7;1,0,33,-8,1;1,0,32,-12,-11;1,0,32,-9,11;1,0,1,-36,-31;1,0,43,-2,21;1,0,2,-20,-6;1,0,8,-21,-16;1,0,48,-6,35;1,0,3,-30,-21;1,0,15,-9,14;1,0,10,-23,-9;1,0,15,-16,3;1,0,0,-159,-159;1,0,58,0,56;1,0,46,-47,15;1,0,6,-34,-25;1,0,13,-9,8;1,0,96,-15,43;1,0,24,-79,-77;1,0,85,-74,85;1,0,6,-23,-13;1,0,29,-4,29;1,0,9,-101,-43;1,0,32,-22,23;1,0,4,-106,-105;1,0,141,0,126;1,0,16,-17,-17;1,0,24,0,23;1,0,16,-1,6;1,0,0,-19,-18;1,0,0,-23,-14;1,0,30,-3,4;1,0,0,-24,-15;1,0,20,0,18;1,0,10,-7,-2;1,0,14,-7,3;1,0,3,-49,-46;1,0,26,-2,11;1,0,4,-17,-9;1,0,1,-47,-21;1,0,40,-11,40;1,0,29,-3,3;1,0,26,-9,20;1,0,31,-14,29;1,0,3,-36,-28;1,0,22,-29,-24;1,0,4,-44,-13;1,0,12,-43,-38;1,0,8,-35,-29;1,0,77,-23,63;1,0,53,-15,51;1,0,3,-57,-37;1,0,0,-105,-105;1,0,27,-100,-100;1,0,3,-119,-43;1,0,22,-52,11;1,0,2,-101,-49;1,0,54,-4,30;1,0,31,-16,16;1,0,6,-550,-402;1,0,199,-21,155;1,0,56,-60,48;1,0,17,-165,-141;1,0,37,-52,-51;1,0,54,-41,26;1,0,21,-98,-75;1,0,81,-38,41;1,0,85,-16,49;1,0,18,-44,-19;1,0,60,-26,2;1,0,7,-112,-33;1,0,139,-1,74;1,0,5,-129,-119;1,0,14,-133,-47;1,0,55,-48,42;1,0,18,-48,-41;1,0,79,-5,56;1,0,31,-39,-35;1,0,23,-62,-53;1,0,168,-30,160;1,0,22,-55,-26;1,0,28,-48,20;1,0,44,-4,36;1,0,23,-21,10;1,0,67,0,55;1,0,26,-31,20;1,0,14,-23,-16;1,0,57,-1,49;1,0,13,-29,6;1,0,14,-20,9;1,0,58,-1,53;1,0,45,-17,35;1,0,38,0,25;1,0,11,-47,-35;1,0,27,-20,-11;1,0,2,-36,-5;1,0,4,-49,-44;1,0,29,-34,-30;1,0,28,-66,-46;1,0,27,-15,17;1,0,23,-21,13;1,0,85,0,85;1,0,8,-62,-52;1,0,1,-69,-56;1,0,6,-52,-26;1,0,45,-7,38;1,0,47,0,43;1,0,11,-72,-66;1,0,14,-33,-12;1,0,60,-52,58;1,0,1,-52,-46;1,0,23,-10,-2;1,0,91,-17,81;1,0,3,-24,-1;1,0,22,-8,1;1,0,90,-4,70;1,0,137,-4,133;1,0,59,-9,32;1,0,65,-8,63;1,0,20,-33,-21;1,0,0,-93,-76;1,0,106,-12,101;1,0,38,-11,23;1,0,147,-1,147;1,0,129,-17,129;1,0,57,-42,33;1,0,57,-34,54;1,0,9,-76,-51;1,0,63,-31,50;1,0,17,-38,17;1,0,0,-92,-91;1,0,31,-22,28;1,0,38,-30,36;1,0,0,-72,-25;1,0,36,-66,-54;1,0,24,-98,-56;1,0,103,-11,96;1,0,49,-11,-11;1,0,23,-34,-23;1,0,14,-258,-258;1,0,109,-30,35;1,0,21,-66,14;1,0,22,-140,19;1,0,56,-54,-22;1,0,37,-26,0;1,0,86,0,81;1,0,24,-104,-52;1,0,113,-3,110;1,0,49,-25,2;1,0,40,-41,-27;1,0,98,-20,59;1,0,66,-38,35;1,0,0,-91,-91;1,0,35,-59,-56;1,0,99,0,83;1,0,63,-32,-22;1,0,124,0,119;1,0,183,0,171;1,0,93,-40,-28;1,0,15,-61,-19;1,0,25,-52,18;1,0,130,-13,104;1,0,4,-73,-73;1,0,27,-63,-53;1,0,68,0,53;1,0,39,-9,-2;1,0,47,-3,34;1,0,16,-41,-41;1,0,80,-4,57;1,0,22,-42,-30;1,0,66,-12,46;1,0,1,-66,-51;1,0,1,-90,-58;1,0,7,-103,-101;1,0,58,-10,28;1,0,81,-5,81;1,0,42,-7,20;1,0,36,-31,-10;1,0,57,-36,39;1,0,42,-11,6;1,0,22,-19,12;1,0,11,-38,-34;1,0,26,-27,-27;1,0,9,-51,-50;1,0,99,-9,94;1,0,62,-4,54;1,0,64,0,41;1,0,6,-67,-53;1,0,49,-40,46;1,0,39,-17,18;1,0,20,-36,7;1,0,15,-25,-24;1,0,25,-71,-69;1,0,12,-62,-59;1,0,52,-20,45;1,0,12,-33,10;1,0,3,-75,-75;1,0,77,-2,55;1,0,1,-76,-45;1,0,41,-23,-22;1,0,36,-20,1;1,0,64,-7,1;1,0,52,0,52;1,0,32,-21,4;1,0,6,-34,-3;1,0,6,-89,-66;1,0,59,-30,53;1,0,68,-12,50;1,0,72,-3,35;1,0,18,-34,18;1,0,17,-132,-128;1,0,67,-16,10;1,0,49,-7,35;1,0,25,-38,-31;1,0,17,-67,-59;1,0,138,-20,93;1,0,0,-133,-133;1,0,29,-70,1;1,0,51,-4,27;1,0,78,-9,36;1,0,63,-25,56;1,0,17,-55,-38;1,0,18,-100,-95;1,0,26,-47,-23;1,0,120,-1,116;1,0,14,-34,0;1,0,55,-24,25;1,0,25,-85,-1;1,0,103,-1,91;1,0,10,-64,-5;1,0,10,-35,-10;1,0,9,-31,-1;1,0,72,-3,43;1,0,9,-52,8;1,0,74,-7,71;1,0,4,-73,-62;1,0,14,-113,-113;1,0,39,-31,39;1,0,10,-36,-11;1,0,20,-36,-8;1,0,29,-25,21;1,0,11,-25,-5;1,0,41,-17,25;1,0,11,-51,-36;1,0,89,-52,43;1,0,4,-80,-30;1,0,95,-20,70;1,0,19,-65,-59;1,0,16,-32,-31;1,0,59,0,44;1,0,28,-41,18;1,0,43,-13,35;1,0,17,-19,-4;1,0,15,-73,-58;1,0,23,-9,21;1,0,32,-33,5;1,0,48,-10,15;1,0,16,-26,3;1,0,7,-33,-5;1,0,7,-40,-32;1,0,13,-29,-24;1,0,17,-22,-4;1,0,2,-33,-27;1,0,21,-8,16;1,0,2,-57,-21;1,0,26,-21,-19;1,0,19,-65,-17;1,0,32,-4,5;1,0,23,-17,5;1,0,9,-25,-3;1,0,26,-6,18;1,0,10,-24,-16;1,0,10,-35,-15;1,0,18,-10,9;1,0,18,-8,-7;1,0,30,-17,23;1,0,4,-29,-2;1,0,32,-9,15;1,0,22,-9,16;1,0,11,-5,9;1,0,22,-10,-9;1,0,6,-27,-2;1,0,30,-21,25;1,0,0,-36,-14;1,0,9,-29,-17;1,0,22,0,22;1,0,4,-29,-11;1,0,16,-6,-6;1,0,83,-3,79;1,0,26,-2,16;1,0,2,-26,-25;1,0,4,-48,-43;1,0,10,-22,6;1,0,5,-42,-39;1,0,38,-2,16;1,0,15,-27,-13;1,0,40,-3,34;1,0,22,-12,8;1,0,12,-52,-41;1,0,23,0,14;1,0,7,-73,-73;1,0,0,-52,-52;1,0,115,0,101;1,0,35,-11,9;1,0,18,-81,-54;1,0,4,-44,-33;1,0,12,-38,-22;1,0,0,-90,-34;1,0,15,-14,12;1,0,14,-16,-5;1,0,9,-48,2;1,0,0,-56,-40;1,0,53,-41,41;1,0,125,0,62;1,0,0,-25,-9;1,0,4,-59,-29;1,0,20,-1,5;1,0,1,-13,-4;1,0,8,-18,-16;1,0,9,-5,8;1,0,9,-3,0;1,0,5,-49,-47;1,0,24,0,21;1,0,1,-37,-31;1,0,19,-21,8;1,0,11,-8,-2;1,0,33,0,26;1,0,15,0,12;1,0,20,-5,19;1,0,18,-5,10;1,0,45,0,12;1,0,11,-31,-21;1,0,28,-5,27"};
+const RAW1H={t0:1782817200,s:"1,214835,22,-223,-23;1,0,5,-641,-198;1,0,215,-30,183;1,0,962,-116,901;1,0,75,-163,-122;1,0,39,-129,-58;1,0,51,-53,-1;1,0,145,-18,21;1,0,139,-59,105;1,0,34,-179,-179;1,0,108,-8,19;1,0,152,0,89;1,0,12,-120,-89;1,0,105,-43,-3;1,0,18,-220,-124;1,0,138,-46,57;1,0,102,-14,55;1,0,14,-276,5;1,0,74,-70,-22;1,0,75,-128,-20;1,0,43,-234,9;1,0,109,-58,39;1,0,171,-51,86;1,0,94,-61,40;1,0,11,-171,-158;1,0,94,-88,-88;1,0,214,-251,41;1,0,373,-27,219;1,0,70,-125,25;1,0,210,-3,119;1,0,101,-36,38;1,0,36,-62,-4;1,0,75,-9,64;1,0,77,-141,-134;1,0,130,-131,-97;1,0,230,0,224;1,0,55,-47,-15;1,0,57,-72,11;1,0,133,-48,63;1,0,156,-14,3;1,0,38,-112,-63;1,0,26,-77,10;1,0,2,-127,-102;1,0,26,-1141,-452;1,0,156,-311,-21;1,0,96,-346,-201;1,0,234,-143,-42;1,0,235,-2,88;1,0,43,-228,-201;1,0,283,-331,266;1,0,162,-122,-40;1,0,248,-42,241;1,0,13,-432,-392;1,0,74,-56,-45;1,0,41,-93,-82;1,0,135,-14,83;1,0,115,-18,69;1,0,52,-95,-95;1,0,69,-194,32;1,0,247,0,225;1,0,169,-29,155;1,0,52,-225,-199;1,0,222,-126,192;1,0,106,-71,6;1,0,8,-46,3;1,0,80,-52,-7;1,0,111,-37,55;1,0,0,-703,-350;1,0,128,-212,-31;1,0,130,-66,122;1,0,57,-135,-25;1,0,121,-4,34;1,0,121,-10,70;1,0,52,-31,36;1,0,73,-43,6;1,0,171,-39,164;1,0,45,-90,22;1,0,54,-49,28;1,0,44,-89,-28;1,0,74,-14,56;1,0,18,-53,-37;1,0,35,-164,-162;49,47,0,-221,-81;1,0,322,-23,194;1,0,142,-1,117;1,0,195,-5,109;1,0,173,-16,155;1,0,64,-12,51;1,0,54,-48,33;1,0,149,-24,142;1,0,86,-116,76;1,0,239,-25,195;1,0,164,-81,117;1,0,82,-180,-65;1,0,103,-77,70;1,0,165,-6,67;1,0,129,-77,88;1,0,128,-60,52;1,0,164,-76,-30;1,0,250,-17,204;1,0,106,-106,90;1,0,129,-41,93;1,0,39,-49,-9;1,0,140,-37,30;1,0,83,-73,-32;1,0,37,-55,-53;1,0,111,-88,-1;1,0,165,0,147;1,0,35,-45,-5;1,0,111,-62,-42;1,0,39,-420,-208;1,0,24,-80,-30;1,0,40,-104,-80;1,0,39,-220,-120;1,0,38,-102,35;1,0,182,-96,141;1,0,26,-446,-143;1,0,176,-52,148;1,0,21,-132,-129;1,0,91,-163,74;1,0,67,-66,24;1,0,30,-214,-152;1,0,59,-182,-159;1,0,263,-42,159;1,0,30,-146,-142;1,0,61,-61,41;1,0,20,-63,-9;1,0,22,-139,-122;1,0,181,-14,159;1,0,16,-105,-96;1,0,142,-120,27;1,0,102,-46,74;1,0,184,-11,146;1,0,104,-105,70;1,0,61,-66,-39;1,0,139,-31,37;1,0,59,-21,31;1,0,64,-36,13;1,0,58,-132,-48;1,0,95,-155,24;1,0,91,-78,20;1,0,156,-133,-57;1,0,41,-248,-3;1,0,190,-32,85;1,0,34,-183,-76;1,0,229,-33,63;1,0,596,-21,508;1,0,122,-62,110;1,0,40,-180,-105;1,0,239,-20,209;1,0,290,-20,169;1,0,102,-21,-4;1,0,100,-1,44;1,0,39,-161,-159;1,0,149,-71,56;1,0,88,-4,41;1,0,35,-50,8;1,0,9,-142,-67;1,0,66,-58,-7;1,0,83,-14,-12;1,0,55,-42,4;1,0,31,-75,26;1,0,59,-26,10;1,0,283,-10,234;1,0,124,-144,-101;1,0,89,-53,28;1,0,68,-46,6;1,0,10,-175,-163;1,0,11,-166,-126;1,0,73,-179,-110;1,0,163,-12,132;1,0,121,-135,-127;1,0,168,-22,153;1,0,83,-51,83;1,0,66,-36,64;1,0,87,-2,52;1,0,41,-99,-57;1,0,55,-86,-79;1,0,88,-103,-35;1,0,167,0,143;1,0,46,-16,39;1,0,15,-478,-273;1,0,25,-413,-229;1,0,18,-347,-162;1,0,43,-184,-57;1,0,123,-22,13;1,0,12,-224,-123;1,0,60,-117,-10;1,0,257,-13,73;1,0,1,-313,-203;1,0,260,-28,191;1,0,323,-46,283;1,0,85,-116,9;1,0,25,-237,-152;1,0,5,-298,-286;1,0,179,-113,139;1,0,19,-549,-496;1,0,172,-21,94;1,0,31,-103,8;1,0,67,-17,31;1,0,56,-35,52;1,0,53,-136,-136;49,-111,115,-79,68;1,0,244,-16,205;1,0,55,-82,-21;1,0,130,-31,119;1,0,36,-140,-40;1,0,78,-31,27;1,0,46,-43,22;1,0,7,-69,-9;1,0,371,-64,293;1,0,198,-114,-62;1,0,129,-394,61;1,0,202,-21,-13;1,0,24,-253,-168;1,0,224,-20,222;1,0,44,-130,-14;1,0,117,-100,77;1,0,20,-91,-75;1,0,81,-202,60;1,0,27,-105,-4;1,0,77,-209,-107;1,0,34,-87,-58;1,0,3,-120,-108;1,0,25,-37,5;1,0,8,-193,-193;1,0,157,-35,10;1,0,163,0,101;1,0,5,-78,-7;1,0,40,-170,-27;1,0,107,-51,62;1,0,51,-63,-60;1,0,67,-35,15;1,0,53,-35,17;1,0,123,-23,23;1,0,52,-76,-36;1,0,117,-79,23;1,0,188,-140,185;1,0,46,-102,-43;1,0,47,-54,-12;1,0,148,-125,109;1,0,440,-313,16;1,0,172,-174,126;1,0,64,-220,-111;1,0,37,-206,-133;1,0,118,-58,64;1,0,40,-188,-85;1,0,118,-4,80;1,0,132,-43,121;1,0,117,-28,-28;1,0,0,-176,-43;1,0,207,0,146;1,0,43,-38,43;1,0,43,-68,-23;1,0,19,-160,-27;1,0,103,-40,81;1,0,43,-31,10;1,0,117,-27,73;1,0,191,-36,117;1,0,135,-71,85;1,0,90,-149,-133;1,0,69,-117,-46;1,0,31,-91,-17;1,0,170,-98,99;1,0,276,-50,195;1,0,106,-67,57;1,0,338,-17,267;1,0,608,-73,513;1,0,291,-51,264;1,0,581,-3,544;1,0,144,-45,104;1,0,64,-105,-100;1,0,230,-3,217;1,0,40,-44,-43;1,0,4,-221,-88;1,0,113,-19,37;1,0,34,-59,-49;1,0,101,-183,-49;1,0,9,-173,-97;1,0,73,-74,55;1,0,88,-27,17;1,0,78,-12,9;1,0,161,0,45;1,0,132,-36,103;1,0,15,-240,-159;1,0,1,-165,-113;1,0,32,-230,-184;1,0,51,-116,-84;1,0,58,-124,45;1,0,173,-22,44;1,0,329,0,213;1,0,131,-185,-165;1,0,42,-137,-108;1,0,6,-208,-199;1,0,36,-82,-30;1,0,4,-95,-21;1,0,93,-24,93;1,0,38,-55,-55;1,0,38,-67,-41;1,0,59,-19,10;1,0,104,-10,102;1,0,47,-129,36;1,0,56,-151,-110;1,0,6,-213,-175;1,0,98,-3,57;1,0,22,-103,-67;1,0,80,-27,50;1,0,178,-205,-15;1,0,60,-262,-243;1,0,147,-126,-77;1,0,61,-75,-52;1,0,9,-225,-185;1,0,189,-83,113;1,0,30,-157,-41;1,0,287,-53,234;1,0,74,-104,-25;1,0,108,-30,32;1,0,260,-65,172;1,0,67,-42,-18;1,0,43,-31,9;1,0,83,-34,-2;1,0,26,-197,-176;49,-129,118,0,81;1,0,219,-66,156;1,0,50,-32,25;1,0,42,-180,-151;1,0,100,-23,85;1,0,130,-19,98;1,0,42,-46,21;1,0,95,-4,53;1,0,64,-38,44;1,0,41,-118,-78;1,0,263,-17,225;1,0,14,-153,-98;1,0,14,-166,-40;1,0,132,-57,59;1,0,73,-178,-159;1,0,61,-158,-48;1,0,73,-153,49;1,0,119,-216,-145;1,0,2,-372,-286;1,0,42,-97,-19;1,0,120,-57,95;1,0,134,0,130;1,0,20,-71,0;1,0,21,-142,-142;1,0,0,-138,-122;1,0,110,0,106;1,0,67,-12,63;1,0,92,-54,58;1,0,51,-79,22;1,0,68,-88,-76;1,0,95,-27,74;1,0,75,-19,60;1,0,104,-3,59;1,0,221,-9,118;1,0,145,-96,-17;1,0,182,-88,-73;1,0,33,-97,-49;1,0,88,-206,-169;1,0,86,-149,-106;1,0,14,-384,-278;1,0,142,-348,72;1,0,328,-57,35;1,0,84,-72,23;1,0,164,-60,140;1,0,99,-36,75;1,0,181,-77,149;1,0,64,-26,9;1,0,33,-189,-189;1,0,111,-137,51;1,0,68,-3,36;1,0,75,-6,54;1,0,62,-98,36;1,0,42,-26,-13;1,0,51,-40,-7;1,0,59,-22,10;1,0,47,-18,35;1,0,29,-180,-137;1,0,138,-182,-41;1,0,193,-355,-152;1,0,156,-136,-118;1,0,57,-100,23;1,0,112,-58,-20;1,0,54,-62,46;1,0,63,-152,-98;1,0,412,-1,395;1,0,74,-176,-131;1,0,76,-61,-13;1,0,0,-139,-15;1,0,77,-19,45;1,0,32,-57,-6;1,0,33,-28,29;1,0,51,-56,-56;1,0,1,-111,-39;1,0,55,-62,-3;1,0,70,-19,34;1,0,98,-11,62;1,0,47,-47,14;1,0,147,-2,138;1,0,29,-84,-54;1,0,88,-12,16;1,0,51,-44,32;1,0,84,-190,-144;1,0,299,-45,221;1,0,109,-92,-57;1,0,153,-13,107;1,0,16,-176,-76;1,0,14,-362,-41;1,0,63,-191,35;1,0,246,-92,148;1,0,27,-265,-192;1,0,35,-373,-309;1,0,208,-3,169;1,0,7,-81,-59;1,0,32,-58,-8;1,0,62,-63,38;1,0,47,-95,-95;1,0,114,-72,9;1,0,96,0,93;1,0,4,-87,-73;1,0,198,-8,168;1,0,59,-123,-103;1,0,17,-117,-106;1,0,78,-21,28;1,0,37,-72,-31;1,0,87,-22,-10;1,0,195,-43,181;1,0,209,-102,162;1,0,18,-294,-281;1,0,41,-130,-90;1,0,248,-52,183;1,0,72,-86,36;1,0,57,-236,-156;1,0,236,-34,156;1,0,107,-71,-8;1,0,245,-26,193;1,0,50,-110,-64;1,0,21,-114,-78;1,0,88,-10,44;1,0,16,-71,-50;1,0,15,-94,-94;49,81,0,-186,-81;1,0,311,0,240;1,0,56,-25,22;1,0,77,-89,19;1,0,45,-71,-1;1,0,37,-61,-6;1,0,18,-62,-33;1,0,26,-51,-30;1,0,95,-13,46;1,0,64,-150,-148;1,0,9,-316,-231;1,0,79,-68,40;1,0,60,-100,-94;1,0,93,-150,-125;1,0,56,-113,1;1,0,104,-98,50;1,0,113,-73,30;1,0,78,-208,-186;1,0,44,-69,-2;1,0,71,-84,-68;1,0,20,-232,-92;1,0,28,-44,21;1,0,34,-23,5;1,0,16,-139,-139;1,0,113,-49,42;1,0,85,-1,58;1,0,61,-42,59;1,0,60,-26,11;1,0,65,-20,10;1,0,77,-14,25;1,0,115,-21,69;1,0,3,-113,-87;1,0,28,-145,-112;1,0,153,-49,131;1,0,172,-51,-12;1,0,249,-3,236;1,0,8,-314,-300;1,0,117,-89,68;1,0,36,-92,-13;1,0,262,-12,234;1,0,74,-77,-17;1,0,38,-197,-100;1,0,79,-96,-1;1,0,59,-40,0;1,0,64,-87,-80;1,0,36,-83,26;1,0,78,-24,-20;1,0,52,-50,-50;1,0,98,-186,-16;1,0,79,-8,4;1,0,66,-55,64;1,0,33,-188,-122;1,0,39,-96,-42;1,0,125,-26,86;1,0,31,-145,-110;1,0,36,-383,-224;1,0,116,-66,112;1,0,110,-77,19;1,0,296,-29,274;1,0,28,-134,-57;1,0,8,-216,-115;1,0,49,-72,-25;1,0,103,-25,0;1,0,101,-93,62;1,0,120,-93,106;1,0,221,-72,63;1,0,35,-123,-48;1,0,86,-63,86;1,0,179,-15,15;1,0,516,-106,463;1,0,286,-74,-45;1,0,270,-13,145;1,0,24,-117,-59;1,0,181,-30,123;1,0,6,-170,-147;1,0,81,-143,55;1,0,21,-71,-36;1,0,20,-87,-73;1,0,38,-63,-34;1,0,36,-38,-32;1,0,206,-5,133;1,0,63,-166,26;1,0,132,-44,55;1,0,242,-10,181;1,0,119,-89,-46;1,0,6,-1151,-522;1,0,218,-201,76;1,0,102,-350,-179;1,0,10,-3404,-3386;1,0,279,-2178,-673;1,0,811,-395,795;1,0,269,-37,221;1,0,289,-1399,-660;1,0,109,-196,-68;1,0,653,0,517;1,0,294,-34,67;1,0,187,-125,187;1,0,265,-221,120;1,0,646,-93,608;1,0,609,-34,435;1,0,165,-219,145;1,0,0,-376,-303;1,0,449,-62,147;1,0,142,-64,10;1,0,40,-186,-164;1,0,57,-647,-284;1,0,468,-104,-104;1,0,229,-2075,-1616;1,0,1396,-446,1305;1,0,100,-179,-100;1,0,94,-176,-121;1,0,420,-27,262;1,0,73,-1695,-1393;1,0,795,-778,438;1,0,293,-424,82;1,0,225,-54,221;1,0,277,-1329,-874;1,0,724,-191,521;1,0,404,-11,279;1,0,18,-2075,-1997;49,-507,513,-57,358;1,0,219,-424,-64;1,0,682,-322,299;1,0,302,-3035,-2030;1,0,302,-910,110;1,0,346,-179,111;1,0,152,-287,8;1,0,80,-145,-12;1,0,60,-98,-18;1,0,380,-90,263;1,0,66,-274,5;1,0,199,-284,180;1,0,218,-179,70;1,0,41,-365,-201;1,0,234,-230,-97;1,0,210,-105,161;1,0,35,-862,-682;1,0,253,-253,-87;1,0,514,-30,493;1,0,23,-555,-243;1,0,135,-16,84;1,0,59,-276,-152;1,0,279,-14,246;1,0,381,-64,210;1,0,85,-74,64;1,0,340,-4,252;1,0,326,-114,191;1,0,13,-377,-92;1,0,208,-59,205;1,0,213,-20,134;1,0,18,-290,-101;1,0,9,-257,-153;1,0,214,-69,208;1,0,123,-137,19;1,0,330,-17,304;1,0,86,-156,73;1,0,197,-20,137;1,0,77,-162,-97;1,0,33,-522,-418;1,0,147,-231,20;1,0,39,-326,-79;1,0,292,-65,188;1,0,58,-177,-52;1,0,148,-44,65;1,0,45,-43,-9;1,0,214,-12,181;1,0,224,0,149;1,0,29,-132,-132;1,0,191,-63,36;1,0,104,-19,61;1,0,82,-104,-45;1,0,64,-310,-198;1,0,66,-75,34;1,0,91,-262,-135;1,0,133,-38,3;1,0,315,-48,287;1,0,47,-40,1;1,0,201,-95,146;1,0,143,-189,136;1,0,160,-74,-28;1,0,116,-43,68;1,0,96,-76,-60;1,0,45,-111,-3;1,0,49,-162,-53;1,0,42,-327,-200;1,0,253,-64,164;1,0,12,-150,-45;1,0,99,-56,86;1,0,96,-73,78;1,0,11,-75,-38;1,0,41,-45,-13;1,0,138,-6,26;1,0,30,-160,-104;1,0,112,0,55;1,0,10,-102,-41;1,0,198,-9,120;1,0,44,-126,-60;1,0,41,-42,-8;1,0,38,-73,-30;1,0,19,-33,9;1,0,67,-46,57;1,0,87,-15,50;1,0,71,-150,49;1,0,89,-29,37;1,0,31,-142,-76;1,0,102,-66,75;1,0,137,-13,92;1,0,133,-91,77;1,0,126,-52,80;1,0,413,-1,273;1,0,188,-11,132;1,0,137,-287,120;1,0,6,-181,-139;1,0,39,-146,-91;1,0,113,-20,68;1,0,81,-28,17;1,0,54,-210,15;1,0,65,-41,-4;1,0,10,-79,-2;1,0,116,-9,62;1,0,25,-358,-207;1,0,64,-27,39;1,0,91,-19,60;1,0,39,-45,-33;1,0,35,-86,-68;1,0,65,-46,48;1,0,61,-104,-32;1,0,80,-122,-122;1,0,50,-99,-35;1,0,33,-224,-135;1,0,216,-2,213;1,0,77,-1509,-476;1,0,338,-150,314;1,0,278,-74,241;1,0,40,-511,-395;1,0,3,-258,-132;1,0,57,-76,41;1,0,175,-25,131;1,0,99,-116,9;1,0,297,-42,123;49,29,22,-236,-119;1,0,356,-5,320;1,0,13,-102,-37;1,0,113,-28,83;1,0,445,-19,415;1,0,20,-113,-107;1,0,14,-110,-50;1,0,248,-3,235;1,0,101,-24,93;1,0,156,0,78;1,0,199,-17,153;1,0,373,-63,356;1,0,180,-3,121;1,0,53,-96,7;1,0,75,-47,44;1,0,109,-528,71;1,0,252,-27,248;1,0,256,-57,153;1,0,91,-85,32;1,0,51,-57,-8;1,0,126,-12,22;1,0,317,-38,171;1,0,135,-32,77;1,0,46,-84,-84;1,0,33,-172,-44;1,0,136,0,62;1,0,38,-123,-84;1,0,90,-248,-12;1,0,55,-103,27;1,0,125,-24,32;1,0,42,-41,9;1,0,43,-33,-5;1,0,45,-82,36;1,0,74,-153,-100;1,0,156,-55,62;1,0,130,-55,111;1,0,32,-117,-97;1,0,53,-206,-168;1,0,7,-169,-40;1,0,169,-9,113;1,0,55,-109,-30;1,0,147,-7,127;1,0,130,-69,124;1,0,3,-197,-123;1,0,23,-81,7;1,0,6,-88,-52;1,0,132,-1,105;1,0,57,-129,-129;1,0,102,-35,102;1,0,104,-3,38;1,0,31,-36,-12;1,0,104,-77,75;1,0,30,-97,-33;1,0,123,-32,95;1,0,89,-2,23;1,0,28,-58,7;1,0,9,-156,-40;1,0,30,-72,19;1,0,53,-64,-20;1,0,15,-94,-36;1,0,86,-722,-189;1,0,190,-4,75;1,0,90,-64,70;1,0,25,-417,-224;1,0,109,-148,91;1,0,128,-82,-5;1,0,94,-64,47;1,0,70,-39,13;1,0,129,-1,74;1,0,45,-81,-77;1,0,72,-17,64;1,0,27,-120,-120;1,0,51,-98,6;1,0,73,-1,29;1,0,8,-74,-52;1,0,75,-83,-12;1,0,31,-63,-36;1,0,89,-14,40;1,0,74,-23,28;1,0,50,-289,-156;1,0,147,-27,6;1,0,127,-85,-26;1,0,45,-110,-30;1,0,59,-63,-6;1,0,135,-33,115;1,0,150,-40,-27;1,0,53,-83,27;1,0,82,-81,49;1,0,87,-67,-41;1,0,167,-191,12;1,0,123,-10,66;1,0,35,-85,14;1,0,51,-64,-7;1,0,33,-42,7;1,0,75,-2,73;1,0,34,-125,-125;1,0,121,-88,38;1,0,85,-9,30;1,0,32,-20,-20;1,0,118,-33,42;1,0,47,-34,-31;1,0,20,-62,-42;1,0,66,-32,41;1,0,59,-24,4;1,0,16,-208,-68;1,0,40,-137,35;1,0,117,-24,67;1,0,147,-38,131;1,0,27,-114,-11;1,0,115,-41,95;1,0,130,-17,21;1,0,2,-458,-207;1,0,334,-18,240;1,0,183,-7,68;1,0,349,-56,345;1,0,100,-48,-30;1,0,5,-160,-117;1,0,82,-22,44;1,0,52,-26,-6;1,0,11,-126,-115;49,-20,137,-25,-8;1,0,172,-8,-7;1,0,162,-8,153;1,0,53,-170,-145;1,0,100,-38,60;1,0,10,-156,-112;1,0,129,0,107;1,0,66,-25,22;1,0,11,-151,-7;1,0,12,-114,-93;1,0,107,-122,60;1,0,175,-28,87;1,0,181,-21,135;1,0,51,-38,-5;1,0,110,-24,68;1,0,80,-31,72;1,0,145,-22,24;1,0,81,-158,-87;1,0,240,-26,219;1,0,61,-39,-20;1,0,65,-76,-59;1,0,61,-26,32;1,0,7,-162,-90;1,0,54,-123,-123;1,0,92,-73,-12;1,0,163,0,74;1,0,21,-46,-6;1,0,221,-3,139;1,0,59,-44,32;1,0,34,-124,-68;1,0,22,-89,-35;1,0,253,-9,188;1,0,34,-63,-37;1,0,89,-159,-67;1,0,59,-70,33;1,0,23,-89,-12;1,0,9,-135,-84;1,0,85,-62,30;1,0,34,-53,9;1,0,54,-52,23;1,0,84,-62,30;1,0,78,-103,3;1,0,59,-82,53;1,0,43,-65,-64;1,0,8,-78,-54;1,0,38,-33,-15;1,0,78,-16,35;1,0,16,-127,-123;1,0,121,-80,29;1,0,132,-1,41;1,0,12,-48,-7;1,0,2,-267,-240;1,0,61,-31,13;1,0,35,-57,27;1,0,90,-13,40;1,0,11,-184,-55;1,0,13,-156,-29;1,0,119,-114,60;1,0,42,-131,-27;1,0,47,-136,-39;1,0,119,-70,-30;1,0,76,-56,-17;1,0,70,-46,2;1,0,38,-857,-72;1,0,279,-96,141;1,0,26,-380,-260;1,0,221,-2,111;1,0,62,-76,-31;1,0,53,-86,-24;1,0,5,-213,-119;1,0,53,-309,-224;1,0,27,-74,-48;1,0,16,-177,-68;1,0,132,-34,112;1,0,65,-7,38;1,0,208,-38,192;1,0,302,-16,296;1,0,14,-211,-167;1,0,169,-1,135;1,0,181,-19,82;1,0,140,-10,46;1,0,21,-193,-182;1,0,317,-129,241;1,0,306,-34,237;1,0,0,-266,-17;1,0,154,-95,124;1,0,114,-49,60;1,0,175,-12,138;1,0,126,-78,115;1,0,95,-182,-167;1,0,354,-178,253;1,0,185,-17,102;1,0,48,-74,22;1,0,130,-20,122;1,0,38,-26,-14;1,0,25,-142,-128;1,0,73,-116,31;1,0,101,-18,-8;1,0,69,-50,23;1,0,270,-26,201;1,0,48,-109,-92;1,0,132,-37,96;1,0,81,-29,-16;1,0,28,-72,-19;1,0,18,-159,-105;1,0,98,-94,40;1,0,43,-321,-234;1,0,23,-127,-22;1,0,52,-166,-50;1,0,144,-16,36;1,0,155,-32,117;1,0,67,-182,-131;1,0,111,-83,40;1,0,70,-136,-65;1,0,244,-26,225;1,0,74,-81,68;1,0,181,0,174;1,0,74,0,50;1,0,18,-126,-98;1,0,18,-171,-171;49,-247,219,-343,-114;1,0,453,0,410;1,0,123,-12,62;1,0,12,-260,-189;1,0,113,-13,43;1,0,91,-31,80;1,0,56,-7,7;1,0,9,-171,-64;1,0,55,-12,1;1,0,167,-66,166;1,0,182,-19,11;1,0,126,-143,-137;1,0,219,0,215;1,0,14,-180,-130;1,0,77,-93,16;1,0,55,-163,35;1,0,193,-11,58;1,0,67,-54,12;1,0,49,-119,-103;1,0,31,-114,-60;1,0,46,-87,24;1,0,99,-19,71;1,0,5,-99,-73;1,0,37,-130,-130;1,0,158,-65,62;1,0,88,-7,77;1,0,116,-51,103;1,0,99,-44,93;1,0,52,-105,-3;1,0,152,-19,126;1,0,21,-101,-91;1,0,5,-196,-70;1,0,56,-59,-29;1,0,190,-39,188;1,0,240,0,215;1,0,6,-172,-81;1,0,56,-93,-65;1,0,16,-176,-163;1,0,31,-56,-41;1,0,112,-60,109;1,0,101,-39,3;1,0,45,-140,-111;1,0,93,-63,62;1,0,51,-44,6;1,0,96,-5,69;1,0,53,-7,31;1,0,34,-76,3;1,0,75,-85,-85;1,0,129,-79,26;1,0,105,0,89;1,0,32,-48,-45;1,0,73,-127,-76;1,0,18,-247,-169;1,0,1,-209,-89;1,0,1,-235,-149;1,0,51,-33,30;1,0,25,-53,1;1,0,48,-69,21;1,0,62,-113,-67;1,0,36,-96,-50;1,0,24,-119,-55;1,0,64,-96,33;1,0,165,-22,125;1,0,41,-215,-142;1,0,151,-17,137;1,0,4,-269,-208;1,0,85,-56,32;1,0,41,-65,19;1,0,53,-21,23;1,0,30,-61,-28;1,0,17,-71,-37;1,0,41,-103,-103;1,0,10,-137,-36;1,0,118,-9,41;1,0,19,-55,-3;1,0,8,-250,-161;1,0,125,-58,104;1,0,141,-1,80;1,0,33,-37,-35;1,0,69,-2,18;1,0,41,-56,27;1,0,34,-45,6;1,0,33,-109,-38;1,0,62,-174,-168;1,0,201,-71,139;1,0,87,-64,2;1,0,103,-58,-9;1,0,37,-109,-97;1,0,393,-4,235;1,0,4,-318,-229;1,0,183,-29,171;1,0,48,-65,-34;1,0,76,-16,70;1,0,52,-50,42;1,0,22,-84,-28;1,0,64,-19,-18;1,0,108,-58,25;1,0,72,-12,42;1,0,24,-62,-49;1,0,62,-19,55;1,0,27,-70,0;1,0,63,-53,61;1,0,30,-62,-51;1,0,70,-1,51;1,0,68,-6,37;1,0,59,-80,-79;1,0,63,-135,25;1,0,111,-9,97;1,0,93,-56,59;1,0,142,-22,104;1,0,3,-90,-86;1,0,18,-214,-123;1,0,68,-115,-81;1,0,385,-338,288;1,0,74,-192,-154;1,0,129,-113,37;1,0,3,-161,-137;1,0,11,-58,-49;1,0,69,-61,45;1,0,18,-134,-134;49,-53,176,-14,163;1,0,62,-92,50;1,0,116,0,65;1,0,2,-202,-122;1,0,6,-264,-214;1,0,25,-120,-48;1,0,74,-21,25;1,0,17,-60,1;1,0,97,-66,83;1,0,89,-101,-93;1,0,12,-346,-257;1,0,141,-55,118;1,0,59,-22,28;1,0,72,-90,-50;1,0,7,-83,-45;1,0,234,-33,232;1,0,77,-32,2;1,0,153,-263,30;1,0,107,-72,-54;1,0,0,-102,-80;1,0,74,-31,30;1,0,154,-21,132;1,0,0,-124,-57;1,0,9,-104,-100;1,0,145,-44,94;1,0,80,-26,-14;1,0,44,-39,-1;1,0,150,-19,140;1,0,14,-250,-177;1,0,70,-18,56;1,0,7,-74,-56;1,0,115,-11,113;1,0,102,-6,74;1,0,66,-104,2;1,0,49,-88,-27;1,0,49,-104,13;1,0,164,-49,132;1,0,36,-60,-10;1,0,76,-86,32;1,0,80,-148,-103;1,0,176,-17,104;1,0,110,-180,-22;1,0,32,-252,-234;1,0,151,-45,-12;1,0,100,-18,90;1,0,16,-107,-50;1,0,39,-25,3;1,0,27,-87,-75;1,0,42,-81,-11;1,0,115,0,106;1,0,22,-62,-41;1,0,36,-91,17;1,0,92,-44,79;1,0,8,-126,-112;1,0,3,-155,-138;1,0,2,-319,-233;1,0,6,-292,-282;1,0,0,-566,-480;1,0,440,0,428;1,0,108,-72,56;1,0,75,-249,-223;1,0,19,-92,5;1,0,45,-359,-336;1,0,12,-213,-211;1,0,159,-1364,-791;1,0,260,-186,129;1,0,62,-221,7;1,0,70,-60,-37;1,0,56,-146,-68;1,0,118,-36,58;1,0,70,-218,-197;1,0,20,-251,-251;1,0,108,-20,38;1,0,210,-20,138;1,0,208,-25,155;1,0,93,-362,-166;1,0,16,-624,-374;1,0,27,-676,-533;1,0,13,-430,-248;1,0,117,-276,-142;1,0,112,-455,-452;1,0,28,-417,-325;1,0,327,-894,65;1,0,100,-681,-518;1,0,197,-725,-414;1,0,1,-364,-184;1,0,36,-598,-300;1,0,70,-581,-352;1,0,158,-271,-271;1,0,303,-57,79;1,0,732,-22,179;1,0,221,-43,141;1,0,170,-25,76;1,0,143,-80,30;1,0,235,-14,139;1,0,93,-32,-11;1,0,201,-48,125;1,0,382,-87,357;1,0,58,-601,-576;1,0,383,-447,199;1,0,454,-104,190;1,0,266,-75,232;1,0,445,-20,376;1,0,119,-116,-23;1,0,138,-99,78;1,0,174,-237,7;1,0,202,-91,-73;1,0,183,-72,133;1,0,112,-248,-69;1,0,2,-180,-69;1,0,66,-158,-72;1,0,32,-1706,-1228;1,0,499,-67,243;1,0,598,-14,501;1,0,108,-165,89;1,0,38,-200,-165;1,0,153,0,106;1,0,154,-33,105;1,0,125,-15,94;1,0,48,-152,-98;49,-377,266,0,238;1,0,246,-31,169;1,0,46,-126,-10;1,0,75,-479,-373;1,0,231,-60,88;1,0,183,-50,124;1,0,33,-149,-130;1,0,149,-13,18;1,0,41,-255,-228;1,0,206,-266,204;1,0,22,-380,-336;1,0,37,-1859,-1422;1,0,142,-273,52;1,0,369,-60,240;1,0,117,-109,11;1,0,70,-558,-244;1,0,136,-150,52;1,0,135,-250,-199;1,0,141,-109,60;1,0,52,-67,-36;1,0,51,-32,18;1,0,17,-31,-30;1,0,28,-29,-7;1,0,57,-67,-67;1,0,118,-70,31;1,0,99,-202,-180;1,0,15,-435,-403;1,0,76,-426,-103;1,0,16,-518,-511;1,0,0,-667,-210;1,0,49,-233,23;1,0,339,-121,216;1,0,133,-233,-138;1,0,681,-15,513;1,0,291,-104,-51;1,0,585,-77,407;1,0,14,-430,-266;1,0,423,-25,402;1,0,355,-22,289;1,0,87,-489,-488;1,0,229,-131,-19;1,0,398,-19,276;1,0,281,-15,142;1,0,96,-91,-30;1,0,78,-44,15;1,0,203,-969,-771;1,0,437,-2,417;1,0,69,-77,-77;1,0,0,-262,-167;1,0,223,-223,-84;1,0,2,-373,-339;1,0,427,-216,235;1,0,286,-70,-56;1,0,142,-114,-45;1,0,90,-212,-113;1,0,119,-146,100;1,0,13,-271,-193;1,0,207,-356,175;1,0,67,-351,-322;1,0,555,-9,475;1,0,15,-317,-148;1,0,95,-115,-71;1,0,141,-120,-62;1,0,228,-51,-18;1,0,201,-83,47;1,0,123,-184,-37;1,0,463,-48,215;1,0,167,-52,118;1,0,107,-65,-43;1,0,73,-71,-26;1,0,134,-32,63;1,0,34,-193,-193;1,0,136,-30,53;1,0,65,-202,-166;1,0,319,-45,222;1,0,204,-85,168;1,0,90,-200,-185;1,0,143,-166,9;1,0,30,-127,-89;1,0,80,-108,77;1,0,268,-60,243;1,0,20,-270,-257;1,0,122,-162,-89;1,0,372,-4,357;1,0,66,-136,-6;1,0,456,-28,347;1,0,46,-118,-51;1,0,326,-201,-8;1,0,9,-391,-346;1,0,183,-258,19;1,0,295,-59,243;1,0,323,-7,169;1,0,124,-72,-61;1,0,69,-42,-35;1,0,31,-60,-26;1,0,228,-22,79;1,0,0,-166,-133;1,0,331,0,131;1,0,285,-9,94;1,0,234,-133,136;1,0,18,-420,-310;1,0,153,-48,-29;1,0,53,-106,-45;1,0,76,-113,-19;1,0,8,-322,-277;1,0,432,-5,382;1,0,27,-170,-68;1,0,119,-350,-326;1,0,189,-86,49;1,0,57,-262,-231;1,0,194,-120,49;1,0,325,-560,-457;1,0,172,-242,83;1,0,190,-50,26;1,0,191,-80,180;1,0,54,-62,44;1,0,38,-102,-5;1,0,70,-38,47;1,0,61,-37,-21;1,0,60,-328,-299;50,0,326,-169,228;1,0,39,-338,-312;1,0,319,-53,197;1,0,237,-45,97;1,0,391,0,334;1,0,57,-115,-78;1,0,22,-159,-71;1,0,122,-96,34;1,0,290,-137,122;1,0,226,-70,171;1,0,140,-101,85;1,0,83,-203,54;1,0,176,-49,8;1,0,135,-76,80;1,0,148,-60,45;1,0,184,-68,52;1,0,67,-241,-150;1,0,52,-298,-131;1,0,156,-150,55;1,0,164,-20,152;1,0,32,-507,-447;1,0,279,0,262;1,0,58,-99,-99;1,0,43,-42,1;1,0,137,0,41;1,0,169,-75,153;1,0,256,-28,249;1,0,32,-90,-23;1,0,160,-27,88;1,0,7,-239,-233;1,0,104,-32,91;1,0,227,-84,69;1,0,20,-227,-63;1,0,163,-134,128;1,0,318,-153,71;1,0,33,-123,-60;1,0,0,-230,-132;1,0,207,-46,195;1,0,209,-21,74;1,0,256,-54,191;1,0,97,-125,55;1,0,55,-289,-129;1,0,37,-134,8;1,0,86,-56,24;1,0,41,-27,-6;1,0,16,-97,-55;1,0,18,-30,6;1,0,0,-145,-137;1,0,166,0,148;1,0,318,-16,137;1,0,149,-182,101;1,0,126,-101,22;1,0,44,-84,-25;1,0,211,-23,169;1,0,29,-52,-14;1,0,44,-75,-50;1,0,71,-478,-463;1,0,110,-190,-121;1,0,167,-70,152;1,0,41,-96,-18;1,0,85,-31,21;1,0,38,-374,-321;1,0,294,-25,264;1,0,107,-48,-37;1,0,34,-210,-205;1,0,14,-179,-130;1,0,236,-3,39;1,0,39,-167,-165;1,0,357,-58,253;1,0,418,-63,414;1,0,196,-59,-59;1,0,84,-58,10;1,0,97,-17,56;1,0,26,-273,-251;1,0,93,-154,79;1,0,70,-198,-82;1,0,172,-33,32;1,0,16,-161,-48;1,0,37,-43,-11;1,0,3,-486,-421;1,0,198,-133,184;1,0,66,-208,-108;1,0,239,-46,212;1,0,38,-274,-30;1,0,107,-115,14;1,0,6,-717,-228;1,0,87,-416,-137;1,0,109,-142,-74;1,0,92,-326,-241;1,0,153,-60,35;1,0,338,-81,328;1,0,95,-122,-55;1,0,141,0,90;1,0,45,-51,8;1,0,9,-73,-32;1,0,42,-135,-100;1,0,201,0,100;1,0,245,-86,227;1,0,208,-12,125;1,0,131,-49,73;1,0,784,-171,548;1,0,809,-134,709;1,0,121,-191,70;1,0,183,-179,-55;1,0,320,-740,-277;1,0,877,-158,781;1,0,540,0,452;1,0,296,-284,213;1,0,31,-515,-459;1,0,176,-182,-64;1,0,48,-153,-153;1,0,187,-124,80;1,0,172,-871,-245;1,0,59,-763,-597;1,0,144,-145,76;1,0,91,-127,-45;1,0,170,-27,12;1,0,186,-1,130;1,0,234,-21,155;49,-213,86,0,3;1,0,427,-6,424;1,0,59,-215,-102;1,0,81,-362,-181;1,0,70,-334,-180;1,0,151,-14,133;1,0,100,-4,71;1,0,169,-27,25;1,0,117,-59,11;1,0,111,-54,42;1,0,323,-76,310;1,0,70,-121,20;1,0,111,-77,20;1,0,27,-120,-18;1,0,144,0,139;1,0,181,-18,107;1,0,34,-90,-55;1,0,69,-180,-57;1,0,53,-74,-11;1,0,9,-180,-105;1,0,98,-41,70;1,0,81,-97,-45;1,0,69,-74,-56;1,0,40,-221,-221;1,0,108,-114,1;1,0,261,0,108;1,0,101,-19,56;1,0,98,-53,73;1,0,139,-25,66;1,0,130,-24,130;1,0,133,-34,115;1,0,69,-34,28;1,0,14,-93,-83;1,0,109,-34,78;1,0,114,-144,-135;1,0,28,-1139,-717;1,0,163,-217,-182;1,0,238,-65,107;1,0,193,0,126;1,0,191,-19,94;1,0,105,-23,27;1,0,80,-226,-188;1,0,79,-85,12;1,0,94,-74,-23;1,0,41,-85,-41;1,0,178,-48,156;1,0,46,-139,18;1,0,19,-102,-102;1,0,150,-70,-30;1,0,252,0,177;1,0,86,-23,21;1,0,75,-48,72;1,0,4,-175,-155;1,0,55,-19,8;1,0,17,-129,-80;1,0,15,-172,-95;1,0,86,-23,33;1,0,181,-45,132;1,0,113,-174,-158;1,0,186,-63,135;1,0,17,-382,-375;1,0,167,-68,166;1,0,139,-130,-75;1,0,13,-221,-102;1,0,255,-58,226;1,0,103,-170,-6;1,0,112,-72,-68;1,0,22,-239,-193;1,0,98,-145,57;1,0,20,-59,-39;1,0,118,-19,86;1,0,32,-169,-169;1,0,150,-54,-4;1,0,148,0,68;1,0,76,-65,-59;1,0,117,-713,-410;1,0,65,-232,-198;1,0,189,-133,177;1,0,194,-31,86;1,0,47,-121,-92;1,0,409,-52,292;1,0,503,-12,476;1,0,11,-422,-285;1,0,246,-23,241;1,0,272,0,221;1,0,36,-204,-18;1,0,111,-120,3;1,0,12,-111,-36;1,0,109,-123,-123;1,0,207,-70,195;1,0,110,-100,-28;1,0,92,-68,70;1,0,16,-147,-111;1,0,26,-84,-19;1,0,111,-9,107;1,0,26,-140,-140;1,0,84,-157,-75;1,0,125,-61,-32;1,0,110,-8,87"};
+function decodeBars(raw,step){const out=[];let t=raw.t0-step,pc=0;for(const seg of raw.s.split(';')){if(!seg)continue;const a=seg.split(',');const dt=+a[0],o=pc+ +a[1],h=o+ +a[2],l=o+ +a[3],c=o+ +a[4];t+=dt*step;out.push({t,o:o/1000,h:h/1000,l:l/1000,c:c/1000});pc=c}return out}
+let REAL5=null,REAL1=null;
+function realData(){if(!REAL5){REAL5=decodeBars(RAW5M,300);REAL1=decodeBars(RAW1H,3600)}return{b5:REAL5,b1:REAL1}}
+
+// ---------- settings ----------
+const S={mode:'practice',data:'synth',th:80,sl:20,tp:0,hide:false,htf:3600,lot:10000,len:150,autoPause:false,sound:true,showDate:false,vis:{ema:true,rci:true,macd:true,div:true,sign:true}};
+try{const o=JSON.parse(localStorage.getItem('hakei-dojo2')||'{}');Object.assign(S,o);S.vis=Object.assign({ema:true,rci:true,macd:true,div:true,sign:true},o.vis||{})}catch(e){}
+function saveS(){try{localStorage.setItem('hakei-dojo2',JSON.stringify(S))}catch(e){}}
+let REC={games:0,n:0,w:0,pips:0,g:{A:{n:0,w:0,p:0},B:{n:0,w:0,p:0},C:{n:0,w:0,p:0}},on:{n:0,p:0},off:{n:0,p:0}};
+try{const o=JSON.parse(localStorage.getItem('hakei-dojo2-rec')||'null');if(o&&o.g)REC=o}catch(e){}
+function saveRec(){try{localStorage.setItem('hakei-dojo2-rec',JSON.stringify(REC))}catch(e){}}
+
+// ---------- utils ----------
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function gauss(r){let u=0;while(u===0)u=r();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*r())}
+function studentT(r){const z=gauss(r);let c=0;for(let k=0;k<4;k++){const g=gauss(r);c+=g*g}return z/Math.sqrt(c/4)/Math.SQRT2}
+function jst(t){const j=t+32400,day=Math.floor(j/86400),sec=j-day*86400;return{day,dow:(day+4)%7,h:Math.floor(sec/3600),m:Math.floor(sec%3600/60)}}
+const pad=n=>(n<10?'0':'')+n;
+function fmtT(t,withDate){const p=jst(t),hm=pad(p.h)+':'+pad(p.m);if(withDate){const d=new Date((t+32400)*1000);return(d.getUTCMonth()+1)+'/'+d.getUTCDate()+'('+DOW[p.dow]+') '+hm}return DOW[p.dow]+' '+hm}
+function fmtDate(t){const d=new Date((t+32400)*1000),p=jst(t);return d.getUTCFullYear()+'/'+(d.getUTCMonth()+1)+'/'+d.getUTCDate()+'('+DOW[p.dow]+') '+pad(p.h)+':'+pad(p.m)}
+const rnd3=v=>Math.round(v*1000)/1000;
+
+// ---------- synthetic market (calibrated to real GBP/JPY 5m statistics) ----------
+const HOUR_MULT=[1.15,0.79,0.66,0.70,0.60,0.58,0.71,0.68,0.85,1.26,1.07,0.96,0.83,0.80,0.88,1.33,1.44,1.46,1.15,0.98,1.03,1.38,1.39,1.31];
+function genMarket(seed,n){
+  const r=mulberry32(seed);
+  let t=Date.UTC(2001,0,7,21,0,0)/1000;
+  let p=rnd3(150+r()*65);
+  let lv=0,regLeft=0,drift=0,center=p,regType=0,slowLeft=0,slow=0,spike=0;
+  const bars=[],ticks=[];
+  for(let i=0;i<n;i++){
+    let jp=jst(t);
+    if(jp.dow===6&&jp.h>=6){t+=172800;p=rnd3(p+gauss(r)*8*PIP);center=p;jp=jst(t)}
+    if(slowLeft<=0){slowLeft=300+Math.floor(r()*600);slow=r()<.3?0:(r()<.5?-1:1)*(0.05+r()*0.25)}
+    if(regLeft<=0){regLeft=18+Math.floor(r()*50);const k=r();regType=k<.35?0:k<.65?1:2;drift=regType===1?(r()<.5?-1:1)*(0.3+r()*1.1):0;center=p}
+    slowLeft--;regLeft--;
+    lv=0.9*lv+0.23*gauss(r);
+    let sigma=5.4*HOUR_MULT[jp.h]*Math.exp(lv-0.14);
+    if(spike>0){sigma*=3.5;spike--}else if(r()<0.003)spike=1+Math.floor(r()*2);
+    let d=drift+slow;if(regType===2)d+=(center-p)/PIP*0.03;
+    const o=p,tk=[];
+    const dlt=(d+sigma*(r()<0.08?studentT(r)*1.6:gauss(r)*0.95))*PIP,sb=sigma*1.3/Math.sqrt(SUB)*PIP;const W=[0];for(let s=1;s<=SUB;s++)W.push(W[s-1]+gauss(r)*sb);for(let s=1;s<=SUB;s++)tk.push(rnd3(o+dlt*s/SUB+(W[s]-s/SUB*W[SUB])));p=tk[SUB-1];
+    bars.push({t,o,h:Math.max(o,...tk),l:Math.min(o,...tk),c:p});ticks.push(tk);
+    t+=TF0;
+  }
+  return{bars,ticks};
+}
+function synthTicks(b,r){
+  const bull=b.c>=b.o;let x1=bull?b.l:b.h,x2=bull?b.h:b.l;if(r()<0.25){const s=x1;x1=x2;x2=s}
+  const out=[];const seg=(a,c,n)=>{for(let k=1;k<n;k++){const v=a+(c-a)*k/n+gauss(r)*0.25*Math.abs(c-a);out.push(rnd3(Math.min(b.h,Math.max(b.l,v))))}out.push(c)};
+  seg(b.o,x1,4);seg(x1,x2,4);seg(x2,b.c,4);return out;
+}
+
+// ---------- indicators ----------
+function emaArr(src,n){const a=2/(n+1),out=[];let e=src[0];for(let i=0;i<src.length;i++){e=i===0?src[0]:a*src[i]+(1-a)*e;out.push(e)}return out}
+function rciAt(get,end,n){
+  if(end<n-1)return 0;const w=[];for(let k=0;k<n;k++)w.push(get(end-k));
+  let d2=0;for(let k=0;k<n;k++){let hi=0,eq=0;for(let j=0;j<n;j++){if(w[j]>w[k])hi++;else if(w[j]===w[k])eq++}const pr=hi+(eq+1)/2;d2+=(k+1-pr)**2}
+  return(1-6*d2/(n*(n*n-1)))*100;
+}
+const bucketStart=(t,tf)=>{const off=tf===14400?75600:0;return Math.floor((t-off)/tf)*tf+off};
+function aggregate(bars,tf){const out=[],byT=new Map();for(const b of bars){const B=bucketStart(b.t,tf);const k=byT.get(B);if(k===undefined){byT.set(B,out.length);out.push({t:B,o:b.o,h:b.h,l:b.l,c:b.c})}else{const x=out[k];if(b.h>x.h)x.h=b.h;if(b.l<x.l)x.l=b.l;x.c=b.c}}return out}
+function makeDS(bars,tf){
+  const c=bars.map(b=>b.c);
+  const e20=emaArr(c,20),e30=emaArr(c,30),e40=emaArr(c,40),e6=emaArr(c,6),e13=emaArr(c,13);
+  const macd=e6.map((v,i)=>v-e13[i]),sig=emaArr(macd,4);
+  const rci=c.map((_,i)=>rciAt(j=>c[j],i,9)),rci14=c.map((_,i)=>rciAt(j=>c[j],i,14));
+  const divs=[],R=3;let pl=[],ph=[];
+  for(let j=R;j<bars.length-R;j++){
+    let isL=true,isH=true;
+    for(let k=1;k<=R;k++){if(!(bars[j].l<bars[j-k].l&&bars[j].l<=bars[j+k].l))isL=false;if(!(bars[j].h>bars[j-k].h&&bars[j].h>=bars[j+k].h))isH=false}
+    if(isL){const p=pl[pl.length-1];if(p!==undefined&&j-p>=5&&j-p<=40&&bars[j].l<bars[p].l&&macd[j]>macd[p])divs.push({t:1,j1:p,j2:j,cf:j+R});pl.push(j)}
+    if(isH){const p=ph[ph.length-1];if(p!==undefined&&j-p>=5&&j-p<=40&&bars[j].h>bars[p].h&&macd[j]<macd[p])divs.push({t:-1,j1:p,j2:j,cf:j+R});ph.push(j)}
+  }
+  const byT=new Map();bars.forEach((b,i)=>byT.set(b.t,i));
+  return{tf,bars,I:{c,e20,e30,e40,e6,e13,macd,sig,rci,rci14},divs,signs:[],byT};
+}
+function cond(ds,i){
+  const I=ds.I;if(i<45)return{po:0,rciL:false,rciS:false,macdUp:false,div:0,L:0,S:0,rv:I.rci[i]||0,rv14:I.rci14[i]||0,rUp:false};
+  const po=(I.e20[i]>I.e30[i]&&I.e30[i]>I.e40[i]&&I.e40[i]>I.e40[i-5])?1:(I.e20[i]<I.e30[i]&&I.e30[i]<I.e40[i]&&I.e40[i]<I.e40[i-5])?-1:0;
+  let mn=999,mx=-999;for(let k=i-6;k<=i;k++){mn=Math.min(mn,I.rci[k]);mx=Math.max(mx,I.rci[k])}
+  const rUp=I.rci[i]>I.rci[i-1],rciL=mn<=-S.th&&rUp,rciS=mx>=S.th&&I.rci[i]<I.rci[i-1];
+  const macdUp=I.macd[i]>I.sig[i];
+  let div=0;for(const d of ds.divs){if(d.cf<=i&&i-d.cf<=10)div=d.t}
+  return{po,rciL,rciS,macdUp,div,L:(po===1)+rciL+macdUp,S:(po===-1)+rciS+(!macdUp),rv:I.rci[i],rv14:I.rci14[i],rUp};
+}
+function buildSigns(ds){ds.signs=[];let pL=0,pS=0;for(let i=0;i<ds.bars.length;i++){const c=cond(ds,i);ds.signs.push(c.L===3&&pL<3?1:c.S===3&&pS<3?-1:0);pL=c.L;pS=c.S}}
+function liveOf(ds,i,b){
+  const I=ds.I,a=n=>2/(n+1),c=b.c,e=(arr,n)=>i>0?a(n)*c+(1-a(n))*arr[i-1]:c;
+  const e6=e(I.e6,6),e13=e(I.e13,13),macd=e6-e13,sig=i>0?a(4)*macd+(1-a(4))*I.sig[i-1]:macd;
+  const gc=j=>j===i?c:(I.c[j]??c);
+  return{t:b.t,o:b.o,h:b.h,l:b.l,c,e20:e(I.e20,20),e30:e(I.e30,30),e40:e(I.e40,40),macd,sig,rci:rciAt(gc,i,9),rci14:rciAt(gc,i,14)};
+}
+function lowerBound(bars,t){let lo=0,hi=bars.length;while(lo<hi){const m=(lo+hi)>>1;if(bars[m].t<t)lo=m+1;else hi=m}return lo}
+
+// ---------- game state ----------
+let BASE,TICKS,HTF={},seed,G,REALDS=null;
+let VIEW={z:1,right:0,follow:true},HOVER=null,DRAG=null;
+function getHTF(tf){
+  if(HTF[tf])return HTF[tf];let ds;
+  if(S.data==='real'&&tf>=3600){const d=realData();ds=makeDS(tf===3600?d.b1:aggregate(d.b1,tf),tf)}
+  else ds=makeDS(aggregate(BASE.bars,tf),tf);
+  HTF[tf]=ds;return ds;
+}
+function newGame(sd){
+  seed=(sd!=null&&isFinite(sd))?Math.abs(Math.floor(sd)):Math.floor(Math.random()*1e9);
+  const r=mulberry32(seed+7);HTF={};
+  let s0;
+  if(S.data==='real'){
+    const d=realData();
+    if(!REALDS){REALDS=makeDS(d.b5,TF0)}
+    BASE=REALDS;buildSigns(BASE);
+    const N=BASE.bars.length,span=N-S.len-300;s0=300+(seed%span);
+    for(let g=s0+1;g<=s0+S.len;g++){if(BASE.bars[g].t-BASE.bars[g-1].t>3600){s0=(g+S.len<=N-1)?g:Math.max(300,g-S.len-1);break}}
+    TICKS={};for(let i=s0;i<s0+S.len&&i<N;i++)TICKS[i]=synthTicks(BASE.bars[i],r);
+  }else{
+    const M=genMarket(seed,PRE+S.len);BASE=makeDS(M.bars,TF0);buildSigns(BASE);TICKS=M.ticks;s0=PRE;
+  }
+  G={s0,end:Math.min(s0+S.len,BASE.bars.length),idx:s0,sub:0,running:false,paused:false,over:false,speed:G?G.speed:1,pos:null,trades:[],timer:null,review:false};
+  VIEW={z:VIEW.z,right:s0,follow:true};HOVER=null;
+  $('modalBg').hidden=true;$('startBtn').hidden=false;$('count').hidden=true;$('overBadge').hidden=true;
+  $('btnPause').textContent='Ⅱ 一時停止';
+  $('startSub').textContent=(S.data==='real'?'実データ':'乱数生成')+' ・ 5分足'+S.len+'本 ・ Enterでも開始';
+  $('seedBtn').textContent=(S.data==='real'?'実データ #':'乱数 #')+seed;
+  renderLog();updateUI();draw();
+}
+function baseBar(){const i=G.idx,b=BASE.bars[i],t=TICKS[i];if(!t)return b;let h=b.o,l=b.o;for(let s=0;s<=G.sub;s++){if(t[s]>h)h=t[s];if(t[s]<l)l=t[s]}return{t:b.t,o:b.o,h,l,c:t[G.sub]}}
+function live(){return liveOf(BASE,G.idx,baseBar())}
+function bucketIndex(ds,T){const B=bucketStart(T,ds.tf);const k=ds.byT.get(B);return k!==undefined?k:lowerBound(ds.bars,B)}
+function htfState(){
+  if(!S.htf)return null;const ds=getHTF(S.htf),tf=ds.tf,T=BASE.bars[G.idx].t,B=bucketStart(T,tf),K=bucketIndex(ds,T);
+  const lb=baseBar();let o=lb.o,h=lb.h,l=lb.l,j=G.idx;
+  while(j-1>=0&&bucketStart(BASE.bars[j-1].t,tf)===B){j--;const b=BASE.bars[j];o=b.o;if(b.h>h)h=b.h;if(b.l<l)l=b.l}
+  return{ds,K,L:liveOf(ds,K,{t:B,o,h,l,c:lb.c}),remain:Math.round((B+tf-T)/TF0)-1};
+}
+const bid=()=>baseBar().c-SPREAD/2, ask=()=>baseBar().c+SPREAD/2;
+function curPips(){if(!G.pos)return 0;const c=baseBar().c;return G.pos.dir===1?((c-SPREAD/2)-G.pos.price)/PIP:(G.pos.price-(c+SPREAD/2))/PIP}
+const yenPerPip=()=>S.lot*PIP;
+
+function step(){
+  if(!G.running||G.paused||G.over)return;
+  const ms=TICK_MS/G.speed,k=Math.max(1,Math.round(16/ms));
+  for(let n=0;n<k;n++){
+    G.sub++;
+    if(G.sub>=SUB){G.sub=0;G.idx++;if(G.idx>=G.end){G.idx=G.end-1;G.sub=SUB-1;finish();return}onNewBar()}
+    checkStops();if(!G.running)return;
+  }
+  G.timer=setTimeout(step,Math.max(16,ms*k));
+  updateUI();draw();
+}
+function onNewBar(){
+  if(VIEW.follow)VIEW.right=G.idx;
+  const s=BASE.signs[G.idx-1];
+  if(s&&S.mode==='practice'&&S.vis.sign){toast(`サイン点灯：${s===1?'ロング':'ショート'}条件 3/3`);beep(s===1?880:440,0.12,0.05,'triangle')}
+}
+function checkStops(){if(!G.pos)return;const p=curPips();if(S.sl>0&&p<=-S.sl)closePos('損切り');else if(S.tp>0&&p>=S.tp)closePos('利確')}
+function start(){
+  if(G.running||G.over)return;
+  initAudio();
+  $('startBtn').hidden=true;const cEl=$('count');cEl.hidden=false;let n=3;cEl.textContent=n;
+  const iv=setInterval(()=>{n--;if(n<=0){clearInterval(iv);cEl.hidden=true;G.running=true;G.timer=setTimeout(step,TICK_MS/G.speed)}else cEl.textContent=n},600);
+}
+function htfPoNow(){const h=htfState();return h?cond(h.ds,h.K-1).po:null}
+function agreeTxt(a){return a==null?'':a==='順'?'上位足と同方向':a==='逆'?'上位足と逆方向':'上位足PO崩れ'}
+function entry(dir){
+  const btn=dir===1?$('btnBuy'):$('btnSell');
+  if(!G.running||G.over||G.pos){btn.classList.remove('deny');void btn.offsetWidth;btn.classList.add('deny');if(G.pos)toast('ポジションは1つずつです。先に決済してください');else if(!G.running&&!G.over)toast('「開始する」を押すと始まります');return}
+  const c=cond(BASE,G.idx-1),n=dir===1?c.L:c.S,grade=n===3?'A':n===2?'B':'C';
+  const counter=(dir===1&&c.po===-1)||(dir===-1&&c.po===1);
+  const hp=htfPoNow(),agree=hp==null?null:hp===dir?'順':hp===-dir?'逆':'中';
+  G.pos={dir,price:dir===1?ask():bid(),idx:G.idx,t:BASE.bars[G.idx].t,grade,n,div:c.div===dir,counter,agree,htf:S.htf};
+  beep(dir===1?660:520,0.07,0.04);
+  if(S.mode==='practice')toast(`${dir===1?'買い':'売り'}エントリー：判定 <b class="g A">${grade}</b>（条件 ${n}/3${G.pos.div?'・ダイバージェンスあり':''}${counter?'・PO逆行の逆張り':''}${agree?'・'+agreeTxt(agree):''}）`);
+  else toast(`${dir===1?'買い':'売り'}エントリー（判定は決済後に公開）`);
+  if(S.autoPause&&!G.paused){togglePause();setTimeout(()=>toast('自動で一時停止中。損切り・利確を設定したら P か「再開」で続行'),1200)}
+  updateUI();draw();
+}
+function closePos(reason='手動'){
+  if(!G.pos)return;
+  const p=G.pos,exit=p.dir===1?bid():ask(),pips=(p.dir===1?exit-p.price:p.price-exit)/PIP;
+  G.trades.push({...p,exit,exitIdx:G.idx,pips,reason});G.pos=null;
+  if(pips>=0){beep(784,0.08,0.05);setTimeout(()=>beep(1047,0.12,0.05),90)}else beep(262,0.18,0.05,'sawtooth');
+  toast(`決済（${reason}）：<b class="${pips>=0?'up':'down'}">${fmtP(pips)}</b>　判定 <b class="g A">${p.grade}</b>（${p.n}/3${p.agree?'・'+agreeTxt(p.agree):''}）`);
+  renderLog();updateUI();draw();
+}
+function finish(){
+  G.over=true;G.running=false;clearTimeout(G.timer);
+  if(G.pos)closePos('時間切れ');
+  // cumulative record
+  REC.games++;for(const t of G.trades){REC.n++;if(t.pips>0)REC.w++;REC.pips+=t.pips;const g=REC.g[t.grade];g.n++;if(t.pips>0)g.w++;g.p+=t.pips;if(t.agree==='順'){REC.on.n++;REC.on.p+=t.pips}else if(t.agree==='逆'){REC.off.n++;REC.off.p+=t.pips}}
+  saveRec();renderRec();
+  $('overBadge').hidden=false;
+  updateUI();draw();showResult();
+}
+
+// ---------- audio ----------
+let AC=null;
+function initAudio(){if(!AC){try{AC=new(window.AudioContext||window.webkitAudioContext)()}catch(e){}}if(AC&&AC.state==='suspended')AC.resume().catch(()=>{})}
+function beep(f,d=0.08,g=0.05,type='sine'){if(!S.sound||!AC)return;try{const o=AC.createOscillator(),v=AC.createGain();o.type=type;o.frequency.value=f;v.gain.value=g;o.connect(v);v.connect(AC.destination);const t=AC.currentTime;o.start(t);v.gain.setValueAtTime(g,t);v.gain.exponentialRampToValueAtTime(0.0001,t+d);o.stop(t+d+0.02)}catch(e){}}
+
+// ---------- UI ----------
+const fmtP=v=>(v>=0?'+':'')+v.toFixed(1)+' pips';
+const fmtY=v=>(v>=0?'+¥':'-¥')+Math.abs(Math.round(v)).toLocaleString('ja-JP');
+const sg=v=>(v>=0?'+':'')+v.toFixed(1);
+let toastT;
+function toast(html){const t=$('toast');t.innerHTML=html;t.classList.remove('hide');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.add('hide'),3400)}
+function setChip(el,cls,txt){el.className='chip '+cls;el.textContent=txt}
+function qHTML(p){const s=p.toFixed(3);return`${s.slice(0,4)}<span class="big">${s.slice(4,6)}</span><sup>${s.slice(6)}</sup>`}
+function updateUI(){
+  const L=baseBar();
+  $('bidTxt').innerHTML=qHTML(L.c-SPREAD/2);$('askTxt').innerHTML=qHTML(L.c+SPREAD/2);
+  const done=Math.min(S.len,G.idx-G.s0+(G.over?1:0));
+  $('progText').textContent=`${done} / ${G.end-G.s0}本`;const tk=$('ticks').children;for(let k=0;k<tk.length;k++)tk[k].classList.toggle('on',k<Math.floor(done/(G.end-G.s0)*tk.length));
+  const practice=S.mode==='practice';
+  $('judgeBox').hidden=!practice;$('judgeHidden').hidden=practice;
+  setChip($('modeChip'),'M',practice?'練習モード':'実戦モード');
+  const c=cond(BASE,G.idx-1);
+  setChip($('jPO'),c.po===1?'L':c.po===-1?'S':'N',c.po===1?'上昇PO':c.po===-1?'下降PO':'崩れ');
+  $('jRciV').textContent=c.rv.toFixed(0)+' / '+c.rv14.toFixed(0);
+  setChip($('jRCI'),c.rciL?'L':c.rciS?'S':'N',c.rciL?'底から反転↑':c.rciS?'天井から反転↓':(c.rUp?'上向き':'下向き'));
+  setChip($('jMACD'),c.macdUp?'L':'S',c.macdUp?'シグナル上':'シグナル下');
+  setChip($('jDIV'),c.div?'D':'N',c.div===1?'強気Div':c.div===-1?'弱気Div':'なし');
+  const hp=htfPoNow();$('jHTFn').textContent=S.htf?`（${TFS[S.htf]}・参考）`:'（参考）';
+  if(hp==null)setChip($('jHTF'),'N','上位足なし');else setChip($('jHTF'),hp===1?'L':hp===-1?'S':'N',hp===1?'上昇PO':hp===-1?'下降PO':'崩れ');
+  $('scLv').textContent=c.L+'/3';$('scSv').textContent=c.S+'/3';
+  $('scL').className='sc'+(c.L===3?' hot-L':'');$('scS').className='sc'+(c.S===3?' hot-S':'');
+  [...$('pL').children].forEach((e,k)=>e.classList.toggle('on',k<c.L));[...$('pS').children].forEach((e,k)=>e.classList.toggle('on',k<c.S));
+  const cb=$('btnClose'),hide=S.hide&&G.pos;
+  if(G.pos){const p=curPips();cb.disabled=false;cb.className='settle '+(hide?'':p>0.05?'win':p<-0.05?'lose':'');$('posTxt').textContent=`${G.pos.dir===1?'買':'売'} ${S.lot.toLocaleString('ja-JP')}通貨 @${G.pos.price.toFixed(3)}`;
+    $('closeTxt').textContent=hide?'損益非表示':fmtP(p);$('flt').textContent=hide?'非表示':fmtP(p)+' / '+fmtY(p*yenPerPip());$('flt').className='v mono '+(hide?'mut':p>=0?'up':'down')}
+  else{cb.disabled=true;cb.className='settle';$('posTxt').textContent='ポジションなし';$('closeTxt').textContent='—';$('flt').textContent='—';$('flt').className='v mono'}
+  $('btnBuy').classList.toggle('dim',!!G.pos||G.over);$('btnSell').classList.toggle('dim',!!G.pos||G.over);
+  const T=G.trades,tot=T.reduce((s,t)=>s+t.pips,0);
+  $('totPips').textContent=fmtP(tot);$('totPips').className='big-num mono '+(tot>0?'up':tot<0?'down':'');
+  $('totYen').textContent=fmtY(tot*yenPerPip())+`（${S.lot.toLocaleString('ja-JP')}通貨換算）`;
+  const n=T.length,w=T.filter(t=>t.pips>0).length;
+  $('wr').textContent=`${n}回 / ${n?Math.round(w/n*100)+'%':'—'}`;
+  $('aRate').textContent=n?Math.round(T.filter(t=>t.grade==='A').length/n*100)+'%':'—';
+  const withH=T.filter(t=>t.agree);$('hRate').textContent=withH.length?Math.round(withH.filter(t=>t.agree==='順').length/withH.length*100)+'%':'—';
+  $('btnLatest').hidden=VIEW.follow;
+  $('btnPause').disabled=!G.running||G.over;
+}
+function renderLog(){
+  const ul=$('log');if(!G.trades.length){ul.innerHTML='<li class="empty">まだ取引はありません</li>';return}
+  ul.innerHTML=G.trades.map((t,k)=>`<li data-k="${k}"><span class="tag ${t.dir===1?'L':'S'}">${t.dir===1?'買':'売'}</span><span class="g ${t.grade}">${t.grade}</span><span class="mono">${t.price.toFixed(3)}→${t.exit.toFixed(3)}${t.agree?' ・上位'+t.agree:''}${t.reason!=='手動'?' ・'+t.reason:''}</span><span class="mono ${t.pips>=0?'up':'down'}">${sg(t.pips)}</span></li>`).reverse().join('');
+}
+function renderRec(){
+  const R=REC,pct=(w,n)=>n?Math.round(w/n*100)+'%':'—',avg=(p,n)=>n?sg(p/n):'—';
+  $('recBox').innerHTML=[['ゲーム数',R.games+'回'],['合計損益',(R.n?sg(R.pips):'±0.0')+' pips'],['取引 / 勝率',R.n+'回 / '+pct(R.w,R.n)],['A判定率',pct(R.g.A.n,R.n)],
+    ['A 平均・勝率',avg(R.g.A.p,R.g.A.n)+' / '+pct(R.g.A.w,R.g.A.n)],['B 平均・勝率',avg(R.g.B.p,R.g.B.n)+' / '+pct(R.g.B.w,R.g.B.n)],['C 平均・勝率',avg(R.g.C.p,R.g.C.n)+' / '+pct(R.g.C.w,R.g.C.n)],['上位足 順/逆 平均',avg(R.on.p,R.on.n)+' / '+avg(R.off.p,R.off.n)]]
+    .map(([k,v])=>`<div><div class="k">${k}</div><div class="v mono">${v}</div></div>`).join('');
+}
+function grp(a){const s=a.reduce((x,t)=>x+t.pips,0);return{n:a.length,s,avg:a.length?s/a.length:0,wr:a.length?Math.round(a.filter(t=>t.pips>0).length/a.length*100):null}}
+function showResult(){
+  const T=G.trades,n=T.length,tot=T.reduce((s,t)=>s+t.pips,0),w=T.filter(t=>t.pips>0);
+  const gp=w.reduce((s,t)=>s+t.pips,0),gl=-T.filter(t=>t.pips<0).reduce((s,t)=>s+t.pips,0);
+  let eq=0,pk=0,dd=0;for(const t of T){eq+=t.pips;pk=Math.max(pk,eq);dd=Math.max(dd,pk-eq)}
+  const t0=BASE.bars[G.s0].t,t1=BASE.bars[G.end-1].t;
+  const period=S.data==='real'?`実データ：${fmtDate(t0)} 〜 ${fmtDate(t1)}（日本時間）`:`乱数生成 #${seed}`;
+  $('mLead').textContent=`${period}\n${S.mode==='practice'?'練習':'実戦'}モード ・ 5分足${G.end-G.s0}本${S.htf?' ・ 上位足 '+TFS[S.htf]:''} ・ ${S.lot.toLocaleString('ja-JP')}通貨`;
+  $('mPips').textContent=fmtP(tot)+'　'+fmtY(tot*yenPerPip());$('mPips').className='v mono '+(tot>=0?'up':'down');
+  $('mWr').textContent=n?Math.round(w.length/n*100)+'%（'+w.length+'勝'+(n-w.length)+'敗）':'—';
+  const pf=n?(gl?(gp/gl).toFixed(2):(gp>0?'∞':'—')):'—';$('mPf').textContent=pf;
+  $('mDd').textContent=n?'-'+dd.toFixed(1)+' pips':'—';
+  const lbl={A:'3/3',B:'2/3',C:'1以下'};
+  const rows=['A','B','C'].map(g=>({g,...grp(T.filter(t=>t.grade===g))}));
+  $('mTable').innerHTML=rows.map(r=>`<tr><td><span class="g ${r.g}">${r.g}</span> ${lbl[r.g]}</td><td class="mono">${r.n}</td><td class="mono">${r.wr===null?'—':r.wr+'%'}</td><td class="mono ${r.avg>=0?'up':'down'}">${r.n?sg(r.avg):'—'}</td><td class="mono ${r.s>=0?'up':'down'}">${r.n?sg(r.s):'—'}</td></tr>`).join('');
+  let v;const A=rows[0],C=rows[2];
+  if(!n)v='取引なしで終了しました。\n条件がそろう場面を待つのも手法のうちですが、練習では何度かエントリーしてみましょう。';
+  else{
+    v=`A判定（3条件そろい）でのエントリーは ${A.n}/${n}回（${Math.round(A.n/n*100)}%）。`;
+    if(A.n&&C.n)v+=`\nA判定の平均 ${sg(A.avg)} pips、C判定の平均 ${sg(C.avg)} pips。`;
+    const on=grp(T.filter(t=>t.agree==='順')),off=grp(T.filter(t=>t.agree==='逆'));
+    if(on.n||off.n)v+=`\n上位足POと同方向 ${on.n}回（平均 ${on.n?sg(on.avg):'—'} pips）、逆方向 ${off.n}回（平均 ${off.n?sg(off.avg):'—'} pips）。`;
+    const counter=T.filter(t=>t.counter).length;if(counter)v+=`\n5分足のパーフェクトオーダーに逆らった逆張りが ${counter}回ありました。`;
+    const early=T.filter(t=>t.reason==='手動'&&t.pips>0&&t.pips<5).length;if(early>=2)v+=`\n+5pips未満での利確が ${early}回。利を伸ばせる場面がなかったか、RCIの反転を待って確認してみましょう。`;
+    const sl=T.filter(t=>t.reason==='損切り').length;if(sl>=3)v+=`\n損切りが ${sl}回。エントリーのタイミングが早すぎないか（RCIの反転を待てているか）を見返してみてください。`;
+    v+=`\n\n※1ゲームの結果だけで手法の優劣は判断できません。通算成績で回数を重ねた傾向を見てください。`;
+  }
+  $('mVerdict').textContent=v;
+  $('shareTxt').value=`波形トレード道場 ${S.data==='real'?'実データ':'乱数'} #${seed} ${S.mode==='practice'?'練習':'実戦'}\n${fmtP(tot)} ｜ 勝率 ${n?Math.round(w.length/n*100)+'%':'—'}（${n}回）｜ A判定率 ${n?Math.round(A.n/n*100)+'%':'—'}\nPF ${pf} ｜ 最大DD -${dd.toFixed(1)} pips`;
+  $('btnCopy').textContent='コピー';
+  $('modalBg').hidden=false;
+  requestAnimationFrame(drawEquity);
+}
+function drawEquity(){
+  const c=$('eqCv'),ctx=c.getContext('2d'),dpr=window.devicePixelRatio||1,W=c.clientWidth,H=c.clientHeight;if(!W)return;
+  c.width=W*dpr;c.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);
+  const css=getComputedStyle(document.documentElement),C=k=>css.getPropertyValue(k).trim();
+  ctx.clearRect(0,0,W,H);
+  const T=G.trades;const pts=[0];let e=0;for(const t of T){e+=t.pips;pts.push(e)}
+  const lo=Math.min(0,...pts),hi=Math.max(0,...pts),pad=(hi-lo)*0.15||5;
+  const Y=v=>10+(hi+pad-v)/(hi-lo+2*pad)*(H-20),X=i=>12+i/Math.max(1,pts.length-1)*(W-60);
+  ctx.strokeStyle=C('--line');ctx.beginPath();ctx.moveTo(0,Y(0)+.5);ctx.lineTo(W,Y(0)+.5);ctx.stroke();
+  ctx.font='10px "JetBrains Mono",monospace';ctx.fillStyle=C('--muted');ctx.textBaseline='middle';ctx.fillText('0',W-44,Y(0));ctx.fillText('損益推移（取引ごと）',12,H-6);
+  if(pts.length<2){ctx.fillText('取引なし',W/2-24,H/2);return}
+  const end=pts[pts.length-1],col=end>=0?C('--up'):C('--down');
+  ctx.beginPath();ctx.moveTo(X(0),Y(0));pts.forEach((v,i)=>ctx.lineTo(X(i),Y(v)));ctx.lineTo(X(pts.length-1),Y(0));ctx.closePath();ctx.globalAlpha=.15;ctx.fillStyle=col;ctx.fill();ctx.globalAlpha=1;
+  ctx.strokeStyle=col;ctx.lineWidth=1.6;ctx.beginPath();pts.forEach((v,i)=>i?ctx.lineTo(X(i),Y(v)):ctx.moveTo(X(i),Y(v)));ctx.stroke();
+  pts.forEach((v,i)=>{if(!i)return;ctx.fillStyle=T[i-1].pips>=0?C('--up'):C('--down');ctx.beginPath();ctx.arc(X(i),Y(v),2.5,0,Math.PI*2);ctx.fill()});
+  ctx.fillStyle=col;ctx.fillText(sg(end),X(pts.length-1)+6,Y(end));
+}
+
+// ---------- drawing ----------
+const GEO={};
+function draw(){
+  try{drawChart(cv,BASE,G.idx,live(),{isBase:true});
+  const h=htfState();if(h&&!$('wrapH').hidden)drawChart(cvH,h.ds,h.K,h.L,{isBase:false,remain:h.remain})}catch(e){console.error(e)}
+}
+function panes(H){
+  const axisH=18,top=22,av=H-axisH,n=(S.vis.rci?1:0)+(S.vis.macd?1:0),pf=n===2?0.58:n===1?0.74:1;
+  const out={P:{y:top,h:av*pf-top},axisY:av};let y=av*pf;const ph=n?(av-av*pf)/n:0;
+  if(S.vis.rci){out.R={y:y+14,h:ph-14};y+=ph}if(S.vis.macd){out.M={y:y+14,h:ph-14};y+=ph}return out;
+}
+function drawChart(canvas,ds,fi,Lv,opt){
+  const ctx=canvas.getContext('2d'),isBase=opt.isBase;
+  const dpr=window.devicePixelRatio||1,W=canvas.clientWidth,H=canvas.clientHeight;if(!W||!H)return;
+  if(canvas.width!==Math.round(W*dpr)||canvas.height!==Math.round(H*dpr)){canvas.width=Math.round(W*dpr);canvas.height=Math.round(H*dpr)}
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  const css=getComputedStyle(document.documentElement),C=k=>css.getPropertyValue(k).trim();
+  ctx.fillStyle=C('--chart');ctx.fillRect(0,0,W,H);
+  const axisW=62,plotW=W-axisW;
+  const bw=Math.max(2.5,Math.min(24,Math.max(5,Math.min(11,plotW/(isBase?74:56)))*(isBase?VIEW.z:1)));
+  const N=Math.floor(plotW/bw)-2;
+  let right=fi;if(isBase&&!VIEW.follow)right=Math.round(Math.max(Math.min(VIEW.right,fi),Math.min(fi,20)));
+  const last=right,first=Math.max(1,last-N+1);
+  const {P,R,M,axisY}=panes(H);
+  const X=i=>(i-first)*bw+bw/2;
+  const bar=i=>i<fi?ds.bars[i]:Lv, val=(k,i)=>i<fi?ds.I[k][i]:Lv[k];
+  const hidePrice=S.hide&&G.pos, practice=S.mode==='practice', showDate=S.data==='real'&&(S.showDate||G.over);
+  let lo=Infinity,hi=-Infinity;
+  for(let i=first;i<=last;i++){const b=bar(i);if(b.l<lo)lo=b.l;if(b.h>hi)hi=b.h;if(S.vis.ema){const e=val('e40',i);if(e<lo)lo=e;if(e>hi)hi=e}}
+  if(isBase&&G.pos&&!hidePrice){lo=Math.min(lo,G.pos.price);hi=Math.max(hi,G.pos.price)}
+  const padv=(hi-lo)*0.08||0.1;lo-=padv;hi+=padv;
+  const Y=v=>P.y+(hi-v)/(hi-lo)*P.h;
+  if(isBase)GEO.base={first,last,bw,plotW,P,lo,hi,fi};
+  ctx.font='11px "JetBrains Mono",monospace';ctx.textBaseline='middle';ctx.lineWidth=1;
+  // day separators + time axis
+  const secs=[900,1800,3600,7200,10800,21600,43200,86400];let labSec=86400;for(const s of secs){const nb=s/ds.tf;if(nb>=1&&nb*bw>=64){labSec=s;break}}
+  ctx.font='10px "JetBrains Mono",monospace';
+  let lastLabX=-100;
+  for(let i=first;i<=last;i++){
+    const t=bar(i).t,x=X(i);
+    const dayChange=i>first&&jst(t).day!==jst(bar(i-1).t).day;
+    if(dayChange){ctx.strokeStyle=C('--line');ctx.setLineDash([2,4]);ctx.beginPath();ctx.moveTo(Math.round(x-bw/2)+.5,P.y);ctx.lineTo(Math.round(x-bw/2)+.5,axisY);ctx.stroke();ctx.setLineDash([]);
+      const lb=fmtT(t,showDate),lx0=x-bw/2+3;if(lx0>lastLabX+6&&lx0>=2){ctx.fillStyle=C('--ink2');ctx.textAlign='left';ctx.fillText(lb,lx0,axisY+9);lastLabX=lx0+ctx.measureText(lb).width}continue}
+    if((t+32400)%labSec===0&&x-lastLabX>40){const lb=pad(jst(t).h)+':'+pad(jst(t).m);ctx.fillStyle=C('--muted');ctx.textAlign='center';const w=ctx.measureText(lb).width;if(x-w/2>lastLabX+6){ctx.fillText(lb,x,axisY+9);lastLabX=x+w/2}}
+  }
+  ctx.textAlign='left';ctx.font='11px "JetBrains Mono",monospace';
+  // grid + price labels
+  ctx.strokeStyle=C('--line');
+  const stepv=niceStep((hi-lo)/5);
+  for(let v=Math.ceil(lo/stepv)*stepv;v<hi;v+=stepv){const y=Math.round(Y(v))+.5;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(plotW,y);ctx.stroke();if(!hidePrice){ctx.fillStyle=C('--muted');ctx.fillText(v.toFixed(3),plotW+6,y)}}
+  ctx.strokeStyle=C('--line');[R&&R.y-14,M&&M.y-14,axisY].forEach(y=>{if(y==null)return;ctx.beginPath();ctx.moveTo(0,y+.5);ctx.lineTo(W,y+.5);ctx.stroke()});
+  ctx.beginPath();ctx.moveTo(plotW+.5,0);ctx.lineTo(plotW+.5,axisY);ctx.stroke();
+
+  ctx.save();ctx.beginPath();ctx.rect(0,P.y-4,plotW,P.h+8);ctx.clip();
+  ctx.globalAlpha=hidePrice?0.05:1;
+  if(practice&&S.vis.div)for(const d of ds.divs){if(d.cf>fi-1||d.j2<first||d.j1>last)continue;
+    const b1=ds.bars[d.j1],b2=ds.bars[d.j2],y1=d.t===1?b1.l:b1.h,y2=d.t===1?b2.l:b2.h;
+    ctx.strokeStyle=C('--div');ctx.setLineDash([4,3]);ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(X(d.j1),Y(y1));ctx.lineTo(X(d.j2),Y(y2));ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle=C('--div');ctx.font='10px "Zen Kaku Gothic New",sans-serif';ctx.fillText(d.t===1?'強気Div':'弱気Div',X(d.j2)+4,Y(y2)+(d.t===1?10:-10));ctx.font='11px "JetBrains Mono",monospace'}
+  if(S.vis.ema)[['e40','--e40'],['e30','--e30'],['e20','--e20']].forEach(([k,col])=>{ctx.strokeStyle=C(col);ctx.lineWidth=1.4;ctx.beginPath();for(let i=first;i<=last;i++){const x=X(i),y=Y(val(k,i));i===first?ctx.moveTo(x,y):ctx.lineTo(x,y)}ctx.stroke()});
+  const cw=Math.max(1.5,bw*0.62);
+  for(let i=first;i<=last;i++){const b=bar(i),col=b.c>=b.o?C('--up'):C('--down'),x=X(i);
+    ctx.strokeStyle=col;ctx.fillStyle=col;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(Math.round(x)+.5,Y(b.h));ctx.lineTo(Math.round(x)+.5,Y(b.l));ctx.stroke();
+    const yo=Y(b.o),yc=Y(b.c);ctx.fillRect(x-cw/2,Math.min(yo,yc),cw,Math.max(1,Math.abs(yc-yo)))}
+  if(isBase&&practice&&S.vis.sign){for(let i=first;i<fi;i++){const s=ds.signs[i];if(!s)continue;const b=ds.bars[i],x=X(i);
+    ctx.fillStyle=s===1?C('--up'):C('--down');ctx.beginPath();
+    if(s===1){const y=Y(b.l)+10;ctx.moveTo(x,y);ctx.lineTo(x-5,y+8);ctx.lineTo(x+5,y+8)}else{const y=Y(b.h)-10;ctx.moveTo(x,y);ctx.lineTo(x-5,y-8);ctx.lineTo(x+5,y-8)}
+    ctx.closePath();ctx.fill()}}
+  const MX=i=>isBase?i:bucketIndex(ds,BASE.bars[i].t);
+  const drawTrade=(t,ei,ex)=>{const col=t.dir===1?C('--up'):C('--down');
+    const a=MX(t.idx);if(a>=first&&a<=last){ctx.fillStyle=col;ctx.strokeStyle=C('--chart');ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(X(a),Y(t.price),isBase?4.5:3.5,0,Math.PI*2);ctx.fill();ctx.stroke()}
+    if(ei!=null){const e=MX(ei);if(e>=first&&e<=last){const x=X(e),y=Y(ex);ctx.strokeStyle=C('--ink');ctx.lineWidth=isBase?2:1.5;const r=isBase?4:3;ctx.beginPath();ctx.moveTo(x-r,y-r);ctx.lineTo(x+r,y+r);ctx.moveTo(x+r,y-r);ctx.lineTo(x-r,y+r);ctx.stroke();
+      if(a<=last){ctx.strokeStyle=col;ctx.lineWidth=1;ctx.setLineDash([2,3]);ctx.beginPath();ctx.moveTo(X(a),Y(t.price));ctx.lineTo(x,y);ctx.stroke();ctx.setLineDash([])}}}};
+  for(const t of G.trades)drawTrade(t,t.exitIdx,t.exit);
+  ctx.globalAlpha=1;
+  if(G.pos&&!hidePrice){const p=G.pos;drawTrade(p,null,null);
+    ctx.setLineDash([5,4]);ctx.lineWidth=1;ctx.strokeStyle=C('--ink2');ctx.beginPath();ctx.moveTo(0,Y(p.price)+.5);ctx.lineTo(plotW,Y(p.price)+.5);ctx.stroke();
+    const lvl=(pips,col,lb)=>{const v=p.price+p.dir*pips*PIP;ctx.strokeStyle=col;ctx.beginPath();ctx.moveTo(0,Y(v));ctx.lineTo(plotW,Y(v));ctx.stroke();ctx.fillStyle=col;ctx.font='10px "Zen Kaku Gothic New",sans-serif';ctx.fillText(lb,4,Y(v)-7);ctx.font='11px "JetBrains Mono",monospace'};
+    if(S.sl>0)lvl(-S.sl,C('--down'),'損切り '+S.sl);if(S.tp>0)lvl(S.tp,C('--up'),'利確 '+S.tp);ctx.setLineDash([])}
+  ctx.restore();
+  if(!hidePrice){const y=Y(Lv.c);ctx.fillStyle=Lv.c>=Lv.o?C('--up'):C('--down');ctx.fillRect(plotW+1,y-9,axisW-1,18);ctx.fillStyle=C('--onfill');ctx.fillText(Lv.c.toFixed(3),plotW+6,y)}
+  else{ctx.fillStyle=C('--ink2');ctx.font='600 13px "Zen Kaku Gothic New",sans-serif';ctx.textAlign='center';ctx.fillText(isBase?'価格を非表示中 ・ RCIとMACDで決済を判断':'価格を非表示中',plotW/2,P.y+P.h/2);ctx.textAlign='left';ctx.font='11px "JetBrains Mono",monospace'}
+  // current time tag on axis
+  if(right===fi){const x=X(fi),lb=fmtT(Lv.t,showDate),w=ctx.measureText(lb).width+8;ctx.font='10px "JetBrains Mono",monospace';ctx.fillStyle=C('--tagbg');ctx.fillRect(Math.min(x-w/2,plotW-w),axisY+1,w,16);ctx.fillStyle=C('--tagink');ctx.textAlign='center';ctx.fillText(lb,Math.min(x,plotW-w/2),axisY+9);ctx.textAlign='left';ctx.font='11px "JetBrains Mono",monospace'}
+  // header labels
+  ctx.textBaseline='alphabetic';
+  let lx=8;const lab=(t,col,y)=>{ctx.fillStyle=col;ctx.fillText(t,lx,y);lx+=ctx.measureText(t).width+12};
+  lab(isBase?'GBP/JPY 5分足'+(S.data==='real'?'（実データ）':'（乱数）'):'上位足 '+TFS[ds.tf],isBase?C('--ink2'):C('--ink'),14);
+  if(S.vis.ema){lab('EMA20',C('--e20'),14);lab('EMA30',C('--e30'),14);lab('EMA40',C('--e40'),14)}
+  if(!isBase){const tx=`形成中 残り${Math.max(0,opt.remain)}本`;if(lx+ctx.measureText(tx).width<plotW)lab(tx,C('--muted'),14)}
+  // RCI
+  if(R){const RY=v=>R.y+(100-v)/200*R.h;
+    ctx.globalAlpha=.07;ctx.fillStyle=C('--up');ctx.fillRect(0,R.y,plotW,RY(S.th)-R.y);ctx.fillStyle=C('--down');ctx.fillRect(0,RY(-S.th),plotW,R.y+R.h-RY(-S.th));ctx.globalAlpha=1;
+    ctx.strokeStyle=C('--line');ctx.setLineDash([3,3]);[S.th,0,-S.th].forEach(v=>{ctx.beginPath();ctx.moveTo(0,RY(v)+.5);ctx.lineTo(plotW,RY(v)+.5);ctx.stroke()});ctx.setLineDash([]);
+    ctx.fillStyle=C('--muted');ctx.textBaseline='middle';[S.th,0,-S.th].forEach(v=>ctx.fillText((v>0?'+':'')+v,plotW+6,RY(v)));
+    [['rci14','--rci14',1.3],['rci','--rci',1.7]].forEach(([k,col,lw])=>{ctx.strokeStyle=C(col);ctx.lineWidth=lw;ctx.beginPath();for(let i=first;i<=last;i++){const y=RY(val(k,i));i===first?ctx.moveTo(X(i),y):ctx.lineTo(X(i),y)}ctx.stroke()});
+    if(right===fi){ctx.fillStyle=C('--rci');ctx.beginPath();ctx.arc(X(last),RY(Lv.rci),3,0,Math.PI*2);ctx.fill()}
+    ctx.textBaseline='alphabetic';lx=8;lab('RCI(9) '+Lv.rci.toFixed(1),C('--rci'),R.y-3);lab('RCI(14) '+Lv.rci14.toFixed(1),C('--rci14'),R.y-3);
+    if(isBase)GEO.base.R=R}
+  // MACD
+  if(M){let mm=1e-6;for(let i=first;i<=last;i++)mm=Math.max(mm,Math.abs(val('macd',i)),Math.abs(val('sig',i)));mm*=1.1;
+    const MY=v=>M.y+M.h/2-v/mm*M.h/2;
+    ctx.strokeStyle=C('--line');ctx.beginPath();ctx.moveTo(0,MY(0)+.5);ctx.lineTo(plotW,MY(0)+.5);ctx.stroke();
+    for(let i=first;i<=last;i++){const h=val('macd',i)-val('sig',i);ctx.globalAlpha=.4;ctx.fillStyle=h>=0?C('--up'):C('--down');const y0=MY(0),y1=MY(h*1.6);ctx.fillRect(X(i)-cw/2,Math.min(y0,y1),cw,Math.abs(y1-y0));ctx.globalAlpha=1}
+    [['macd','--macd'],['sig','--sigl']].forEach(([k,col])=>{ctx.strokeStyle=C(col);ctx.lineWidth=1.3;ctx.beginPath();for(let i=first;i<=last;i++){const y=MY(val(k,i));i===first?ctx.moveTo(X(i),y):ctx.lineTo(X(i),y)}ctx.stroke()});
+    if(practice&&S.vis.div)for(const d of ds.divs){if(d.cf>fi-1||d.j2<first||d.j1>last)continue;ctx.strokeStyle=C('--div');ctx.setLineDash([4,3]);ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(X(d.j1),MY(ds.I.macd[d.j1]));ctx.lineTo(X(d.j2),MY(ds.I.macd[d.j2]));ctx.stroke();ctx.setLineDash([])}
+    lx=8;lab('MACD(6,13,4)',C('--ink2'),M.y-3);lab('MACD',C('--macd'),M.y-3);lab('シグナル',C('--sigl'),M.y-3);
+    if(isBase){GEO.base.M=M;GEO.base.mm=mm}}
+  // crosshair (base only)
+  if(isBase&&HOVER){
+    const i=first+Math.floor(HOVER.x/bw);
+    if(i>=first&&i<=last&&HOVER.x<plotW){
+      const b=bar(i),x=Math.round(X(i))+.5;
+      ctx.strokeStyle=C('--ink2');ctx.setLineDash([3,3]);ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,P.y-4);ctx.lineTo(x,axisY);ctx.stroke();
+      if(HOVER.y>=P.y&&HOVER.y<=P.y+P.h){const y=Math.round(HOVER.y)+.5;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(plotW,y);ctx.stroke();
+        if(!hidePrice){const v=hi-(HOVER.y-P.y)/P.h*(hi-lo);ctx.fillStyle=C('--ink2');ctx.fillRect(plotW+1,y-8,axisW-1,16);ctx.fillStyle=C('--onfill');ctx.textBaseline='middle';ctx.fillText(v.toFixed(3),plotW+6,y)}}
+      ctx.setLineDash([]);
+      const tl=fmtT(b.t,showDate),w=ctx.measureText(tl).width+8;ctx.font='10px "JetBrains Mono",monospace';ctx.fillStyle=C('--ink2');ctx.fillRect(Math.max(0,Math.min(x-w/2,plotW-w)),axisY+1,w,16);ctx.fillStyle=C('--onfill');ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(tl,Math.max(w/2,Math.min(x,plotW-w/2)),axisY+9);ctx.textAlign='left';
+      const rows=[];rows.push(`${fmtT(b.t,showDate)}${hidePrice?'':`  ${sg((b.c-b.o)/PIP)}p  幅 ${((b.h-b.l)/PIP).toFixed(1)}p`}`);
+      if(!hidePrice)rows.push(`O ${b.o.toFixed(3)} H ${b.h.toFixed(3)} L ${b.l.toFixed(3)} C ${b.c.toFixed(3)}`);
+      rows.push(`RCI9 ${val('rci',i).toFixed(0)}  RCI14 ${val('rci14',i).toFixed(0)}  MACD ${(val('macd',i)/PIP).toFixed(1)}p  Sig ${(val('sig',i)/PIP).toFixed(1)}p`);
+      if(S.vis.ema&&!hidePrice)rows.push(`EMA20 ${val('e20',i).toFixed(3)}  30 ${val('e30',i).toFixed(3)}  40 ${val('e40',i).toFixed(3)}`);
+      ctx.font='11px "JetBrains Mono",monospace';const bw2=Math.max(...rows.map(r=>ctx.measureText(r).width))+14,bh=rows.length*16+8,bx=Math.min(plotW-bw2-4,Math.max(4,x+14)),by=P.y+8;
+      ctx.fillStyle=C('--panel');ctx.globalAlpha=.94;ctx.fillRect(bx,by,bw2,bh);ctx.globalAlpha=1;ctx.strokeStyle=C('--line');ctx.strokeRect(bx+.5,by+.5,bw2,bh);
+      ctx.fillStyle=C('--ink');rows.forEach((r,k)=>ctx.fillText(r,bx+7,by+12+k*16));
+    }
+  }
+}
+function niceStep(r){const p=Math.pow(10,Math.floor(Math.log10(r))),f=r/p;return(f<1.5?1:f<3?2:f<7?5:10)*p}
+
+// ---------- chart interaction ----------
+function setRight(v){const g=GEO.base;if(!g)return;const mn=Math.min(G.idx,g.last-g.first+2);VIEW.right=Math.max(mn,Math.min(G.idx,Math.round(v)));VIEW.follow=VIEW.right>=G.idx;$('btnLatest').hidden=VIEW.follow;draw()}
+function goLatest(){VIEW.follow=true;VIEW.right=G.idx;$('btnLatest').hidden=true;draw()}
+function zoom(f){VIEW.z=Math.max(0.35,Math.min(3,VIEW.z*f));draw()}
+cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);const r=cv.getBoundingClientRect();DRAG={x:e.clientX,right:VIEW.follow?G.idx:VIEW.right,moved:false};HOVER={x:e.clientX-r.left,y:e.clientY-r.top};draw()});
+cv.addEventListener('pointermove',e=>{const r=cv.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;
+  if(DRAG&&e.buttons){const dx=e.clientX-DRAG.x;if(Math.abs(dx)>3){DRAG.moved=true;cv.classList.add('grab');const g=GEO.base;if(g){VIEW.right=DRAG.right-dx/g.bw;const mn=Math.min(G.idx,g.last-g.first+2);VIEW.right=Math.max(mn,Math.min(G.idx,VIEW.right));VIEW.follow=VIEW.right>=G.idx;$('btnLatest').hidden=VIEW.follow}}}
+  HOVER={x,y};draw()});
+const endDrag=e=>{if(DRAG){DRAG=null;cv.classList.remove('grab');if(VIEW.right!=null)VIEW.right=Math.round(VIEW.right)}if(e&&e.pointerType!=='mouse'){setTimeout(()=>{HOVER=null;draw()},1800)}};
+cv.addEventListener('pointerup',endDrag);cv.addEventListener('pointercancel',endDrag);
+cv.addEventListener('pointerleave',()=>{HOVER=null;DRAG=null;cv.classList.remove('grab');draw()});
+cv.addEventListener('wheel',e=>{e.preventDefault();const g=GEO.base;if(!g)return;if(Math.abs(e.deltaX)>Math.abs(e.deltaY)||e.shiftKey){setRight((VIEW.follow?G.idx:VIEW.right)+(e.shiftKey?e.deltaY:e.deltaX)/g.bw*2)}else zoom(e.deltaY<0?1.15:1/1.15)},{passive:false});
+$('btnLatest').onclick=goLatest;$('zIn').onclick=()=>zoom(1.25);$('zOut').onclick=()=>zoom(0.8);
+
+// ---------- controls ----------
+$('startBtn').onclick=start;
+$('btnBuy').onclick=()=>entry(1);$('btnSell').onclick=()=>entry(-1);$('btnClose').onclick=()=>closePos();
+$('btnPause').onclick=togglePause;
+function togglePause(){if(!G.running||G.over)return;G.paused=!G.paused;$('btnPause').textContent=G.paused?'▶ 再開':'Ⅱ 一時停止';if(!G.paused){clearTimeout(G.timer);G.timer=setTimeout(step,TICK_MS/G.speed)}}
+document.querySelectorAll('[data-speed]').forEach(b=>b.onclick=()=>{G.speed=+b.dataset.speed;document.querySelectorAll('[data-speed]').forEach(x=>x.classList.toggle('on',x===b))});
+const restart=sd=>{clearTimeout(G.timer);G.running=false;newGame(sd)};
+$('btnReplay').onclick=()=>restart(seed);$('btnNew').onclick=()=>restart();
+$('mReplay').onclick=()=>restart(seed);$('mNew').onclick=()=>restart();
+$('mReview').onclick=()=>{$('modalBg').hidden=true;G.review=true;toast('見返しモード：ドラッグや ← → でゲーム全体を見返せます。履歴をクリックするとその取引へ移動します')};
+$('btnResult').onclick=()=>{$('modalBg').hidden=false;requestAnimationFrame(drawEquity)};
+$('btnSound').onclick=()=>{S.sound=!S.sound;saveS();syncSettings();if(S.sound){initAudio();beep(660,0.08,0.04)}};
+$('seedBtn').onclick=()=>{copyText(String(seed),$('seedBtn'),(S.data==='real'?'実データ #':'乱数 #')+seed)};
+$('btnCopy').onclick=()=>copyText($('shareTxt').value,$('btnCopy'),'コピー');
+function copyText(txt,btn,orig){const done=()=>{btn.textContent='コピーしました';setTimeout(()=>btn.textContent=orig,1500)};
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(done).catch(()=>{const ta=$('shareTxt');ta.value=txt;ta.select();done()})}else{const ta=$('shareTxt');ta.value=txt;ta.select();done()}}
+$('btnSeedGo').onclick=()=>{const v=parseInt($('seedIn').value,10);if(!isFinite(v)){toast('シード番号（整数）を入力してください');return}restart(v)};
+$('seedIn').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('btnSeedGo').click()}});
+$('log').addEventListener('click',e=>{const li=e.target.closest('li[data-k]');if(!li)return;const t=G.trades[+li.dataset.k];const g=GEO.base;const N=g?g.last-g.first:60;setRight(t.exitIdx+Math.floor(N*0.3));toast(`${fmtT(t.t,S.data==='real'&&(S.showDate||G.over))} ${t.dir===1?'買い':'売り'} @${t.price.toFixed(3)} → ${t.exit.toFixed(3)}（${fmtP(t.pips)}・判定 ${t.grade}）`)});
+$('btnRecReset').onclick=()=>{REC={games:0,n:0,w:0,pips:0,g:{A:{n:0,w:0,p:0},B:{n:0,w:0,p:0},C:{n:0,w:0,p:0}},on:{n:0,p:0},off:{n:0,p:0}};saveRec();renderRec();toast('通算成績をリセットしました')};
+document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{S.mode=b.dataset.mode;saveS();syncSettings();updateUI();draw()});
+document.querySelectorAll('[data-data]').forEach(b=>b.onclick=()=>{if(S.data===b.dataset.data)return;S.data=b.dataset.data;saveS();syncSettings();restart();toast(S.data==='real'?'実データに切り替えました（期間はランダム、日付は結果画面で公開）':'乱数生成に切り替えました')});
+document.querySelectorAll('[data-htf]').forEach(b=>b.onclick=()=>{S.htf=+b.dataset.htf;saveS();syncSettings();updateUI();requestAnimationFrame(draw)});
+document.querySelectorAll('[data-vis]').forEach(b=>b.onclick=()=>{S.vis[b.dataset.vis]=!S.vis[b.dataset.vis];saveS();syncSettings();draw()});
+$('selTh').onchange=e=>{S.th=+e.target.value;saveS();buildSigns(BASE);updateUI();draw()};
+$('selSL').onchange=e=>{S.sl=+e.target.value;saveS();checkStops();updateUI();draw()};
+$('selTP').onchange=e=>{S.tp=+e.target.value;saveS();checkStops();updateUI();draw()};
+$('selLot').onchange=e=>{S.lot=+e.target.value;saveS();updateUI()};
+$('selLen').onchange=e=>{S.len=+e.target.value;saveS();if(G.running&&!G.over)toast('次のゲームから適用されます');else restart()};
+$('chkHide').onchange=e=>{S.hide=e.target.checked;saveS();updateUI();draw()};
+$('chkAuto').onchange=e=>{S.autoPause=e.target.checked;saveS()};
+$('chkDate').onchange=e=>{S.showDate=e.target.checked;saveS();draw()};
+function syncSettings(){
+  document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('on',b.dataset.mode===S.mode));
+  document.querySelectorAll('[data-data]').forEach(b=>b.classList.toggle('on',b.dataset.data===S.data));
+  document.querySelectorAll('[data-htf]').forEach(b=>b.classList.toggle('on',+b.dataset.htf===S.htf));
+  document.querySelectorAll('[data-vis]').forEach(b=>b.classList.toggle('on',!!S.vis[b.dataset.vis]));
+  $('wrapH').hidden=!S.htf;$('charts').classList.toggle('two',!!S.htf);
+  $('selTh').value=S.th;$('selSL').value=S.sl;$('selTP').value=S.tp;$('selLot').value=S.lot;$('selLen').value=S.len;
+  $('chkHide').checked=S.hide;$('chkAuto').checked=S.autoPause;$('chkDate').checked=S.showDate;
+  $('btnSound').textContent=S.sound?'音 ON':'音 OFF';
+  $('dataNote').textContent=S.data==='real'?'実データ：期間はランダムに切り出し・日付は結果画面で公開':'乱数：実際のGBP/JPYの統計に合わせた架空の値動き';
+}
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='SELECT'||e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;
+  const k=e.key.toLowerCase();
+  if(k==='enter'&&!G.running&&!G.over){e.preventDefault();start()}
+  else if(k==='b'||k==='arrowup'){e.preventDefault();entry(1)}
+  else if(k==='s'||k==='arrowdown'){e.preventDefault();entry(-1)}
+  else if(k===' '){e.preventDefault();closePos()}
+  else if(k==='p')togglePause();
+  else if(k==='arrowleft'){e.preventDefault();setRight((VIEW.follow?G.idx:VIEW.right)-10)}
+  else if(k==='arrowright'){e.preventDefault();setRight((VIEW.follow?G.idx:VIEW.right)+10)}
+  else if(k==='home'){e.preventDefault();goLatest()}
+  else if(k==='+'||k==='=')zoom(1.25);else if(k==='-')zoom(0.8);
+  else if(k==='escape'&&!$('modalBg').hidden){$('modalBg').hidden=true;G.review=true}
+});
+const ro=new ResizeObserver(()=>draw());ro.observe($('wrap'));ro.observe($('wrapH'));
+$('ticks').innerHTML='<i></i>'.repeat(15);
+(function(){const d=realData();$('realSpan').textContent=fmtDate(d.b5[0].t).slice(0,-6)+'〜'+fmtDate(d.b5[d.b5.length-1].t).slice(0,-6)})();
+syncSettings();renderRec();newGame();
+document.fonts&&document.fonts.ready.then(draw);
+try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>draw());new MutationObserver(()=>draw()).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']})}catch(e){}
+})();
+</script>
