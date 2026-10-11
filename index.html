@@ -17,7 +17,7 @@
   --ink:#1a2230; --ink2:#4b5563; --muted:#8b93a1; --line:#e3e6ea;
   --up:#e0432c; --down:#2b57a8; --onfill:#ffffff;
   --e20:#c99400; --e30:#2e9467; --e40:#7a52c7;
-  --rci:#1f7fc4; --rci14:#e0761c; --div:#b03c95; --sigl:#e0761c; --macd:#1a2230; --ev:#c98a00;
+  --rci:#1f7fc4; --rci14:#e0761c; --rci18:#1f8f98; --div:#b03c95; --sigl:#e0761c; --macd:#1a2230; --ev:#c98a00;
   --tagbg:#1a2230; --tagink:#ffffff; --gold:#d19a12; --goldbg:#fff7e0; --ok:#1f9d55; --okbg:#e8f7ee; --ng:#d23c3c; --ngbg:#fdecec;
   color-scheme:light;
 }
@@ -45,7 +45,7 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
 .seedbtn{background:transparent;border:1px solid var(--line);border-radius:3px;padding:3px 8px;font-size:11px;color:var(--ink2);white-space:nowrap}
 .seedbtn:hover{border-color:var(--ink);color:var(--ink)}
 .prog{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink2);white-space:nowrap}
-@media (max-width:1180px){.ticks{display:none}}
+@media (max-width:1400px){.ticks{display:none}}
 .ticks{display:flex;gap:2px}
 .ticks i{width:5px;height:12px;background:var(--panel3);border-radius:1px}
 .ticks i.on{background:var(--ink)}
@@ -184,8 +184,8 @@ kbd{font-family:"JetBrains Mono",monospace;font-size:10.5px;border:1px solid var
 .foot button{background:transparent;border:0;color:var(--muted);font-size:11px;text-decoration:underline;text-underline-offset:3px;padding:0}
 
 /* character card */
-.charbox{display:grid;grid-template-columns:84px 1fr;gap:12px;align-items:start}
-.charbox .av{width:84px;height:84px;border-radius:12px;overflow:hidden;background:var(--panel2);border:1px solid var(--line)}
+.charbox{display:grid;grid-template-columns:72px 1fr;gap:12px;align-items:start}
+.charbox .av{width:72px;height:72px;border-radius:12px;overflow:hidden;background:var(--panel2);border:1px solid var(--line)}
 .charbox .av svg{width:100%;height:100%;display:block}
 .charbox .nm{font-weight:900;font-size:16px;line-height:1.2}
 .charbox .ttl{font-size:11px;color:var(--ink2);margin-bottom:4px}
@@ -199,6 +199,9 @@ kbd{font-family:"JetBrains Mono",monospace;font-size:10.5px;border:1px solid var
 .wrow .wn{font-weight:700}
 .wrow .wl{font-size:11px;color:var(--ink2)}
 .btnrow{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.nextw{font-size:11.5px;color:var(--ink2);margin-top:6px}
+.nextw.can{color:#7a5a00;font-weight:700}
+.smallbtn.alert{box-shadow:0 0 0 2px #f0d58a;background:var(--gold);border-color:var(--gold)}
 .ptsbig{font-size:22px;font-weight:900;color:#7a5a00;background:var(--goldbg);border:1px solid #f0d58a;border-radius:6px;padding:4px 10px;display:inline-block;margin-top:8px}
 /* quest card */
 .qlist{display:flex;flex-direction:column;gap:5px}
@@ -287,7 +290,7 @@ table.gt th{color:var(--ink2);font-weight:500;font-size:11px}
 .loading .bar i{display:block;height:100%;width:40%;background:var(--up);animation:slide 1.1s ease-in-out infinite alternate}
 @keyframes slide{from{transform:translateX(-60%)}to{transform:translateX(250%)}}
 
-@media (max-width:900px){.layout{grid-template-columns:minmax(0,1fr)}.chartwrap{height:clamp(380px,60vh,560px)}}
+@media (max-width:900px){.layout{grid-template-columns:minmax(0,1fr)}.chartwrap{height:clamp(380px,60vh,560px)}.ticket{position:sticky;bottom:0;z-index:5;background:#f6f7f9;padding:6px 0 calc(6px + env(safe-area-inset-bottom,0px));box-shadow:0 -8px 16px rgba(26,34,48,.08)}}
 @media (max-width:560px){
   .ticks{display:none}
   .side-btn{min-height:74px;padding:8px 10px}
@@ -316,6 +319,7 @@ table.gt th{color:var(--ink2);font-weight:500;font-size:11px}
     <div class="sp"></div>
     <div class="ctrl"><button class="pausebtn" id="btnPause">Ⅱ 一時停止</button>
       <span>速度</span><div class="seg"><button data-speed="0.5">0.5</button><button class="on" data-speed="1">1</button><button data-speed="2">2</button><button data-speed="4">4</button><button data-speed="8">8</button></div></div>
+    <button class="txtbtn" id="btnHelp">あそびかた</button>
     <button class="txtbtn" id="btnSound">音 ON</button>
     <button class="txtbtn" id="btnReplay">再挑戦</button>
     <button class="txtbtn" id="btnNew">新しい場面</button>
@@ -384,6 +388,7 @@ table.gt th{color:var(--ink2);font-weight:500;font-size:11px}
         </div>
         <div class="trait" id="charTrait"></div>
         <div class="wrow"><span class="wi" id="wIcon"></span><div><div class="wn" id="wName">木刀</div><div class="wl" id="wLot">取引数量の上限：1,000通貨</div></div></div>
+        <div class="nextw" id="nextW"></div>
         <div class="btnrow"><button class="smallbtn fill" id="btnShop">武器庫（ショップ）</button><button class="smallbtn" id="btnQuests">クエスト一覧</button></div>
       </section>
 
@@ -397,14 +402,14 @@ table.gt th{color:var(--ink2);font-weight:500;font-size:11px}
         <div id="judgeBox">
           <div class="judge">
             <div class="jrow"><span class="n">EMA パーフェクトオーダー</span><span class="pill N" id="jPO">—</span></div>
-            <div class="jrow"><span class="n">RCI(9/14)　<span class="mono" id="jRciV">0 / 0</span></span><span class="pill N" id="jRCI">—</span></div>
+            <div class="jrow"><span class="n">RCI(9/14/18)　<span class="mono" id="jRciV">0 / 0 / 0</span></span><span class="pill N" id="jRCI">—</span></div>
             <div class="jrow"><span class="n">MACD(6,13,4)</span><span class="pill N" id="jMACD">—</span></div>
             <div class="jrow"><span class="n">ダイバージェンス</span><span class="pill N" id="jDIV">なし</span></div>
             <div class="jrow"><span class="n">上位足PO <span id="jHTFn">（参考）</span></span><span class="pill N" id="jHTF">—</span></div>
           </div>
           <div class="score">
-            <div class="sc" id="scL"><div class="k">ロング条件</div><div class="v mono up" id="scLv">0/3</div><div class="pips L" id="pL"><i></i><i></i><i></i></div></div>
-            <div class="sc" id="scS"><div class="k">ショート条件</div><div class="v mono down" id="scSv">0/3</div><div class="pips S" id="pS"><i></i><i></i><i></i></div></div>
+            <div class="sc" id="scL"><div class="k">今ロングなら</div><div class="v mono up" id="scLv">0/3</div><div class="pips L" id="pL"><i></i><i></i><i></i></div></div>
+            <div class="sc" id="scS"><div class="k">今ショートなら</div><div class="v mono down" id="scSv">0/3</div><div class="pips S" id="pS"><i></i><i></i><i></i></div></div>
           </div>
         </div>
         <div class="hiddenmsg" id="judgeHidden" hidden>実戦モードでは判定パネルとサインを隠しています。決済するとエントリー時の判定（A/B/C）が公開されます。</div>
@@ -453,11 +458,11 @@ table.gt th{color:var(--ink2);font-weight:500;font-size:11px}
       </section>
 
       <p class="note">判定ルール（このゲームでの簡易版）<br>
-      ロング：①EMA20&gt;30&gt;40かつEMA40が5本前より上 ②RCI(9)が直近7本以内に−ライン以下→現在上向き（RCI(14)は表示のみ） ③MACDがシグナルより上。ショートは逆。3/3＝A、2/3＝B、1以下＝C。ダイバージェンスと上位足POは参考表示（採点外）。<br>ポイント：合計pips × 武器の倍率（負けた分はマイナス）＋完走10P＋A判定・勝率などのボーナス。所持ポイントは0未満になりません。<br>
+      ロング：①EMA20&gt;30&gt;40かつEMA40が5本前より上 ②RCI(9)が直近7本以内に−ライン以下→現在上向き（RCI(14)・RCI(18)は表示のみ） ③MACDがシグナルより上。ショートは逆。3/3＝A、2/3＝B、1以下＝C。ダイバージェンスと上位足POは参考表示（採点外）。<br>ポイント：合計pips × 武器の倍率（負けた分はマイナス）＋完走10P＋A判定・勝率などのボーナス。所持ポイントは0未満になりません。武器は12段階（1,000通貨〜300万通貨）。<br>
       値動きは、実際のGBP/JPY 5分足の統計的な性質を参考に乱数で生成した架空の3年分です。指標やイベントも架空のカレンダーです。実在の相場や特定の期間を再現したものではなく、将来の値動きや成績を示すものでもありません。</p>
     </aside>
   </main>
-  <footer class="foot"><span>波形トレード道場 ・ 架空相場3年分で練習するFXトレードゲーム</span><span>© もちぽよ / 合同会社Trend One</span><button id="btnNotice">ご利用上の注意</button></footer>
+  <footer class="foot"><span>波形トレード道場 ・ 架空相場3年分で練習するFXトレードゲーム</span><span>© もちぽよ / 合同会社Trend One</span><button id="btnNotice">ご利用上の注意</button><button id="btnHelp2">あそびかた</button></footer>
 </div>
 
 <div class="modal-bg" id="noticeBg" hidden>
@@ -467,6 +472,21 @@ table.gt th{color:var(--ink2);font-weight:500;font-size:11px}
     <p>トレード手法の練習・学習を目的としたゲームであり、投資助言や特定の取引の推奨ではありません。ゲーム内の成績やポイントは、実際の取引の成果を保証するものではありません。ポイントは負けた分だけ減ります（0未満にはなりません）。実際の取引はご自身の判断と責任で行ってください。</p>
     <p>成績や設定はお使いのブラウザ内にのみ保存され、外部には送信されません。</p>
     <div class="mbtns" style="grid-template-columns:1fr"><button class="primary" id="btnNoticeOk">内容を確認しました</button></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="helpBg" hidden>
+  <div class="modal" role="dialog" aria-labelledby="hTitle">
+    <h2 id="hTitle">あそびかた</h2>
+    <p><b>1. 開始する</b> … ボタンを押すとチャートが動きます。1ゲームは5分足150本（約12時間分）。右上の「速度」で早送りできます。</p>
+    <p><b>2. 買／売ボタンでエントリー、決済ボタンで手じまい</b> … ポジションは1つずつ。損切り・利確は設定で選べます（自動で決済）。</p>
+    <p><b>3. 採点</b> … エントリーした瞬間に、EMAのパーフェクトオーダー・RCI(9)の反転・MACDの3条件をチェック。3つそろえば<b>A</b>、2つで<b>B</b>、1つ以下は<b>C</b>。判定パネルの「今ロングなら／今ショートなら」で、いま入った場合の判定が分かります。</p>
+    <p><b>4. 練習モードと実戦モード</b> … 練習は条件とサインを表示。実戦は隠して自分で判断し、決済後に答え合わせ。</p>
+    <p><b>5. クエスト</b> … 場面と条件が決まった修行を順番にクリア。報酬ポイントと仲間の解放があります。</p>
+    <p><b>6. ポイントと武器</b> … 勝つと増え、負けると減ります。武器庫で武器を買うと取引数量の上限と倍率が上がります。</p>
+    <p><b>7. 引き継ぎコード</b> … 記録はこのブラウザに保存されます。結果画面やプレイヤー情報からコードを控えておくと、別の端末や消えたときに復元できます。</p>
+    <p style="font-size:11.5px;color:var(--muted)">キー操作：B／↑ 買い、S／↓ 売り、Space 決済、P 一時停止、←→ チャート移動、Home 最新へ</p>
+    <div class="mbtns" style="grid-template-columns:1fr"><button class="primary" id="btnHelpClose">閉じる</button></div>
   </div>
 </div>
 
@@ -579,8 +599,13 @@ const WEAPONS=[
   {id:3,name:'鋼の刀',price:700,lot:10000,mult:3,desc:'1万通貨の世界へ。1pipsが100円',c1:'#b8c4d6',c2:'#5a6d8c'},
   {id:4,name:'銀の太刀',price:1500,lot:20000,mult:4,desc:'切れ味が増す。油断は禁物',c1:'#e3e8ef',c2:'#8e98a8'},
   {id:5,name:'波形の太刀',price:3000,lot:50000,mult:5,desc:'波を読む者だけが扱える',c1:'#7fc3ee',c2:'#1f7fc4'},
-  {id:6,name:'鬼速の剣',price:6000,lot:100000,mult:6,desc:'最強の一振り。10万通貨を張れる',c1:'#ff8a75',c2:'#b3261e'}];
-function weaponSVG(w){return `<svg viewBox="0 0 40 40" aria-hidden="true"><g transform="rotate(-45 20 20)"><rect x="18" y="4" width="4" height="22" rx="1.5" fill="${w.c1}" stroke="${w.c2}" stroke-width="1"/><polygon points="18,4 22,4 20,0" fill="${w.c1}"/><rect x="13" y="25" width="14" height="3" rx="1" fill="${w.c2}"/><rect x="18.5" y="28" width="3" height="8" fill="${w.c2}"/><circle cx="20" cy="37.5" r="1.8" fill="${w.c1}"/></g></svg>`}
+  {id:6,name:'鬼速の剣',price:6000,lot:100000,mult:6,desc:'道場の証。10万通貨を張れる',c1:'#ff8a75',c2:'#b3261e'},
+  {id:7,name:'雷鳴の大剣',price:12000,lot:200000,mult:8,big:true,desc:'雷を宿す大剣。20万通貨',c1:'#ffe066',c2:'#c99400'},
+  {id:8,name:'竜牙の剣',price:25000,lot:500000,mult:10,big:true,desc:'竜の牙から打たれた剣。50万通貨',c1:'#9be0a8',c2:'#1f7a3c'},
+  {id:9,name:'天翔の聖剣',price:50000,lot:1000000,mult:13,big:true,glow:'#fff1a8',desc:'天を翔ける聖なる剣。100万通貨',c1:'#fdf6d8',c2:'#d19a12'},
+  {id:10,name:'冥王の魔剣',price:90000,lot:2000000,mult:16,big:true,glow:'#c9b3ff',desc:'闇をまとう魔剣。200万通貨',c1:'#6b4fd1',c2:'#2a1a5e'},
+  {id:11,name:'覇王の神剣',price:150000,lot:3000000,mult:20,big:true,glow:'#ffd1d1',desc:'すべてを制する神剣。300万通貨（1pips＝30,000円）',c1:'#ff6b6b',c2:'#8a0f0f'}];
+function weaponSVG(w){const bw=w.big?7:4,x=20-bw/2;return `<svg viewBox="0 0 40 40" aria-hidden="true">${w.glow?`<circle cx="20" cy="20" r="18" fill="${w.glow}" opacity=".7"/>`:''}<g transform="rotate(-45 20 20)"><rect x="${x}" y="4" width="${bw}" height="22" rx="1.5" fill="${w.c1}" stroke="${w.c2}" stroke-width="1"/><polygon points="${x},4 ${x+bw},4 20,0" fill="${w.c1}"/><rect x="12" y="25" width="16" height="3" rx="1" fill="${w.c2}"/><rect x="18.5" y="28" width="3" height="8" fill="${w.c2}"/><circle cx="20" cy="37.5" r="1.8" fill="${w.c1}"/>${w.big?`<circle cx="20" cy="26.5" r="1.6" fill="#fff" opacity=".9"/>`:''}</g></svg>`}
 
 // ---------- characters ----------
 const CHARS=[
@@ -593,7 +618,12 @@ const CHARS=[
   {id:7,name:'えびす',title:'旅商人',trait:'武器庫の価格 10%引き',desc:'累計500ポイント獲得で仲間になる',unlock:{type:'exp',v:500,text:'累計500P獲得'},look:{bg:'#f3eadb',hair:'bald',hc:'#5a4632',outfit:'#8a6a3c',acc:'hat'}},
   {id:8,name:'ことね',title:'波形の巫女',trait:'サイン点灯から3本以内のエントリーが利益なら +8P/回',desc:'サイン後の利益10回で仲間になる',unlock:{type:'signWins',v:10,text:'サイン後エントリーで利益 10回'},look:{bg:'#fdeef0',hair:'ponytail',hc:'#2b2b2b',outfit:'#c43a3a',acc:'hairpin'}},
   {id:9,name:'らいが',title:'指標ハンター',trait:'重要指標のあるゲームの利益ポイント ×1.5',desc:'クエスト6「指標の嵐」クリアで仲間になる',unlock:{type:'quest',v:6,text:'クエスト6クリア'},look:{bg:'#fff6dc',hair:'spiky',hc:'#e0b000',outfit:'#1c2230',acc:'goggles'}},
-  {id:10,name:'おにがみ',title:'鬼速の剣聖',trait:'利益ポイント ×1.3、A判定ボーナス1回8P',desc:'クエスト10「鬼速の証」クリアで仲間になる',unlock:{type:'quest',v:10,text:'クエスト10クリア'},look:{bg:'#f6e3e3',hair:'long',hc:'#f2f2f2',outfit:'#9c1f1f',acc:'horns'}}];
+  {id:10,name:'おにがみ',title:'鬼速の剣聖',trait:'利益ポイント ×1.3、A判定ボーナス1回8P',desc:'クエスト10「鬼速の証」クリアで仲間になる',unlock:{type:'quest',v:10,text:'クエスト10クリア'},look:{bg:'#f6e3e3',hair:'long',hc:'#f2f2f2',outfit:'#9c1f1f',acc:'horns'}},
+  {id:11,name:'ガルド',title:'竜騎士',trait:'利益ポイント ×1.5、ただし損失ポイントも ×1.5',desc:'Lv10到達で仲間になる。攻めの一手を選ぶ者へ',unlock:{type:'level',v:10,text:'Lv10到達'},look:{bg:'#fbe4dc',hair:'short',hc:'#2b2b2b',outfit:'#8b1e1e',acc:'dragonhelm'}},
+  {id:12,name:'セレネ',title:'大魔導士',trait:'実戦モードの倍率 ×1.5 → ×2.2',desc:'実戦モードを10ゲーム完走で仲間になる',unlock:{type:'realGames',v:10,text:'実戦モード10ゲーム完走'},look:{bg:'#e9e4f7',hair:'long',hc:'#5b4fcf',outfit:'#3c2a8a',acc:'wizardhat'}},
+  {id:13,name:'レオン',title:'聖騎士',trait:'損失ポイントを半分に（負けの減点 ×0.5）',desc:'累計3,000P獲得で仲間になる。守りながら前へ',unlock:{type:'exp',v:3000,text:'累計3,000P獲得'},look:{bg:'#f6f1dc',hair:'short',hc:'#e0b000',outfit:'#cfc9ae',acc:'halo'}},
+  {id:14,name:'ゼノ',title:'暗黒剣士',trait:'A判定ボーナス 1回20P',desc:'A判定エントリー累計100回で仲間になる。条件を見抜く眼を持つ',unlock:{type:'aTrades',v:100,text:'A判定エントリー累計100回'},look:{bg:'#e4e2ea',hair:'spiky',hc:'#f2f2f2',outfit:'#1a1a24',acc:'hood'}},
+  {id:15,name:'リュウオウ',title:'龍王',trait:'利益ポイント ×2.0',desc:'全クエストクリア＋Lv15で仲間になる。道場の頂点',unlock:{type:'final',v:15,text:'全クエストクリア＋Lv15'},look:{bg:'#dcecf3',hair:'long',hc:'#e8b23a',outfit:'#0f3d5c',acc:'crown'}}];
 function avatarSVG(ch){
   const L=ch.look,skin='#f6d6bf',hc=L.hc,o=L.outfit;const s=[];
   s.push(`<svg viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" rx="18" fill="${L.bg}"/>`);
@@ -623,6 +653,11 @@ function avatarSVG(ch){
     case 'hairpin':s.push(`<circle cx="70" cy="32" r="5" fill="#f2b8c6"/><circle cx="70" cy="32" r="2" fill="#fff"/>`);break;
     case 'goggles':s.push(`<rect x="28" y="28" width="44" height="9" rx="4" fill="#1c2230"/><circle cx="40" cy="32.5" r="4" fill="#f0b429"/><circle cx="60" cy="32.5" r="4" fill="#f0b429"/>`);break;
     case 'horns':s.push(`<path d="M30 30 L26 12 L38 26 Z M70 30 L74 12 L62 26 Z" fill="#f2d16b" stroke="#9c1f1f" stroke-width="1.2"/><path d="M44 42 L48 38 M56 38 L60 42" stroke="#9c1f1f" stroke-width="2"/>`);break;
+    case 'dragonhelm':s.push(`<path d="M24 44 Q24 18 50 16 Q76 18 76 44 L68 44 Q68 30 50 28 Q32 30 32 44 Z" fill="#b03a2e" stroke="#5e1a14" stroke-width="1.2"/><path d="M28 26 L18 8 L36 20 Z M72 26 L82 8 L64 20 Z" fill="#e8b23a" stroke="#8a5a00" stroke-width="1.2"/><circle cx="50" cy="22" r="3" fill="#ffe066"/>`);break;
+    case 'wizardhat':s.push(`<ellipse cx="50" cy="36" rx="34" ry="6" fill="#3c2a8a" stroke="#1f1550" stroke-width="1.2"/><path d="M34 36 L52 2 L68 36 Z" fill="#3c2a8a" stroke="#1f1550" stroke-width="1.2"/><path d="M56 16 l1.8 3.6 4 .6-2.9 2.8.7 4-3.6-1.9-3.6 1.9.7-4-2.9-2.8 4-.6z" fill="#ffe066"/>`);break;
+    case 'halo':s.push(`<ellipse cx="50" cy="14" rx="18" ry="4.5" fill="none" stroke="#f0c040" stroke-width="3"/><path d="M26 74 Q50 64 74 74 L74 80 Q50 72 26 80 Z" fill="#e8e3cf" stroke="#9c9470" stroke-width="1"/>`);break;
+    case 'hood':s.push(`<path fill-rule="evenodd" d="M18 72 Q16 12 50 10 Q84 12 82 72 L70 72 Q72 34 50 32 Q28 34 30 72 Z" fill="#2a2140" stroke="#15102a" stroke-width="1"/><path d="M40 46 L46 48 M60 46 L54 48" stroke="#b22" stroke-width="2"/>`);break;
+    case 'crown':s.push(`<path d="M28 32 L34 14 L44 28 L50 8 L56 28 L66 14 L72 32 Z" fill="#f0c040" stroke="#b8860b" stroke-width="1.5"/><circle cx="50" cy="30" r="3" fill="#e0432c"/><circle cx="36" cy="30" r="2" fill="#2b57a8"/><circle cx="64" cy="30" r="2" fill="#2b57a8"/>`);break;
   }
   s.push('</svg>');return s.join('');
 }
@@ -655,7 +690,7 @@ let P=null,Q=null;
 const emptyRec=()=>({games:0,n:0,w:0,pips:0,g:{A:{n:0,w:0,p:0},B:{n:0,w:0,p:0},C:{n:0,w:0,p:0}},on:{n:0,p:0},off:{n:0,p:0}});
 function genId(){const A='ABCDEFGHJKMNPQRSTUVWXYZ23456789';const b=new Uint8Array(6);(window.crypto&&crypto.getRandomValues)?crypto.getRandomValues(b):b.forEach((_,i)=>b[i]=Math.random()*256|0);let s='';for(const x of b)s+=A[x%A.length];return 'HD-'+s}
 function loadProfile(){try{const o=JSON.parse(localStorage.getItem('hakei-dojo4-profile')||'null');if(o&&o.id&&o.name)P=normalizeProfile(o)}catch(e){P=null}}
-function normalizeProfile(o){return Object.assign({v:1,id:genId(),name:'player',created:Date.now(),charId:1,points:0,exp:0,weapons:[0],equipped:0,quests:{},history:[],rec:emptyRec(),streak:0,counters:{signWins:0}},o,{rec:Object.assign(emptyRec(),o.rec||{}),counters:Object.assign({signWins:0},o.counters||{}),quests:o.quests||{},weapons:Array.isArray(o.weapons)&&o.weapons.length?o.weapons:[0],history:Array.isArray(o.history)?o.history:[]})}
+function normalizeProfile(o){return Object.assign({v:1,id:genId(),name:'player',created:Date.now(),charId:1,points:0,exp:0,weapons:[0],equipped:0,quests:{},history:[],rec:emptyRec(),streak:0,counters:{signWins:0,realGames:0,aTrades:0}},o,{rec:Object.assign(emptyRec(),o.rec||{}),counters:Object.assign({signWins:0,realGames:0,aTrades:0},o.counters||{}),quests:o.quests||{},weapons:Array.isArray(o.weapons)&&o.weapons.length?o.weapons:[0],history:Array.isArray(o.history)?o.history:[]})}
 function saveProfile(){if(!P)return;try{localStorage.setItem('hakei-dojo4-profile',JSON.stringify(P))}catch(e){}}
 function createProfile(name,charId){P=normalizeProfile({id:genId(),name,charId,created:Date.now()});saveProfile()}
 const curChar=()=>CHARS.find(c=>c.id===(P?P.charId:1))||CHARS[0];
@@ -663,7 +698,10 @@ const weapon=()=>WEAPONS[P?P.equipped:0]||WEAPONS[0];
 const lotCap=()=>weapon().lot;
 function levelOf(exp){return Math.floor(Math.sqrt(Math.max(0,exp)/50))+1}
 function expForLevel(lv){return (lv-1)*(lv-1)*50}
-function charUnlocked(ch){if(!ch.unlock)return true;if(!P)return false;const u=ch.unlock;if(u.type==='exp')return P.exp>=u.v;if(u.type==='signWins')return (P.counters.signWins||0)>=u.v;if(u.type==='quest')return !!(P.quests[u.v]&&P.quests[u.v].cleared);return false}
+function charUnlocked(ch){if(!ch.unlock)return true;if(!P)return false;const u=ch.unlock,C=P.counters;
+  if(u.type==='exp')return P.exp>=u.v;if(u.type==='signWins')return (C.signWins||0)>=u.v;if(u.type==='quest')return !!(P.quests[u.v]&&P.quests[u.v].cleared);
+  if(u.type==='level')return levelOf(P.exp)>=u.v;if(u.type==='realGames')return (C.realGames||0)>=u.v;if(u.type==='aTrades')return (C.aTrades||0)>=u.v;
+  if(u.type==='final')return levelOf(P.exp)>=u.v&&QUESTS.every(q=>P.quests[q.id]&&P.quests[q.id].cleared);return false}
 function questAvailable(q){return q.id===1||!!(P&&P.quests[q.id-1]&&P.quests[q.id-1].cleared)}
 function shopPrice(w){return Math.round(w.price*(curChar().id===7?0.9:1))}
 // 引き継ぎコード
@@ -673,18 +711,18 @@ function decodeProfile(code){try{const m=String(code).trim().match(/^HDv1\.([A-Z
 // ---------- points ----------
 function calcPoints(st){
   const ch=curChar(),w=weapon(),L=[];
-  const evMult=(ch.id===9&&st.hasEvent)?1.5:1,sageMult=ch.id===10?1.3:1;
-  const profit=st.tot>0?Math.round(st.tot*w.mult*evMult*sageMult):Math.round(st.tot*w.mult);
-  L.push([st.tot>=0?`利益ポイント（${sg(st.tot)}p × ${w.name} ×${w.mult}${evMult>1?' × 指標1.5':''}${sageMult>1?' × 剣聖1.3':''}）`:`損失ポイント（${sg(st.tot)}p × ${w.name} ×${w.mult}）`,profit]);
+  const evMult=(ch.id===9&&st.hasEvent)?1.5:1,pMult=ch.id===10?1.3:ch.id===11?1.5:ch.id===15?2:1,lMult=ch.id===11?1.5:ch.id===13?0.5:1;
+  const profit=st.tot>0?Math.round(st.tot*w.mult*evMult*pMult):Math.round(st.tot*w.mult*lMult);
+  L.push([st.tot>=0?`利益ポイント（${sg(st.tot)}p × ${w.name} ×${w.mult}${evMult>1?' × 指標1.5':''}${pMult>1?' × '+ch.title+pMult:''}）`:`損失ポイント（${sg(st.tot)}p × ${w.name} ×${w.mult}${lMult!==1?' × '+ch.title+lMult:''}）`,profit]);
   L.push(['完走',10]);
-  const aUnit=ch.id===3?10:ch.id===10?8:5,aB=st.nA*aUnit;if(st.nA)L.push([`A判定 ${st.nA}回 × ${aUnit}`,aB]);
+  const aUnit=ch.id===3?10:ch.id===10?8:ch.id===14?20:5,aB=st.nA*aUnit;if(st.nA)L.push([`A判定 ${st.nA}回 × ${aUnit}`,aB]);
   const wB=(st.n>=3&&st.w/st.n>=0.6)?20:0;if(wB)L.push(['勝率60%以上（3回以上）',wB]);
   const hB=ch.id===5?st.agreeOn*3:0;if(hB)L.push([`上位足と同方向 ${st.agreeOn}回 × 3`,hB]);
   const gB=(ch.id===2&&st.sl<=1)?20:0;if(gB)L.push(['損切り1回以下（守り手）',gB]);
   const streak=st.tot>0?(P.streak||0)+1:0;const sUnit=ch.id===6?10:3,sB=streak>1?streak*sUnit:0;if(sB)L.push([`連続プラス ${streak}ゲーム × ${sUnit}`,sB]);
   const signB=ch.id===8?st.signWins*8:0;if(signB)L.push([`サイン後エントリーで利益 ${st.signWins}回 × 8`,signB]);
   const sum=profit+10+aB+wB+hB+gB+sB+signB;
-  const mm=st.mode==='real'?(ch.id===4?1.8:1.5):1;if(mm>1)L.push([`実戦モード ×${mm}`,null]);
+  const mm=st.mode==='real'?(ch.id===4?1.8:ch.id===12?2.2:1.5):1;if(mm>1)L.push([`実戦モード ×${mm}`,null]);
   const cm=ch.id===1?1.1:1;if(cm>1)L.push(['見習いの熱意 ×1.1',null]);
   const total=sum>0?Math.round(sum*mm*cm):Math.round(sum);
   return{lines:L,total,streak};
@@ -788,7 +826,7 @@ function makeDS(bars,tf){
   const n=bars.length,c=new Float64Array(n);for(let i=0;i<n;i++)c[i]=bars[i].c;
   const e20=emaArr(c,20),e30=emaArr(c,30),e40=emaArr(c,40),e6=emaArr(c,6),e13=emaArr(c,13);
   const macd=new Float64Array(n);for(let i=0;i<n;i++)macd[i]=e6[i]-e13[i];const sig=emaArr(macd,4);
-  const rci=new Float64Array(n),rci14=new Float64Array(n);const gc=j=>c[j];for(let i=0;i<n;i++){rci[i]=rciAt(gc,i,9);rci14[i]=rciAt(gc,i,14)}
+  const rci=new Float64Array(n),rci14=new Float64Array(n),rci18=new Float64Array(n);const gc=j=>c[j];for(let i=0;i<n;i++){rci[i]=rciAt(gc,i,9);rci14[i]=rciAt(gc,i,14);rci18[i]=rciAt(gc,i,18)}
   const divs=[],R=3;let pl=-1,ph=-1;
   for(let j=R;j<n-R;j++){
     let isL=true,isH=true;const bj=bars[j];
@@ -798,23 +836,23 @@ function makeDS(bars,tf){
   }
   const divAt=new Int8Array(n);for(const d of divs)for(let i=d.cf;i<=d.cf+10&&i<n;i++)divAt[i]=d.t;
   const byT=new Map();for(let i=0;i<n;i++)byT.set(bars[i].t,i);
-  return{tf,bars,I:{c,e20,e30,e40,e6,e13,macd,sig,rci,rci14},divs,divAt,signs:new Int8Array(n),byT};
+  return{tf,bars,I:{c,e20,e30,e40,e6,e13,macd,sig,rci,rci14,rci18},divs,divAt,signs:new Int8Array(n),byT};
 }
 function cond(ds,i){
-  const I=ds.I;if(i<45)return{po:0,rciL:false,rciS:false,macdUp:false,div:0,L:0,S:0,rv:I.rci[i]||0,rv14:I.rci14[i]||0,rUp:false};
+  const I=ds.I;if(i<45)return{po:0,rciL:false,rciS:false,macdUp:false,div:0,L:0,S:0,rv:I.rci[i]||0,rv14:I.rci14[i]||0,rv18:I.rci18[i]||0,rUp:false};
   const po=(I.e20[i]>I.e30[i]&&I.e30[i]>I.e40[i]&&I.e40[i]>I.e40[i-5])?1:(I.e20[i]<I.e30[i]&&I.e30[i]<I.e40[i]&&I.e40[i]<I.e40[i-5])?-1:0;
   let mn=999,mx=-999;for(let k=i-6;k<=i;k++){if(I.rci[k]<mn)mn=I.rci[k];if(I.rci[k]>mx)mx=I.rci[k]}
   const rUp=I.rci[i]>I.rci[i-1],rciL=mn<=-S.th&&rUp,rciS=mx>=S.th&&I.rci[i]<I.rci[i-1];
   const macdUp=I.macd[i]>I.sig[i];
   const div=ds.divAt[i];
-  return{po,rciL,rciS,macdUp,div,L:(po===1)+rciL+macdUp,S:(po===-1)+rciS+(!macdUp),rv:I.rci[i],rv14:I.rci14[i],rUp};
+  return{po,rciL,rciS,macdUp,div,L:(po===1)+rciL+macdUp,S:(po===-1)+rciS+(!macdUp),rv:I.rci[i],rv14:I.rci14[i],rv18:I.rci18[i],rUp};
 }
 function buildSigns(ds){let pL=0,pS=0;for(let i=0;i<ds.bars.length;i++){const c=cond(ds,i);ds.signs[i]=c.L===3&&pL<3?1:c.S===3&&pS<3?-1:0;pL=c.L;pS=c.S}}
 function liveOf(ds,i,b){
   const I=ds.I,a=n=>2/(n+1),c=b.c,e=(arr,n)=>i>0?a(n)*c+(1-a(n))*arr[i-1]:c;
   const e6=e(I.e6,6),e13=e(I.e13,13),macd=e6-e13,sig=i>0?a(4)*macd+(1-a(4))*I.sig[i-1]:macd;
   const gc=j=>j===i?c:(j<I.c.length?I.c[j]:c);
-  return{t:b.t,o:b.o,h:b.h,l:b.l,c,e20:e(I.e20,20),e30:e(I.e30,30),e40:e(I.e40,40),macd,sig,rci:rciAt(gc,i,9),rci14:rciAt(gc,i,14)};
+  return{t:b.t,o:b.o,h:b.h,l:b.l,c,e20:e(I.e20,20),e30:e(I.e30,30),e40:e(I.e40,40),macd,sig,rci:rciAt(gc,i,9),rci14:rciAt(gc,i,14),rci18:rciAt(gc,i,18)};
 }
 function lowerBound(bars,t){let lo=0,hi=bars.length;while(lo<hi){const m=(lo+hi)>>1;if(bars[m].t<t)lo=m+1;else hi=m}return lo}
 
@@ -934,7 +972,7 @@ function finish(){
     P.quests[q.id]={cleared:prev.cleared||ok,tries:(prev.tries||0)+1,best:Math.max(prev.best||-1e9,st.tot)};qres={ok,reward,first:ok&&!prev.cleared}}
   const unlockedBefore=CHARS.filter(charUnlocked).map(c=>c.id);
   const total=pt.total+reward;
-  P.points=Math.max(0,P.points+total);P.exp+=Math.max(0,total);P.streak=pt.streak;P.counters.signWins=(P.counters.signWins||0)+st.signWins;
+  P.points=Math.max(0,P.points+total);P.exp+=Math.max(0,total);P.streak=pt.streak;P.counters.signWins=(P.counters.signWins||0)+st.signWins;P.counters.aTrades=(P.counters.aTrades||0)+st.nA;if(st.mode==='real')P.counters.realGames=(P.counters.realGames||0)+1;
   const R=P.rec;R.games++;for(const t of G.trades){R.n++;if(t.pips>0)R.w++;R.pips+=t.pips;const g=R.g[t.grade];g.n++;if(t.pips>0)g.w++;g.p+=t.pips;if(t.agree==='順'){R.on.n++;R.on.p+=t.pips}else if(t.agree==='逆'){R.off.n++;R.off.p+=t.pips}}
   P.history.unshift({d:Date.now(),scene,mode:S.mode,len:G.end-G.s0,pips:Math.round(st.tot*10)/10,n:st.n,a:st.n?Math.round(st.nA/st.n*100):null,pts:total,q:q?q.id:0,ok:qres?qres.ok:null});if(P.history.length>100)P.history.length=100;
   const newly=CHARS.filter(charUnlocked).map(c=>c.id).filter(id=>!unlockedBefore.includes(id));
@@ -978,6 +1016,8 @@ function renderChar(){
   $('wIcon').innerHTML=weaponSVG(w);$('wName').textContent=w.name+'（ポイント倍率 ×'+w.mult+'）';$('wLot').textContent='取引数量の上限：'+fmtN(w.lot)+'通貨';
   $('chipName').textContent=P.name;$('chipLv').textContent='Lv'+lv;$('ptsChip').textContent=fmtN(P.points)+' P';
   const q=curQuest();$('questChip').textContent=q?`クエスト${q.id} 挑戦中`:'クエスト';
+  const nw=WEAPONS.find(x=>!P.weapons.includes(x.id));const can=nw&&P.points>=shopPrice(nw);
+  $('nextW').textContent=nw?(can?`「${nw.name}」を購入できます！（${fmtN(shopPrice(nw))}P）`:`次の武器「${nw.name}」まで あと ${fmtN(shopPrice(nw)-P.points)} P`):'すべての武器を入手済み';$('nextW').className='nextw'+(can?' can':'');$('btnShop').classList.toggle('alert',!!can);
   renderLotSelect();
 }
 function renderLotSelect(){
@@ -995,13 +1035,13 @@ function updateUI(){
   setPill($('modeChip'),'M',practice?'練習モード':'実戦モード');
   const c=cond(BASE,G.idx-1);
   setPill($('jPO'),c.po===1?'L':c.po===-1?'S':'N',c.po===1?'上昇PO':c.po===-1?'下降PO':'崩れ');
-  $('jRciV').textContent=c.rv.toFixed(0)+' / '+c.rv14.toFixed(0);
+  $('jRciV').textContent=c.rv.toFixed(0)+' / '+c.rv14.toFixed(0)+' / '+c.rv18.toFixed(0);
   setPill($('jRCI'),c.rciL?'L':c.rciS?'S':'N',c.rciL?'底から反転↑':c.rciS?'天井から反転↓':(c.rUp?'上向き':'下向き'));
   setPill($('jMACD'),c.macdUp?'L':'S',c.macdUp?'シグナル上':'シグナル下');
   setPill($('jDIV'),c.div?'D':'N',c.div===1?'強気Div':c.div===-1?'弱気Div':'なし');
   const hp=htfPoNow();$('jHTFn').textContent=S.htf?`（${TFS[S.htf]}・参考）`:'（参考）';
   if(hp==null)setPill($('jHTF'),'N','上位足なし');else setPill($('jHTF'),hp===1?'L':hp===-1?'S':'N',hp===1?'上昇PO':hp===-1?'下降PO':'崩れ');
-  $('scLv').textContent=c.L+'/3';$('scSv').textContent=c.S+'/3';
+  const gl=n=>n===3?'A':n===2?'B':'C';$('scLv').textContent=c.L+'/3 '+gl(c.L);$('scSv').textContent=c.S+'/3 '+gl(c.S);
   $('scL').className='sc'+(c.L===3?' hot-L':'');$('scS').className='sc'+(c.S===3?' hot-S':'');
   [...$('pL').children].forEach((e,k)=>e.classList.toggle('on',k<c.L));[...$('pS').children].forEach((e,k)=>e.classList.toggle('on',k<c.S));
   const cb=$('btnClose'),hide=S.hide&&G.pos;
@@ -1213,9 +1253,9 @@ function drawChart(canvas,ds,fi,Lv,opt){
     ctx.globalAlpha=.07;ctx.fillStyle=C('--up');ctx.fillRect(0,R.y,plotW,RY(S.th)-R.y);ctx.fillStyle=C('--down');ctx.fillRect(0,RY(-S.th),plotW,R.y+R.h-RY(-S.th));ctx.globalAlpha=1;
     ctx.strokeStyle=C('--line');ctx.setLineDash([3,3]);[S.th,0,-S.th].forEach(v=>{ctx.beginPath();ctx.moveTo(0,RY(v)+.5);ctx.lineTo(plotW,RY(v)+.5);ctx.stroke()});ctx.setLineDash([]);
     ctx.fillStyle=C('--muted');ctx.textBaseline='middle';[S.th,0,-S.th].forEach(v=>ctx.fillText((v>0?'+':'')+v,plotW+6,RY(v)));
-    [['rci14','--rci14',1.3],['rci','--rci',1.7]].forEach(([k,col,lw])=>{ctx.strokeStyle=C(col);ctx.lineWidth=lw;ctx.beginPath();for(let i=first;i<=last;i++){const y=RY(val(k,i));i===first?ctx.moveTo(X(i),y):ctx.lineTo(X(i),y)}ctx.stroke()});
+    [['rci18','--rci18',1.2],['rci14','--rci14',1.3],['rci','--rci',1.7]].forEach(([k,col,lw])=>{ctx.strokeStyle=C(col);ctx.lineWidth=lw;ctx.beginPath();for(let i=first;i<=last;i++){const y=RY(val(k,i));i===first?ctx.moveTo(X(i),y):ctx.lineTo(X(i),y)}ctx.stroke()});
     if(right===fi){ctx.fillStyle=C('--rci');ctx.beginPath();ctx.arc(X(last),RY(Lv.rci),3,0,Math.PI*2);ctx.fill()}
-    ctx.textBaseline='alphabetic';lx=8;lab('RCI(9) '+Lv.rci.toFixed(1),C('--rci'),R.y-3);lab('RCI(14) '+Lv.rci14.toFixed(1),C('--rci14'),R.y-3)}
+    ctx.textBaseline='alphabetic';lx=8;lab('RCI(9) '+Lv.rci.toFixed(1),C('--rci'),R.y-3);lab('RCI(14) '+Lv.rci14.toFixed(1),C('--rci14'),R.y-3);lab('RCI(18) '+Lv.rci18.toFixed(1),C('--rci18'),R.y-3)}
   if(M){let mm=1e-6;for(let i=first;i<=last;i++)mm=Math.max(mm,Math.abs(val('macd',i)),Math.abs(val('sig',i)));mm*=1.1;
     const MY=v=>M.y+M.h/2-v/mm*M.h/2;
     ctx.strokeStyle=C('--line');ctx.beginPath();ctx.moveTo(0,MY(0)+.5);ctx.lineTo(plotW,MY(0)+.5);ctx.stroke();
@@ -1236,7 +1276,7 @@ function drawChart(canvas,ds,fi,Lv,opt){
       ctx.font='10px "JetBrains Mono",monospace';const tl=fmtT(b.t,true),w=ctx.measureText(tl).width+8;ctx.fillStyle=C('--ink2');ctx.fillRect(Math.max(0,Math.min(x-w/2,plotW-w)),axisY+1,w,16);ctx.fillStyle=C('--onfill');ctx.textAlign='center';ctx.fillText(tl,Math.max(w/2,Math.min(x,plotW-w/2)),axisY+9);ctx.textAlign='left';
       const rows=[];rows.push(`${fmtDate(b.t)}${hidePrice?'':`  ${sg((b.c-b.o)/PIP)}p  幅 ${((b.h-b.l)/PIP).toFixed(1)}p`}`);
       if(!hidePrice)rows.push(`O ${b.o.toFixed(3)} H ${b.h.toFixed(3)} L ${b.l.toFixed(3)} C ${b.c.toFixed(3)}`);
-      rows.push(`RCI9 ${val('rci',i).toFixed(0)}  RCI14 ${val('rci14',i).toFixed(0)}  MACD ${(val('macd',i)/PIP).toFixed(1)}p  Sig ${(val('sig',i)/PIP).toFixed(1)}p`);
+      rows.push(`RCI9 ${val('rci',i).toFixed(0)}  RCI14 ${val('rci14',i).toFixed(0)}  RCI18 ${val('rci18',i).toFixed(0)}  MACD ${(val('macd',i)/PIP).toFixed(1)}p  Sig ${(val('sig',i)/PIP).toFixed(1)}p`);
       if(S.vis.ema&&!hidePrice)rows.push(`EMA20 ${val('e20',i).toFixed(3)}  30 ${val('e30',i).toFixed(3)}  40 ${val('e40',i).toFixed(3)}`);
       const ev=i<=fi?WORLD.evAt.get(i):null;if(ev)rows.push(`指標：${EV_NAMES[ev.kind]}`);
       ctx.font='11px "JetBrains Mono",monospace';const bw2=Math.max(...rows.map(r=>ctx.measureText(r).width))+14,bh=rows.length*16+8,bx=Math.min(plotW-bw2-4,Math.max(4,x+14)),by=P.y+20;
@@ -1296,6 +1336,7 @@ $('selLen').onchange=e=>{S.len=+e.target.value;saveS();if(G.running&&!G.over)toa
 $('chkHide').onchange=e=>{S.hide=e.target.checked;saveS();updateUI();draw()};
 $('chkAuto').onchange=e=>{S.autoPause=e.target.checked;saveS()};
 $('btnNotice').onclick=()=>{$('noticeBg').hidden=false};
+$('btnHelp').onclick=()=>{$('helpBg').hidden=false};$('btnHelp2').onclick=()=>{$('helpBg').hidden=false};$('btnHelpClose').onclick=()=>{$('helpBg').hidden=true};
 $('btnNoticeOk').onclick=()=>{$('noticeBg').hidden=true;try{localStorage.setItem('hakei-dojo3-notice','1')}catch(e){}if(!P)$('regBg').hidden=false};
 function syncSettings(){
   const lock=!!Q;
@@ -1360,7 +1401,7 @@ $('btnQuestFree').onclick=()=>{Q=null;$('questBg').hidden=true;lastQuestHTML='';
 
 document.addEventListener('keydown',e=>{
   if(e.target.tagName==='SELECT'||e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;
-  if(!$('noticeBg').hidden||!$('regBg').hidden||!$('profBg').hidden||!$('shopBg').hidden||!$('questBg').hidden){if(e.key==='Escape'){['profBg','shopBg','questBg'].forEach(id=>$(id).hidden=true)}return}
+  if(!$('noticeBg').hidden||!$('regBg').hidden||!$('profBg').hidden||!$('shopBg').hidden||!$('questBg').hidden||!$('helpBg').hidden){if(e.key==='Escape'){['profBg','shopBg','questBg','helpBg'].forEach(id=>$(id).hidden=true)}return}
   const k=e.key.toLowerCase();
   if(k==='enter'&&!G.running&&!G.over){e.preventDefault();start()}
   else if(k==='b'||k==='arrowup'){e.preventDefault();entry(1)}
