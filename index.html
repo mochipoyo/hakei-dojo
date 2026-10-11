@@ -73,8 +73,21 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
 .seg button.on{background:var(--ink);color:var(--onink);font-weight:700}
 .txtbtn{background:transparent;border:0;color:var(--ink2);font-size:12px;padding:4px 2px;text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--line);white-space:nowrap}
 .txtbtn:hover{color:var(--ink);text-decoration-color:var(--ink)}
-.pausebtn{background:var(--panel);border:1px solid var(--ink);border-radius:4px;padding:4px 10px;font-size:12px;font-weight:700;white-space:nowrap}
-.pausebtn:disabled{opacity:.4;cursor:default}
+.pausebtn{background:var(--ink);color:var(--onink);border:1px solid var(--ink);border-radius:6px;padding:7px 14px;font-size:12.5px;font-weight:900;white-space:nowrap;box-shadow:0 2px 0 rgba(0,0,0,.15)}
+.pausebtn.paused{background:var(--ok);border-color:var(--ok);color:#fff}
+.pausebtn:disabled{opacity:.35;cursor:default;box-shadow:none}
+.tbtn{display:inline-flex;align-items:center;gap:5px;background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:6px 10px;font-size:12px;font-weight:700;color:var(--ink);white-space:nowrap;line-height:1}
+.tbtn:hover{border-color:var(--ink)}
+.tbtn .ic{display:inline-grid;place-items:center;width:16px;height:16px;border-radius:50%;background:var(--ink);color:var(--onink);font-size:10px;font-weight:900}
+.tbtn.warn{border-color:var(--goldline);background:var(--goldbg);color:var(--goldink)}
+.tgroup{display:flex;flex-direction:column;align-items:flex-start;gap:3px}
+.tgroup .tbtns{display:flex;gap:6px}
+.tcap{font-size:10px;color:var(--muted);line-height:1.2;white-space:nowrap}
+.skinseg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.skinseg button{background:var(--panel2);border:0;border-right:1px solid var(--line);padding:6px 9px;font-size:12px;font-weight:700;color:var(--muted);display:inline-flex;align-items:center;gap:5px}
+.skinseg button:last-child{border-right:0}
+.skinseg button i{width:12px;height:12px;border-radius:3px;border:1px solid var(--line);display:inline-block}
+.skinseg button.on{background:var(--ink);color:var(--onink)}
 
 .layout{display:grid;grid-template-columns:minmax(0,1fr) 310px;gap:14px;padding:14px 16px 18px;flex:1}
 .main{display:flex;flex-direction:column;gap:10px;min-width:0}
@@ -338,11 +351,10 @@ table.gt th{color:var(--ink2);font-weight:500;font-size:11px}
     <div class="sp"></div>
     <div class="ctrl"><button class="pausebtn" id="btnPause">Ⅱ 一時停止</button>
       <span>速度</span><div class="seg"><button data-speed="0.5">0.5</button><button class="on" data-speed="1">1</button><button data-speed="2">2</button><button data-speed="4">4</button><button data-speed="8">8</button></div></div>
-    <button class="txtbtn" id="btnSkin">背景：白</button>
-    <button class="txtbtn" id="btnHelp">あそびかた</button>
-    <button class="txtbtn" id="btnSound">音 ON</button>
-    <button class="txtbtn" id="btnReplay">再挑戦</button>
-    <button class="txtbtn" id="btnNew">新しい場面</button>
+    <div class="skinseg" title="背景色"><button data-skin="white"><i style="background:#fff"></i>白</button><button data-skin="navy"><i style="background:#0f1f3d"></i>紺</button></div>
+    <button class="tbtn" id="btnSound">音 ON</button>
+    <button class="tbtn" id="btnHelp"><span class="ic">?</span>あそびかた</button>
+    <div class="tgroup"><div class="tbtns"><button class="tbtn warn" id="btnReplay">↻ 再挑戦</button><button class="tbtn warn" id="btnNew">＋ 新しい場面</button></div><div class="tcap">※途中で押すと今のゲームはリセットされ、記録に残りません</div></div>
   </header>
 
   <main class="layout">
@@ -938,7 +950,7 @@ function newGame(s0){
   G={s0,end:Math.min(s0+S.len,N),idx:s0,sub:0,running:false,paused:false,over:false,speed:G?G.speed:1,pos:null,trades:[],timer:null,review:false,quest:Q,result:null};
   VIEW={z:VIEW.z,right:s0,follow:true};HOVER=null;
   $('modalBg').hidden=true;$('startBtn').hidden=false;$('count').hidden=true;$('overBadge').hidden=true;
-  $('btnPause').textContent='Ⅱ 一時停止';
+  $('btnPause').textContent='Ⅱ 一時停止';$('btnPause').classList.remove('paused');
   const q=curQuest();
   const tags=sceneTags(s0,S.len).filter(x=>x!=='event').map(x=>SCENE_LABEL[x].replace('直前が','')),evs=eventsIn(s0,G.end).filter(e=>BIG_EV.has(e.kind));
   $('startSub').textContent=`${q?'クエスト'+q.id+'「'+q.name+'」 ・ ':''}${worldLabel()} ${fmtDate(BASE.bars[s0].t)} から 5分足${S.len}本${tags.length?' ・ 直前：'+tags.join('・'):''}${evs.length?' ・ ゲーム中の指標：'+evs.map(e=>fmtT(e.t,false).slice(2)+' '+EV_NAMES[e.kind]).join('、'):''} ・ Enterでも開始`;
@@ -1368,10 +1380,10 @@ $('btnLatest').onclick=goLatest;$('zIn').onclick=()=>zoom(1.25);$('zOut').onclic
 $('startBtn').onclick=start;
 $('btnBuy').onclick=()=>entry(1);$('btnSell').onclick=()=>entry(-1);$('btnClose').onclick=()=>closePos();
 $('btnPause').onclick=togglePause;
-function togglePause(){if(!G.running||G.over)return;G.paused=!G.paused;$('btnPause').textContent=G.paused?'▶ 再開':'Ⅱ 一時停止';if(!G.paused){clearTimeout(G.timer);G.timer=setTimeout(step,TICK_MS/G.speed)}}
+function togglePause(){if(!G.running||G.over)return;G.paused=!G.paused;$('btnPause').textContent=G.paused?'▶ 再開':'Ⅱ 一時停止';$('btnPause').classList.toggle('paused',G.paused);if(!G.paused){clearTimeout(G.timer);G.timer=setTimeout(step,TICK_MS/G.speed)}}
 document.querySelectorAll('[data-speed]').forEach(b=>b.onclick=()=>{G.speed=+b.dataset.speed;document.querySelectorAll('[data-speed]').forEach(x=>x.classList.toggle('on',x===b))});
 const restart=s=>{clearTimeout(G.timer);G.running=false;newGame(s)};
-$('btnReplay').onclick=()=>restart(scene);$('btnNew').onclick=()=>restart();
+$('btnReplay').onclick=()=>{const mid=G.running&&!G.over;restart(scene);if(mid)toast('ゲームをリセットしました（途中の成績は記録されません）')};$('btnNew').onclick=()=>{const mid=G.running&&!G.over;restart();if(mid)toast('新しい場面に切り替えました（途中の成績は記録されません）')};
 $('mReplay').onclick=()=>restart(scene);
 $('mNew').onclick=()=>{const q=curQuest(),R=G.result;if(q&&R&&R.qres&&R.qres.ok&&q.id<10){startQuest(q.id+1)}else if(q){$('modalBg').hidden=true;openQuests()}else restart()};
 $('mReview').onclick=()=>{$('modalBg').hidden=true;G.review=true;toast('見返しモード：ドラッグや ← → でゲーム全体を見返せます。履歴をクリックするとその取引へ移動します')};
@@ -1398,10 +1410,10 @@ $('selLen').onchange=e=>{S.len=+e.target.value;saveS();if(G.running&&!G.over)toa
 $('chkHide').onchange=e=>{S.hide=e.target.checked;saveS();updateUI();draw()};
 $('chkAuto').onchange=e=>{S.autoPause=e.target.checked;saveS()};
 $('btnNotice').onclick=()=>{$('noticeBg').hidden=false};
-$('btnSkin').onclick=()=>{S.skin=S.skin==='navy'?'white':'navy';saveS();applySkin();draw();drawOverview();toast(S.skin==='navy'?'背景を紺色にしました':'背景を白にしました')};
+document.querySelectorAll('[data-skin]').forEach(b=>b.onclick=()=>{S.skin=b.dataset.skin;saveS();applySkin();draw();drawOverview()});
 $('btnHelp').onclick=()=>{$('helpBg').hidden=false};$('btnHelp2').onclick=()=>{$('helpBg').hidden=false};$('btnHelpClose').onclick=()=>{$('helpBg').hidden=true};
 $('btnNoticeOk').onclick=()=>{$('noticeBg').hidden=true;try{localStorage.setItem('hakei-dojo3-notice','1')}catch(e){}if(!P)$('regBg').hidden=false};
-function applySkin(){document.documentElement.dataset.skin=S.skin==='navy'?'navy':'';$('btnSkin').textContent=S.skin==='navy'?'背景：紺':'背景：白'}
+function applySkin(){document.documentElement.dataset.skin=S.skin==='navy'?'navy':'';document.querySelectorAll('[data-skin]').forEach(b=>b.classList.toggle('on',b.dataset.skin===(S.skin==='navy'?'navy':'white')))}
 function syncSettings(){
   const lock=!!Q;applySkin();
   document.querySelectorAll('[data-mode]').forEach(b=>{b.classList.toggle('on',b.dataset.mode===S.mode);b.disabled=lock});
@@ -1412,7 +1424,7 @@ function syncSettings(){
   $('selScene').disabled=lock;$('selLen').disabled=lock;
   const q=curQuest();$('setLock').hidden=!lock;if(lock)$('setLock').textContent=`クエスト${q.id}「${q.name}」挑戦中：場面・モード・長さは固定です（${SCENE_LABEL[q.setup.scene]} ・ ${q.setup.mode==='real'?'実戦':'練習'} ・ ${q.setup.len}本）`;
   $('chkHide').checked=S.hide;$('chkAuto').checked=S.autoPause;
-  $('btnSound').textContent=S.sound?'音 ON':'音 OFF';
+  $('btnSound').textContent=S.sound?'🔊 音 ON':'🔇 音 OFF';
   renderLotSelect();
 }
 
