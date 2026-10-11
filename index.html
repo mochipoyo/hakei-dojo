@@ -31,7 +31,7 @@ button{cursor:pointer;touch-action:manipulation}
 button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--up);outline-offset:2px}
 .app{min-height:100%;display:flex;flex-direction:column;background:#f6f7f9}
 
-.topbar{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;padding:10px 16px;background:#fff;border-bottom:1px solid var(--line);box-shadow:0 1px 0 rgba(26,34,48,.03)}
+.topbar{display:flex;align-items:center;flex-wrap:wrap;gap:6px 8px;padding:10px 16px;background:#fff;border-bottom:1px solid var(--line);box-shadow:0 1px 0 rgba(26,34,48,.03)}
 .brand{display:flex;align-items:center;gap:10px;white-space:nowrap}
 .hanko{width:32px;height:32px;border:2px solid var(--up);color:var(--up);border-radius:6px;display:grid;place-items:center;font-weight:900;font-size:16px;transform:rotate(-4deg);background:#fff}
 .brand b{font-weight:900;font-size:18px;letter-spacing:.12em}
@@ -50,6 +50,7 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
 .seedbtn:hover{border-color:var(--ink);color:var(--ink)}
 .prog{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink2);white-space:nowrap}
 @media (max-width:1400px){.ticks{display:none}}
+@media (max-width:1366px){.seedbtn{display:none}}
 .ticks{display:flex;gap:2px}
 .ticks i{width:5px;height:12px;background:var(--panel3);border-radius:1px}
 .ticks i.on{background:var(--ink)}
@@ -415,6 +416,7 @@ table.gt th{color:var(--ink2);font-weight:500;font-size:11px}
             <div class="jrow"><span class="n">MACD(6,13,4)</span><span class="pill N" id="jMACD">—</span></div>
             <div class="jrow"><span class="n">ダイバージェンス</span><span class="pill N" id="jDIV">なし</span></div>
             <div class="jrow"><span class="n">上位足PO <span id="jHTFn">（参考）</span></span><span class="pill N" id="jHTF">—</span></div>
+            <div class="jrow" id="jExitRow"><span class="n">決済目安 <span id="jExitN" style="font-size:11px;color:var(--muted)"></span></span><span class="pill N" id="jEXIT">—</span></div>
           </div>
           <div class="score">
             <div class="sc" id="scL"><div class="k">今ロングなら</div><div class="v mono up" id="scLv">0/3</div><div class="pips L" id="pL"><i></i><i></i><i></i></div></div>
@@ -448,6 +450,8 @@ table.gt th{color:var(--ink2);font-weight:500;font-size:11px}
           <select id="selLen"><option value="100">5分足100本（約8時間）</option><option value="150">5分足150本（約12時間）</option><option value="300">5分足300本（約1日）</option><option value="576">5分足576本（約2日）</option></select>
           <label for="selLot">取引数量</label>
           <select id="selLot"></select>
+          <label for="selExit">決済目安サイン</label>
+          <select id="selExit"><option value="alert">アラート方式（RCI(9)が±ラインに到達）</option><option value="macd">MACDがシグナルとクロス</option><option value="ema">終値がEMA20を反対側に抜ける</option><option value="none">表示しない</option></select>
           <label for="selTh">RCI 過熱ライン</label>
           <select id="selTh"><option value="70">±70</option><option value="80">±80</option><option value="90">±90</option></select>
           <label for="selSL">損切り（逆指値）</label>
@@ -467,7 +471,8 @@ table.gt th{color:var(--ink2);font-weight:500;font-size:11px}
       </section>
 
       <p class="note">判定ルール（このゲームでの簡易版）<br>
-      ロング：①EMA20&gt;30&gt;40かつEMA40が5本前より上 ②RCI(9)が直近7本以内に−ライン以下→現在上向き（RCI(14)・RCI(18)は表示のみ） ③MACDがシグナルより上。ショートは逆。3/3＝A、2/3＝B、1以下＝C。ダイバージェンスと上位足POは参考表示（採点外）。<br>ポイント：合計pips × 武器の倍率（負けた分はマイナス）＋完走10P＋A判定・勝率などのボーナス。所持ポイントは0未満になりません。武器は12段階（1,000通貨〜300万通貨）。<br>
+      サイン（L／S）と決済サイン（E）は「もちぽよアラート ver.04」と同じ条件です。L：EMA20&gt;30&gt;40、RCI(9)が2本前で−ライン以下かつ3本前以下（底）、1本前で上向き。S：その逆。E：ロング中にRCI(9)が1本前で＋ライン以上（ショートは−ライン以下）になった足。Eが出るまで次のサインは出ません。Eの横の数字はサインの足の終値からの値幅です。<br>
+      A/B/C採点（エントリー時の確定足）：①EMA20&gt;30&gt;40 ②RCI(9)が直近7本以内に−ライン以下→現在上向き ③MACDがシグナルより上（ショートは逆）。3/3＝A、2/3＝B、1以下＝C。③はこのゲーム独自の条件で、ダイバージェンス・上位足PO・RCI(14)(18)は参考表示です。<br>ポイント：合計pips × 武器の倍率（負けた分はマイナス）＋完走10P＋A判定・勝率などのボーナス。所持ポイントは0未満になりません。武器は12段階（1,000通貨〜300万通貨）。<br>
       値動きは、実際のGBP/JPY 5分足の統計的な性質を参考に乱数で生成した架空のものです。相場セット（第1期〜第12期）はそれぞれ別の3年分で、合計36年分の場面から練習できます。指標やイベントも架空のカレンダーです。実在の相場や特定の期間を再現したものではなく、将来の値動きや成績を示すものでもありません。</p>
     </aside>
   </main>
@@ -490,6 +495,7 @@ table.gt th{color:var(--ink2);font-weight:500;font-size:11px}
     <p><b>1. 開始する</b> … ボタンを押すとチャートが動きます。1ゲームは5分足150本（約12時間分）。右上の「速度」で早送りできます。</p>
     <p><b>2. 買／売ボタンでエントリー、決済ボタンで手じまい</b> … ポジションは1つずつ。損切り・利確は設定で選べます（自動で決済）。</p>
     <p><b>3. 採点</b> … エントリーした瞬間に、EMAのパーフェクトオーダー・RCI(9)の反転・MACDの3条件をチェック。3つそろえば<b>A</b>、2つで<b>B</b>、1つ以下は<b>C</b>。判定パネルの「今ロングなら／今ショートなら」で、いま入った場合の判定が分かります。</p>
+    <p><b>サインと決済サイン</b> … チャートの L／S はエントリーサイン、E は決済サイン（もちぽよアラートと同じ条件）。E の横にサインからの値幅が出ます。設定の「決済目安サイン」で、E の条件をMACDクロスやEMA20抜けに変えて試すこともできます。ポジション保有中に条件を満たすと判定パネルに「今が決済サイン！」と出ます（練習モードのみ）。</p>
     <p><b>4. 練習モードと実戦モード</b> … 練習は条件とサインを表示。実戦は隠して自分で判断し、決済後に答え合わせ。</p>
     <p><b>5. クエスト</b> … 場面と条件が決まった修行を順番にクリア。報酬ポイントと仲間の解放があります。</p>
     <p><b>6. ポイントと武器</b> … 勝つと増え、負けると減ります。武器庫で武器を買うと取引数量の上限と倍率が上がります。</p>
@@ -597,11 +603,11 @@ const fmtN=n=>Number(n).toLocaleString('ja-JP');
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 // ---------- settings ----------
-const S={mode:'practice',scene:'any',world:1,th:80,sl:20,tp:0,hide:false,htf:3600,lot:1000,len:150,autoPause:false,sound:true,vis:{ema:true,rci:true,macd:true,div:true,sign:true,ev:true}};
+const S={mode:'practice',scene:'any',world:1,exit:'alert',th:70,sl:20,tp:0,hide:false,htf:3600,lot:1000,len:150,autoPause:false,sound:true,vis:{ema:true,rci:true,macd:true,div:true,sign:true,ev:true}};
 const WORLDS=12;
 try{const o=JSON.parse(localStorage.getItem('hakei-dojo4')||'{}');Object.assign(S,o);S.vis=Object.assign({ema:true,rci:true,macd:true,div:true,sign:true,ev:true},o.vis||{})}catch(e){}
 function saveS(){try{localStorage.setItem('hakei-dojo4',JSON.stringify(S))}catch(e){}}
-if(!(S.world>=1&&S.world<=WORLDS))S.world=1;
+if(!(S.world>=1&&S.world<=WORLDS))S.world=1;if(!['none','alert','macd','ema'].includes(S.exit))S.exit='alert';
 let WSEED=WORLD_SEED;const worldSeed=w=>(WORLD_SEED+(w-1)*7919)>>>0;const worldLabel=()=>`第${S.world}期`;
 
 // ---------- weapons (lot cap and point multiplier) ----------
@@ -856,14 +862,30 @@ function makeDS(bars,tf){
 }
 function cond(ds,i){
   const I=ds.I;if(i<45)return{po:0,rciL:false,rciS:false,macdUp:false,div:0,L:0,S:0,rv:I.rci[i]||0,rv14:I.rci14[i]||0,rv18:I.rci18[i]||0,rUp:false};
-  const po=(I.e20[i]>I.e30[i]&&I.e30[i]>I.e40[i]&&I.e40[i]>I.e40[i-5])?1:(I.e20[i]<I.e30[i]&&I.e30[i]<I.e40[i]&&I.e40[i]<I.e40[i-5])?-1:0;
+  const po=(I.e20[i]>I.e30[i]&&I.e30[i]>I.e40[i])?1:(I.e20[i]<I.e30[i]&&I.e30[i]<I.e40[i])?-1:0;
   let mn=999,mx=-999;for(let k=i-6;k<=i;k++){if(I.rci[k]<mn)mn=I.rci[k];if(I.rci[k]>mx)mx=I.rci[k]}
   const rUp=I.rci[i]>I.rci[i-1],rciL=mn<=-S.th&&rUp,rciS=mx>=S.th&&I.rci[i]<I.rci[i-1];
   const macdUp=I.macd[i]>I.sig[i];
   const div=ds.divAt[i];
   return{po,rciL,rciS,macdUp,div,L:(po===1)+rciL+macdUp,S:(po===-1)+rciS+(!macdUp),rv:I.rci[i],rv14:I.rci14[i],rv18:I.rci18[i],rUp};
 }
-function buildSigns(ds){let pL=0,pS=0;for(let i=0;i<ds.bars.length;i++){const c=cond(ds,i);ds.signs[i]=c.L===3&&pL<3?1:c.S===3&&pS<3?-1:0;pL=c.L;pS=c.S}}
+const EXIT_LABEL={none:'',alert:'アラート方式（RCI±70）',macd:'MACDクロス',ema:'EMA20抜け'};
+function entryPattern(I,i,th){if(i<4)return 0;const po=(I.e20[i]>I.e30[i]&&I.e30[i]>I.e40[i])?1:(I.e20[i]<I.e30[i]&&I.e30[i]<I.e40[i])?-1:0;if(!po)return 0;
+  const r1=I.rci[i-1],r2=I.rci[i-2],r3=I.rci[i-3];
+  if(po===1&&r2<=-th&&r2<=r3&&r1>r2)return 1;if(po===-1&&r2>=th&&r2>=r3&&r1<r2)return -1;return 0}
+function exitCond(ds,i,dir){const I=ds.I;if(i<3||S.exit==='none')return false;
+  if(S.exit==='alert')return dir===1?I.rci[i-1]>=S.th:I.rci[i-1]<=-S.th;
+  if(S.exit==='macd'){const d0=I.macd[i]-I.sig[i],d1=I.macd[i-1]-I.sig[i-1];return dir===1?(d0<0&&d1>=0):(d0>0&&d1<=0)}
+  if(S.exit==='ema'){return dir===1?(I.c[i]<I.e20[i]&&I.c[i-1]>=I.e20[i-1]):(I.c[i]>I.e20[i]&&I.c[i-1]<=I.e20[i-1])}
+  return false}
+function exitLive(dir){return S.exit==='alert'?exitCond(BASE,G.idx,dir):exitCond(BASE,G.idx-1,dir)}
+function buildSigns(ds){const n=ds.bars.length,I=ds.I;ds.signs=new Int8Array(n);ds.exits=new Int8Array(n);ds.exitFrom=new Int32Array(n);ds.exitPips=new Float32Array(n);
+  let pos=0,entryI=-1,entryP=0;
+  for(let i=0;i<n;i++){
+    if(pos&&exitCond(ds,i,pos)){ds.exits[i]=pos;ds.exitFrom[i]=entryI;ds.exitPips[i]=(I.c[i]-entryP)/PIP*pos;pos=0}
+    const e=entryPattern(I,i,S.th);
+    if(e&&!pos){ds.signs[i]=e;if(S.exit!=='none'){pos=e;entryI=i;entryP=I.c[i]}}
+  }}
 function liveOf(ds,i,b){
   const I=ds.I,a=n=>2/(n+1),c=b.c,e=(arr,n)=>i>0?a(n)*c+(1-a(n))*arr[i-1]:c;
   const e6=e(I.e6,6),e13=e(I.e13,13),macd=e6-e13,sig=i>0?a(4)*macd+(1-a(4))*I.sig[i-1]:macd;
@@ -937,8 +959,9 @@ function step(){
 }
 function onNewBar(){
   if(VIEW.follow)VIEW.right=G.idx;
-  const s=BASE.signs[G.idx-1];
-  if(s&&S.mode==='practice'&&S.vis.sign){toast(`サイン点灯：${s===1?'ロング':'ショート'}条件 3/3`);beep(s===1?880:440,0.12,0.05,'triangle')}
+  const s=BASE.signs[G.idx-1],ex=BASE.exits[G.idx-1];
+  if(S.mode==='practice'&&S.vis.sign){if(s){toast(`サイン点灯：${s===1?'L（ロング）':'S（ショート）'}`);beep(s===1?880:440,0.12,0.05,'triangle')}if(ex){toast(`決済サイン E：${sg(BASE.exitPips[G.idx-1])}p（サインからの値幅）`);beep(740,0.1,0.04,'triangle')}}
+  if(G.pos&&S.mode==='practice'&&S.exit!=='none'&&exitLive(G.pos.dir)){toast(`決済サイン：${EXIT_LABEL[S.exit]}（含み ${sg(curPips())}p）`);beep(G.pos.dir===1?1046:523,0.1,0.05,'triangle')}
   const ev=WORLD.evAt.get(G.idx);if(ev&&S.vis.ev){toast(`${fmtT(BASE.bars[G.idx].t,false).slice(2)} ${EV_NAMES[ev.kind]} 発表`);if(BIG_EV.has(ev.kind))beep(330,0.1,0.04,'square')}
 }
 function checkStops(){if(!G.pos)return;const p=curPips();if(S.sl>0&&p<=-S.sl)closePos('損切り');else if(S.tp>0&&p>=S.tp)closePos('利確')}
@@ -1059,6 +1082,7 @@ function updateUI(){
   setPill($('jDIV'),c.div?'D':'N',c.div===1?'強気Div':c.div===-1?'弱気Div':'なし');
   const hp=htfPoNow();$('jHTFn').textContent=S.htf?`（${TFS[S.htf]}・参考）`:'（参考）';
   if(hp==null)setPill($('jHTF'),'N','上位足なし');else setPill($('jHTF'),hp===1?'L':hp===-1?'S':'N',hp===1?'上昇PO':hp===-1?'下降PO':'崩れ');
+  $('jExitRow').hidden=S.exit==='none';if(S.exit!=='none'){$('jExitN').textContent='（'+EXIT_LABEL[S.exit]+'）';if(G.pos){const ex=exitLive(G.pos.dir);setPill($('jEXIT'),ex?(G.pos.dir===1?'L':'S'):'N',ex?'今が決済サイン！':'待ち')}else{const exL=exitLive(1),exS=exitLive(-1);setPill($('jEXIT'),exL?'L':exS?'S':'N',exL?'ロング決済の条件':exS?'ショート決済の条件':'—')}}
   const gl=n=>n===3?'A':n===2?'B':'C';$('scLv').textContent=c.L+'/3 '+gl(c.L);$('scSv').textContent=c.S+'/3 '+gl(c.S);
   $('scL').className='sc'+(c.L===3?' hot-L':'');$('scS').className='sc'+(c.S===3?' hot-S':'');
   [...$('pL').children].forEach((e,k)=>e.classList.toggle('on',k<c.L));[...$('pS').children].forEach((e,k)=>e.classList.toggle('on',k<c.S));
@@ -1244,10 +1268,15 @@ function drawChart(canvas,ds,fi,Lv,opt){
   for(let i=first;i<=last;i++){const b=bar(i),col=b.c>=b.o?C('--up'):C('--down'),x=X(i);
     ctx.strokeStyle=col;ctx.fillStyle=col;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(Math.round(x)+.5,Y(b.h));ctx.lineTo(Math.round(x)+.5,Y(b.l));ctx.stroke();
     const yo=Y(b.o),yc=Y(b.c);ctx.fillRect(x-cw/2,Math.min(yo,yc),cw,Math.max(1,Math.abs(yc-yo)))}
-  if(isBase&&practice&&S.vis.sign){for(let i=first;i<fi;i++){const s=ds.signs[i];if(!s)continue;const b=ds.bars[i],x=X(i);
-    ctx.fillStyle=s===1?C('--up'):C('--down');ctx.beginPath();
-    if(s===1){const y=Y(b.l)+10;ctx.moveTo(x,y);ctx.lineTo(x-5,y+8);ctx.lineTo(x+5,y+8)}else{const y=Y(b.h)-10;ctx.moveTo(x,y);ctx.lineTo(x-5,y-8);ctx.lineTo(x+5,y-8)}
-    ctx.closePath();ctx.fill()}}
+  if(isBase&&practice&&S.vis.sign){ctx.font='bold 10px "JetBrains Mono",monospace';ctx.textAlign='center';ctx.textBaseline='middle';
+    for(let i=first;i<fi;i++){const sgn=ds.signs[i],ex=ds.exits[i];if(!sgn&&!ex)continue;const b=ds.bars[i],x=X(i);
+      if(ex){const up=ex===1,y0=up?Y(b.h):Y(b.l),y1=up?y0-18:y0+18;ctx.strokeStyle='#e0a800';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(x,y0);ctx.lineTo(x,y1);ctx.stroke();
+        ctx.fillStyle='#e0a800';ctx.fillRect(x-7,up?y1-14:y1,14,14);ctx.fillStyle='#fff';ctx.fillText('E',x,up?y1-7:y1+7);
+        const pp=ds.exitPips[i];ctx.fillStyle=pp>=0?'#7a3fc4':'#1a9bb0';ctx.textAlign='left';ctx.fillText(sg(pp),x+10,up?y1-7:y1+7);ctx.textAlign='center';
+        const f=ds.exitFrom[i];if(f>=first&&f<i){ctx.setLineDash([2,3]);ctx.strokeStyle='#e0a800';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(X(f),Y(ds.bars[f].c));ctx.lineTo(x,Y(b.c));ctx.stroke();ctx.setLineDash([])}}
+      if(sgn){const up=sgn===1,y0=up?Y(b.l):Y(b.h),y1=up?y0+18:y0-18,col=up?C('--up'):C('--down');ctx.strokeStyle=col;ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(x,y0);ctx.lineTo(x,y1);ctx.stroke();
+        ctx.fillStyle=col;ctx.fillRect(x-7,up?y1:y1-14,14,14);ctx.fillStyle='#fff';ctx.fillText(up?'L':'S',x,up?y1+7:y1-7)}}
+    ctx.textAlign='left';ctx.textBaseline='alphabetic';ctx.font='11px "JetBrains Mono",monospace'}
   const MX=i=>isBase?i:bucketIndex(ds,BASE.bars[i].t);
   const drawTrade=(t,ei,ex)=>{const col=t.dir===1?C('--up'):C('--down');
     const a=MX(t.idx);if(a>=first&&a<=last){ctx.fillStyle=col;ctx.strokeStyle=C('--chart');ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(X(a),Y(t.price),isBase?4.5:3.5,0,Math.PI*2);ctx.fill();ctx.stroke()}
@@ -1349,6 +1378,7 @@ document.querySelectorAll('[data-htf]').forEach(b=>b.onclick=()=>{S.htf=+b.datas
 document.querySelectorAll('[data-vis]').forEach(b=>b.onclick=()=>{S.vis[b.dataset.vis]=!S.vis[b.dataset.vis];saveS();syncSettings();updateUI();draw()});
 $('selScene').onchange=e=>{S.scene=e.target.value;saveS();if(!G.running||G.over)restart();else toast('次の「新しい場面」から適用されます')};
 $('selTh').onchange=e=>{S.th=+e.target.value;saveS();buildSigns(BASE);updateUI();draw()};
+$('selExit').onchange=e=>{S.exit=e.target.value;saveS();buildSigns(BASE);updateUI();draw()};
 $('selSL').onchange=e=>{S.sl=+e.target.value;saveS();checkStops();updateUI();draw()};
 $('selTP').onchange=e=>{S.tp=+e.target.value;saveS();checkStops();updateUI();draw()};
 $('selLot').onchange=e=>{const v=+e.target.value;if(v>lotCap()){toast('この数量を張るには、武器庫で上位の武器が必要です');renderLotSelect();return}S.lot=v;saveS();updateUI()};
@@ -1364,7 +1394,7 @@ function syncSettings(){
   document.querySelectorAll('[data-htf]').forEach(b=>b.classList.toggle('on',+b.dataset.htf===S.htf));
   document.querySelectorAll('[data-vis]').forEach(b=>b.classList.toggle('on',!!S.vis[b.dataset.vis]));
   $('wrapH').hidden=!S.htf;$('charts').classList.toggle('two',!!S.htf);
-  $('selScene').value=S.scene;$('selWorld').value=S.world;$('selTh').value=S.th;$('selSL').value=S.sl;$('selTP').value=S.tp;$('selLen').value=S.len;
+  $('selScene').value=S.scene;$('selWorld').value=S.world;$('selExit').value=S.exit;$('selTh').value=S.th;$('selSL').value=S.sl;$('selTP').value=S.tp;$('selLen').value=S.len;
   $('selScene').disabled=lock;$('selLen').disabled=lock;
   const q=curQuest();$('setLock').hidden=!lock;if(lock)$('setLock').textContent=`クエスト${q.id}「${q.name}」挑戦中：場面・モード・長さは固定です（${SCENE_LABEL[q.setup.scene]} ・ ${q.setup.mode==='real'?'実戦':'練習'} ・ ${q.setup.len}本）`;
   $('chkHide').checked=S.hide;$('chkAuto').checked=S.autoPause;
