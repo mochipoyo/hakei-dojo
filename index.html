@@ -312,7 +312,7 @@ table.gt th{color:var(--ink2);font-weight:500;font-size:11px}
 
 </head>
 <body>
-<div class="loading" id="loading"><b>波形トレード道場</b><span>架空相場3年分を生成しています…</span><div class="bar"><i></i></div></div>
+<div class="loading" id="loading"><b>波形トレード道場</b><span id="loadingTxt">架空相場3年分を生成しています…</span><div class="bar"><i></i></div></div>
 
 <div class="app">
   <header class="topbar">
@@ -335,6 +335,7 @@ table.gt th{color:var(--ink2);font-weight:500;font-size:11px}
   <main class="layout">
     <div class="main">
       <div class="tools">
+        <div class="grp"><span class="lb">相場セット</span><select id="selWorld"></select></div>
         <div class="grp"><span class="lb">場面の選び方</span>
           <select id="selScene">
             <option value="any">ランダム</option>
@@ -456,7 +457,7 @@ table.gt th{color:var(--ink2);font-weight:500;font-size:11px}
           <div class="lock" id="setLock" hidden></div>
           <label class="full"><input type="checkbox" id="chkAuto"> エントリーしたら自動で一時停止する（損切り・利確を落ち着いて設定できます）</label>
           <label class="full"><input type="checkbox" id="chkHide"> ポジション保有中はローソク足と損益を隠す（RCIとMACDだけで決済を判断する練習）</label>
-          <div class="seedrow"><input type="text" id="seedIn" placeholder="場面番号を入力して同じ場面を再現" inputmode="numeric"><button class="smallbtn" id="btnSeedGo">この場面で開始</button></div>
+          <div class="seedrow"><input type="text" id="seedIn" placeholder="場面番号（例 3-123456）で同じ場面を再現" inputmode="numeric"><button class="smallbtn" id="btnSeedGo">この場面で開始</button></div>
         </div>
       </section>
 
@@ -467,7 +468,7 @@ table.gt th{color:var(--ink2);font-weight:500;font-size:11px}
 
       <p class="note">判定ルール（このゲームでの簡易版）<br>
       ロング：①EMA20&gt;30&gt;40かつEMA40が5本前より上 ②RCI(9)が直近7本以内に−ライン以下→現在上向き（RCI(14)・RCI(18)は表示のみ） ③MACDがシグナルより上。ショートは逆。3/3＝A、2/3＝B、1以下＝C。ダイバージェンスと上位足POは参考表示（採点外）。<br>ポイント：合計pips × 武器の倍率（負けた分はマイナス）＋完走10P＋A判定・勝率などのボーナス。所持ポイントは0未満になりません。武器は12段階（1,000通貨〜300万通貨）。<br>
-      値動きは、実際のGBP/JPY 5分足の統計的な性質を参考に乱数で生成した架空の3年分です。指標やイベントも架空のカレンダーです。実在の相場や特定の期間を再現したものではなく、将来の値動きや成績を示すものでもありません。</p>
+      値動きは、実際のGBP/JPY 5分足の統計的な性質を参考に乱数で生成した架空のものです。相場セット（第1期〜第12期）はそれぞれ別の3年分で、合計36年分の場面から練習できます。指標やイベントも架空のカレンダーです。実在の相場や特定の期間を再現したものではなく、将来の値動きや成績を示すものでもありません。</p>
     </aside>
   </main>
   <footer class="foot"><span>波形トレード道場 ・ 架空相場3年分で練習するFXトレードゲーム</span><span>© もちぽよ / 合同会社Trend One</span><button id="btnNotice">ご利用上の注意</button><button id="btnHelp2">あそびかた</button></footer>
@@ -596,9 +597,12 @@ const fmtN=n=>Number(n).toLocaleString('ja-JP');
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 // ---------- settings ----------
-const S={mode:'practice',scene:'any',th:80,sl:20,tp:0,hide:false,htf:3600,lot:1000,len:150,autoPause:false,sound:true,vis:{ema:true,rci:true,macd:true,div:true,sign:true,ev:true}};
+const S={mode:'practice',scene:'any',world:1,th:80,sl:20,tp:0,hide:false,htf:3600,lot:1000,len:150,autoPause:false,sound:true,vis:{ema:true,rci:true,macd:true,div:true,sign:true,ev:true}};
+const WORLDS=12;
 try{const o=JSON.parse(localStorage.getItem('hakei-dojo4')||'{}');Object.assign(S,o);S.vis=Object.assign({ema:true,rci:true,macd:true,div:true,sign:true,ev:true},o.vis||{})}catch(e){}
 function saveS(){try{localStorage.setItem('hakei-dojo4',JSON.stringify(S))}catch(e){}}
+if(!(S.world>=1&&S.world<=WORLDS))S.world=1;
+let WSEED=WORLD_SEED;const worldSeed=w=>(WORLD_SEED+(w-1)*7919)>>>0;const worldLabel=()=>`第${S.world}期`;
 
 // ---------- weapons (lot cap and point multiplier) ----------
 const WEAPONS=[
@@ -779,7 +783,7 @@ function planDay(D,plan,rEv){const out=[];if(D.dow===0||D.dow===6)return out;con
   return out;
 }
 function genWorld(){
-  const r=mulberry32(WORLD_SEED),rEv=mulberry32((WORLD_SEED^0x5bd1e995)>>>0);
+  const r=mulberry32(WSEED),rEv=mulberry32((WSEED^0x5bd1e995)>>>0);
   const bars=[],events=[],evAt=new Map(),evMap=new Map(),days=[];
   let t=Date.UTC(2000,11,31,21,0,0)/1000;const tEnd=Date.UTC(2003,11,31,21,0,0)/1000;
   let p=rnd3(160+r()*20),L=p;
@@ -874,7 +878,7 @@ function lowerBound(bars,t){let lo=0,hi=bars.length;while(lo<hi){const m=(lo+hi)
 let WORLD,BASE,EVENTS,HTF={},scene,G,PCT=null;
 let VIEW={z:1,right:0,follow:true},HOVER=null,DRAG=null;
 const TICK_CACHE=new Map();
-function ticksOf(i){let t=TICK_CACHE.get(i);if(t)return t;const r=mulberry32((WORLD_SEED+i*2654435761)>>>0);t=synthTicks(BASE.bars[i],r);if(TICK_CACHE.size>3000)TICK_CACHE.clear();TICK_CACHE.set(i,t);return t}
+function ticksOf(i){let t=TICK_CACHE.get(i);if(t)return t;const r=mulberry32((WSEED+i*2654435761)>>>0);t=synthTicks(BASE.bars[i],r);if(TICK_CACHE.size>3000)TICK_CACHE.clear();TICK_CACHE.set(i,t);return t}
 function getHTF(tf){if(!HTF[tf])HTF[tf]=makeDS(aggregate(BASE.bars,tf),tf);return HTF[tf]}
 function leadStats(s){const b=BASE.bars;let hi=-1e9,lo=1e9,atr=0;const a=s-288;for(let i=a;i<s;i++){const x=b[i];if(x.h>hi)hi=x.h;if(x.l<lo)lo=x.l;atr+=x.h-x.l}return{net:(b[s-1].c-b[a].o)/PIP,range:(hi-lo)/PIP,atr:atr/288/PIP}}
 function pct(){if(PCT)return PCT;const N=BASE.bars.length,rs=[],as=[];const r=mulberry32(99);for(let k=0;k<800;k++){const s=WARM+Math.floor(r()*(N-WARM-600));const st=leadStats(s);rs.push(st.range);as.push(st.atr)}rs.sort((a,b)=>a-b);as.sort((a,b)=>a-b);const q=(a,p)=>a[Math.floor(p*(a.length-1))];PCT={r45:q(rs,0.45),a85:q(as,0.85),a20:q(as,0.2)};return PCT}
@@ -903,8 +907,8 @@ function newGame(s0){
   $('btnPause').textContent='Ⅱ 一時停止';
   const q=curQuest();
   const tags=sceneTags(s0,S.len).filter(x=>x!=='event').map(x=>SCENE_LABEL[x].replace('直前が','')),evs=eventsIn(s0,G.end).filter(e=>BIG_EV.has(e.kind));
-  $('startSub').textContent=`${q?'クエスト'+q.id+'「'+q.name+'」 ・ ':''}${fmtDate(BASE.bars[s0].t)} から 5分足${S.len}本${tags.length?' ・ 直前：'+tags.join('・'):''}${evs.length?' ・ ゲーム中の指標：'+evs.map(e=>fmtT(e.t,false).slice(2)+' '+EV_NAMES[e.kind]).join('、'):''} ・ Enterでも開始`;
-  $('seedBtn').textContent='#'+scene;
+  $('startSub').textContent=`${q?'クエスト'+q.id+'「'+q.name+'」 ・ ':''}${worldLabel()} ${fmtDate(BASE.bars[s0].t)} から 5分足${S.len}本${tags.length?' ・ 直前：'+tags.join('・'):''}${evs.length?' ・ ゲーム中の指標：'+evs.map(e=>fmtT(e.t,false).slice(2)+' '+EV_NAMES[e.kind]).join('、'):''} ・ Enterでも開始`;
+  $('seedBtn').textContent='#'+S.world+'-'+scene;
   renderLog();updateUI();draw();drawOverview();
 }
 function baseBar(){const i=G.idx,b=BASE.bars[i],t=ticksOf(i);let h=b.o,l=b.o;for(let s=0;s<=G.sub;s++){if(t[s]>h)h=t[s];if(t[s]<l)l=t[s]}return{t:b.t,o:b.o,h,l,c:t[G.sub]}}
@@ -987,7 +991,7 @@ function finish(){
   const yen=G.trades.reduce((a,t)=>a+t.pips*t.lot*PIP,0);P.yen=(P.yen||0)+yen;
   P.points=Math.max(0,P.points+total);P.exp+=Math.max(0,total);P.streak=pt.streak;P.counters.signWins=(P.counters.signWins||0)+st.signWins;P.counters.aTrades=(P.counters.aTrades||0)+st.nA;if(st.mode==='real')P.counters.realGames=(P.counters.realGames||0)+1;
   const R=P.rec;R.games++;for(const t of G.trades){R.n++;if(t.pips>0)R.w++;R.pips+=t.pips;const g=R.g[t.grade];g.n++;if(t.pips>0)g.w++;g.p+=t.pips;if(t.agree==='順'){R.on.n++;R.on.p+=t.pips}else if(t.agree==='逆'){R.off.n++;R.off.p+=t.pips}}
-  P.history.unshift({d:Date.now(),scene,mode:S.mode,len:G.end-G.s0,pips:Math.round(st.tot*10)/10,yen:Math.round(yen),n:st.n,a:st.n?Math.round(st.nA/st.n*100):null,pts:total,q:q?q.id:0,ok:qres?qres.ok:null});if(P.history.length>100)P.history.length=100;
+  P.history.unshift({d:Date.now(),scene,w:S.world,mode:S.mode,len:G.end-G.s0,pips:Math.round(st.tot*10)/10,yen:Math.round(yen),n:st.n,a:st.n?Math.round(st.nA/st.n*100):null,pts:total,q:q?q.id:0,ok:qres?qres.ok:null});if(P.history.length>100)P.history.length=100;
   const newly=CHARS.filter(charUnlocked).map(c=>c.id).filter(id=>!unlockedBefore.includes(id));
   saveProfile();
   G.result={st,pt,qres,total,newly,clamped:P.points===0&&total<0};
@@ -1093,7 +1097,7 @@ function showResult(){
   let eq=0,pk=0,dd=0;for(const t of T){eq+=t.pips;pk=Math.max(pk,eq);dd=Math.max(dd,pk-eq)}
   const t0=BASE.bars[G.s0].t,t1=BASE.bars[G.end-1].t,q=curQuest(),R=G.result;
   $('mTitle').textContent=q?(R&&R.qres&&R.qres.ok?'クエストクリア！':'クエスト未達成'):'RESULT';
-  $('mLead').textContent=`場面 #${scene} ・ ${fmtDate(t0)} 〜 ${fmtDate(t1)}（架空カレンダー）\n${S.mode==='practice'?'練習':'実戦'}モード ・ 5分足${G.end-G.s0}本${S.htf?' ・ 上位足 '+TFS[S.htf]:''} ・ ${curChar().name}（${weapon().name}）`;
+  $('mLead').textContent=`場面 #${S.world}-${scene} ・ ${worldLabel()} ${fmtDate(t0)} 〜 ${fmtDate(t1)}（架空カレンダー）\n${S.mode==='practice'?'練習':'実戦'}モード ・ 5分足${G.end-G.s0}本${S.htf?' ・ 上位足 '+TFS[S.htf]:''} ・ ${curChar().name}（${weapon().name}）`;
   if(R){const pt=R.pt;$('ptsBox').innerHTML=`<div class="tot" style="${R.total<0?'color:var(--ng)':''}">${R.total>=0?'獲得 +':'減少 '}${fmtN(R.total)} P <span style="font-size:12px;font-weight:400;color:#5d4a10">（所持 ${fmtN(P.points)} P ・ Lv ${levelOf(P.exp)}${R.clamped?' ・ 0未満にはなりません':''}）</span></div>`+pt.lines.map(([k,v])=>`<div class="ln"><span>${esc(k)}</span><span class="mono">${v==null?'':(v>=0?'+':'')+v}</span></div>`).join('')+(R.qres&&R.qres.reward?`<div class="ln"><span>クエスト報酬${R.qres.first?'':'（再挑戦 20%）'}</span><span class="mono">+${R.qres.reward}</span></div>`:'')
     +(R.newly.length?`<div class="ln" style="margin-top:6px;font-weight:700">新しい仲間が解放：${R.newly.map(id=>CHARS.find(c=>c.id===id).name).join('、')}（プレイヤー情報から選択）</div>`:'');
     const qb=$('qResBox');if(q&&R.qres){const lines=q.cond.map(c=>`${c.f(R.st)?'✓':'✗'} ${esc(c.t)}（${esc(c.v(R.st))}）`).join('<br>');qb.innerHTML=`<div class="qres ${R.qres.ok?'ok':'ng'}"><b>クエスト${q.id}「${esc(q.name)}」 ${R.qres.ok?'クリア！':'未達成'}</b><br>${lines}${R.qres.ok&&q.id<10?'<br>次のクエストが解放されました':''}</div>`}else qb.innerHTML=''}
@@ -1118,7 +1122,7 @@ function showResult(){
     v+=`\n\n※1ゲームの結果だけで手法の優劣は判断できません。通算成績で回数を重ねた傾向を見てください。`;
   }
   $('mVerdict').textContent=v;
-  $('shareTxt').value=`波形トレード道場 ${P.name}（${curChar().name} Lv${levelOf(P.exp)}） 場面#${scene}${q?' クエスト'+q.id+(R&&R.qres&&R.qres.ok?' クリア':''):''}\n${fmtP(tot)}（${fmtY(yen)}） ｜ 勝率 ${n?Math.round(w.length/n*100)+'%':'—'}（${n}回）｜ A判定率 ${n?Math.round(A.n/n*100)+'%':'—'} ｜ ${R&&R.total<0?'':'+'}${R?R.total:0}P`;
+  $('shareTxt').value=`波形トレード道場 ${P.name}（${curChar().name} Lv${levelOf(P.exp)}） 場面#${S.world}-${scene}${q?' クエスト'+q.id+(R&&R.qres&&R.qres.ok?' クリア':''):''}\n${fmtP(tot)}（${fmtY(yen)}） ｜ 勝率 ${n?Math.round(w.length/n*100)+'%':'—'}（${n}回）｜ A判定率 ${n?Math.round(A.n/n*100)+'%':'—'} ｜ ${R&&R.total<0?'':'+'}${R?R.total:0}P`;
   $('btnCopy').textContent='コピー';
   $('bkTxt').value=encodeProfile();$('btnBkCopy').textContent='コードをコピー';
   $('mNew').textContent=q&&R&&R.qres&&R.qres.ok&&q.id<10?'次のクエストへ':(q?'クエスト一覧へ':'新しい場面');
@@ -1159,7 +1163,7 @@ function drawOverview(){
   ctx.font='10px "JetBrains Mono",monospace';ctx.textBaseline='top';ctx.textAlign='left';
   for(let k=1;k<n;k++){const d=D[k],p=D[k-1];if(d.mo!==p.mo){const x=Math.round(X(k))+.5;ctx.strokeStyle=C('--line');ctx.beginPath();ctx.moveTo(x,top-2);ctx.lineTo(x,H-bot);ctx.stroke();
     if(d.mo===1){ctx.fillStyle=C('--ink2');ctx.fillText(yearNo(d.y),x+3,2)}else if(pw/36>20){ctx.fillStyle=C('--muted');ctx.fillText(d.mo+'月',x+3,H-bot+2)}}}
-  ctx.fillStyle=C('--ink2');ctx.fillText(yearNo(D[0].y),padL+3,2);
+  ctx.fillStyle=C('--ink2');ctx.fillText(worldLabel()+' '+yearNo(D[0].y),padL+3,2);
   // line
   ctx.strokeStyle=C('--ink2');ctx.lineWidth=1.1;ctx.beginPath();for(let k=0;k<n;k++){const x=X(k),y=Y(D[k].c);k?ctx.lineTo(x,y):ctx.moveTo(x,y)}ctx.stroke();
   // price labels
@@ -1332,12 +1336,12 @@ $('mNew').onclick=()=>{const q=curQuest(),R=G.result;if(q&&R&&R.qres&&R.qres.ok&
 $('mReview').onclick=()=>{$('modalBg').hidden=true;G.review=true;toast('見返しモード：ドラッグや ← → でゲーム全体を見返せます。履歴をクリックするとその取引へ移動します')};
 $('btnResult').onclick=()=>{$('modalBg').hidden=false;requestAnimationFrame(drawEquity)};
 $('btnSound').onclick=()=>{S.sound=!S.sound;saveS();syncSettings();if(S.sound){initAudio();beep(660,0.08,0.04)}};
-$('seedBtn').onclick=()=>copyText(String(scene),$('seedBtn'),'#'+scene);
+$('seedBtn').onclick=()=>copyText(S.world+'-'+scene,$('seedBtn'),'#'+S.world+'-'+scene);
 $('btnCopy').onclick=()=>copyText($('shareTxt').value,$('btnCopy'),'コピー');
 $('btnBkCopy').onclick=()=>copyText($('bkTxt').value,$('btnBkCopy'),'コードをコピー',$('bkTxt'));
 function copyText(txt,btn,orig,ta){const done=()=>{btn.textContent='コピーしました';setTimeout(()=>btn.textContent=orig,1500)};const sel=()=>{const el=ta||$('shareTxt');el.value=txt;el.focus();el.select();try{document.execCommand('copy')}catch(e){}done()};
   if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(done).catch(sel)}else sel()}
-$('btnSeedGo').onclick=()=>{const v=parseInt($('seedIn').value,10);if(!isFinite(v)){toast('場面番号（整数）を入力してください');return}restart(v)};
+$('btnSeedGo').onclick=()=>{const m=String($('seedIn').value).trim().match(/^#?(?:(\d+)-)?(\d+)$/);if(!m){toast('場面番号を入力してください（例：3-123456）');return}const w=m[1]?+m[1]:S.world,v=+m[2];if(w<1||w>WORLDS){toast('相場セットは1〜'+WORLDS+'です');return}if(w!==S.world){switchWorld(w,v)}else restart(v)};
 $('seedIn').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('btnSeedGo').click()}});
 $('log').addEventListener('click',e=>{const li=e.target.closest('li[data-k]');if(!li)return;const t=G.trades[+li.dataset.k];const g=GEO.base;const N=g?g.last-g.first:60;setRight(t.exitIdx+Math.floor(N*0.3));toast(`${fmtT(t.t,true)} ${t.dir===1?'買い':'売り'} @${t.price.toFixed(3)} → ${t.exit.toFixed(3)}（${fmtP(t.pips)}・判定 ${t.grade}）`)});
 document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{if(Q)return;S.mode=b.dataset.mode;saveS();syncSettings();updateUI();draw()});
@@ -1360,7 +1364,7 @@ function syncSettings(){
   document.querySelectorAll('[data-htf]').forEach(b=>b.classList.toggle('on',+b.dataset.htf===S.htf));
   document.querySelectorAll('[data-vis]').forEach(b=>b.classList.toggle('on',!!S.vis[b.dataset.vis]));
   $('wrapH').hidden=!S.htf;$('charts').classList.toggle('two',!!S.htf);
-  $('selScene').value=S.scene;$('selTh').value=S.th;$('selSL').value=S.sl;$('selTP').value=S.tp;$('selLen').value=S.len;
+  $('selScene').value=S.scene;$('selWorld').value=S.world;$('selTh').value=S.th;$('selSL').value=S.sl;$('selTP').value=S.tp;$('selLen').value=S.len;
   $('selScene').disabled=lock;$('selLen').disabled=lock;
   const q=curQuest();$('setLock').hidden=!lock;if(lock)$('setLock').textContent=`クエスト${q.id}「${q.name}」挑戦中：場面・モード・長さは固定です（${SCENE_LABEL[q.setup.scene]} ・ ${q.setup.mode==='real'?'実戦':'練習'} ・ ${q.setup.len}本）`;
   $('chkHide').checked=S.hide;$('chkAuto').checked=S.autoPause;
@@ -1380,7 +1384,7 @@ $('btnRegImportGo').onclick=()=>{const o=decodeProfile($('regImportTxt').value);
 function openProfile(){if(!P){$('regBg').hidden=false;return}
   $('profLead').textContent=`${P.name} ・ ID ${P.id} ・ Lv ${levelOf(P.exp)} ・ 所持 ${fmtN(P.points)} P ・ 累計獲得 ${fmtN(P.exp)} P ・ 累計損益 ${fmtY(P.yen||0)} ・ 登録 ${new Date(P.created).toLocaleDateString('ja-JP')}`;
   $('profName').value=P.name;$('profGrid').innerHTML=CHARS.map(c=>charCardHTML(c,c.id===P.charId)).join('');
-  $('histBody').innerHTML=P.history.length?P.history.map(h=>{const d=new Date(h.d);return`<tr><td>${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}</td><td class="mono">#${h.scene}</td><td>${h.q?'Q'+h.q+(h.ok?' ✓':' ✗')+' ':''}${h.mode==='real'?'実戦':'練習'} ${h.len}本</td><td class="mono ${h.pips>=0?'up':'down'}">${sg(h.pips)}</td><td class="mono ${(h.yen||0)>=0?'up':'down'}">${h.yen==null?'—':fmtY(h.yen)}</td><td class="mono">${h.a==null?'—':h.a+'%'}</td><td class="mono ${h.pts<0?'down':''}">${h.pts>=0?'+':''}${h.pts}</td></tr>`}).join(''):'<tr><td colspan="7" class="empty">まだ記録がありません</td></tr>';
+  $('histBody').innerHTML=P.history.length?P.history.map(h=>{const d=new Date(h.d);return`<tr><td>${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}</td><td class="mono">#${h.w||1}-${h.scene}</td><td>${h.q?'Q'+h.q+(h.ok?' ✓':' ✗')+' ':''}${h.mode==='real'?'実戦':'練習'} ${h.len}本</td><td class="mono ${h.pips>=0?'up':'down'}">${sg(h.pips)}</td><td class="mono ${(h.yen||0)>=0?'up':'down'}">${h.yen==null?'—':fmtY(h.yen)}</td><td class="mono">${h.a==null?'—':h.a+'%'}</td><td class="mono ${h.pts<0?'down':''}">${h.pts>=0?'+':''}${h.pts}</td></tr>`}).join(''):'<tr><td colspan="7" class="empty">まだ記録がありません</td></tr>';
   $('exportTxt').value=encodeProfile();$('importTxt').value='';$('btnWipe').textContent='削除する（確認あり）';wipeArmed=false;
   $('profBg').hidden=false}
 $('playerChip').onclick=openProfile;$('btnProfile').onclick=openProfile;
@@ -1432,8 +1436,13 @@ document.addEventListener('keydown',e=>{
 });
 
 // ---------- boot ----------
+function buildWorld(){WSEED=worldSeed(S.world);WORLD=genWorld();BASE=makeDS(WORLD.bars,TF0);buildSigns(BASE);EVENTS=WORLD.events;HTF={};PCT=null;TICK_CACHE.clear()}
+function switchWorld(w,s0){S.world=w;saveS();$('selWorld').value=w;$('loadingTxt').textContent=`${worldLabel()}の架空相場3年分を生成しています…`;$('loading').hidden=false;clearTimeout(G.timer);G.running=false;
+  setTimeout(()=>{buildWorld();newGame(s0);$('loading').hidden=true;toast(`${worldLabel()}（3年分）に切り替えました`)},40)}
+$('selWorld').innerHTML=Array.from({length:WORLDS},(_,k)=>`<option value="${k+1}">第${k+1}期（3年分）</option>`).join('');
+$('selWorld').onchange=e=>{const w=+e.target.value;if(w!==S.world)switchWorld(w)};
 function boot(){
-  WORLD=genWorld();BASE=makeDS(WORLD.bars,TF0);buildSigns(BASE);EVENTS=WORLD.events;
+  buildWorld();
   $('ticks').innerHTML='<i></i>'.repeat(15);
   loadProfile();renderRegGrid();
   syncSettings();renderChar();renderRec();newGame();
