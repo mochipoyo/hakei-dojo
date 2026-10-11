@@ -42,6 +42,10 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
 .chip .lv{font-size:10.5px;color:var(--muted)}
 .chip.pts{padding-left:10px;background:var(--goldbg);border-color:#f0d58a;color:#7a5a00;font-weight:700}
 .chip.quest{padding-left:10px;background:#eef3ff;border-color:#b9c9f0;color:#24418a;font-weight:700}
+.chip.yen{padding-left:10px;font-weight:700;font-family:"JetBrains Mono",monospace}
+.chip.yen.up{background:#fdeeeb;border-color:#f3c2bb;color:var(--up)}.chip.yen.down{background:#eaf0fb;border-color:#b9c9f0;color:var(--down)}
+.yenline{font-size:12.5px;margin-top:6px;color:var(--ink2)}.yenline b{font-size:15px}
+.sub.money{font-size:18px;font-weight:700}
 .seedbtn{background:transparent;border:1px solid var(--line);border-radius:3px;padding:3px 8px;font-size:11px;color:var(--ink2);white-space:nowrap}
 .seedbtn:hover{border-color:var(--ink);color:var(--ink)}
 .prog{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink2);white-space:nowrap}
@@ -315,6 +319,7 @@ table.gt th{color:var(--ink2);font-weight:500;font-size:11px}
     <div class="brand"><span class="hanko">波</span><b>波形トレード道場</b></div>
     <button class="chip" id="playerChip" title="プレイヤー情報"><span class="av" id="chipAv"></span><span id="chipName">—</span><span class="lv" id="chipLv"></span></button>
     <button class="chip pts" id="ptsChip" title="武器庫を開く">0 P</button>
+    <span class="chip yen" id="yenChip" title="累計損益（円）">¥0</span>
     <button class="chip quest" id="questChip" title="クエスト一覧">クエスト</button>
     <button class="seedbtn mono" id="seedBtn" title="クリックで場面番号をコピー">場面 #</button>
     <div class="prog mono"><span id="progText">0 / 150本</span><div class="ticks" id="ticks"></div></div>
@@ -386,6 +391,7 @@ table.gt th{color:var(--ink2);font-weight:500;font-size:11px}
             <div class="row" style="margin:0"><span class="l mono" id="charLv">Lv 1</span><span class="v mono" id="charExp" style="font-size:11px;color:var(--muted)"></span></div>
             <div class="lvbar"><i id="lvBar"></i></div>
             <div class="ptsbig mono" id="charPts">0 P</div>
+            <div class="yenline" id="charYen">累計損益 <b class="mono">¥0</b></div>
           </div>
         </div>
         <div class="trait" id="charTrait"></div>
@@ -516,7 +522,7 @@ table.gt th{color:var(--ink2);font-weight:500;font-size:11px}
       <div class="cgrid" id="profGrid"></div>
     </div>
     <div id="tab-hist" hidden>
-      <div style="max-height:360px;overflow:auto"><table class="gt hist"><thead><tr><th>日時</th><th>場面</th><th>内容</th><th>損益</th><th>A率</th><th>獲得P</th></tr></thead><tbody id="histBody"></tbody></table></div>
+      <div style="max-height:360px;overflow:auto"><table class="gt hist"><thead><tr><th>日時</th><th>場面</th><th>内容</th><th>損益</th><th>円</th><th>A率</th><th>獲得P</th></tr></thead><tbody id="histBody"></tbody></table></div>
     </div>
     <div id="tab-data" hidden>
       <h4>引き継ぎコード（別の端末やブラウザで続きを遊ぶ）</h4>
@@ -557,6 +563,7 @@ table.gt th{color:var(--ink2);font-weight:500;font-size:11px}
     <h2 id="mTitle">RESULT</h2>
     <div class="lead" id="mLead"></div>
     <div class="ptsbox" id="ptsBox"></div>
+    <div class="qres" id="yenBox" style="background:var(--panel2);border:1px solid var(--line)"></div>
     <div id="qResBox"></div>
     <div class="bkbox" id="bkBox"><b>引き継ぎコードを保存しましょう</b>ブラウザのデータ消去や端末の変更、iPhoneのSafariで7日間開かなかった場合などに記録が消えることがあります。コードをメモに控えておけば、いつでも復元できます（プレイヤー情報の「引き継ぎ・データ」からも取得できます）。<div class="share"><textarea id="bkTxt" readonly></textarea><button class="smallbtn fill" id="btnBkCopy">コードをコピー</button></div></div>
     <div class="grid2">
@@ -695,7 +702,7 @@ let P=null,Q=null;
 const emptyRec=()=>({games:0,n:0,w:0,pips:0,g:{A:{n:0,w:0,p:0},B:{n:0,w:0,p:0},C:{n:0,w:0,p:0}},on:{n:0,p:0},off:{n:0,p:0}});
 function genId(){const A='ABCDEFGHJKMNPQRSTUVWXYZ23456789';const b=new Uint8Array(6);(window.crypto&&crypto.getRandomValues)?crypto.getRandomValues(b):b.forEach((_,i)=>b[i]=Math.random()*256|0);let s='';for(const x of b)s+=A[x%A.length];return 'HD-'+s}
 function loadProfile(){try{const o=JSON.parse(localStorage.getItem('hakei-dojo4-profile')||'null');if(o&&o.id&&o.name)P=normalizeProfile(o)}catch(e){P=null}}
-function normalizeProfile(o){return Object.assign({v:1,id:genId(),name:'player',created:Date.now(),charId:1,points:0,exp:0,weapons:[0],equipped:0,quests:{},history:[],rec:emptyRec(),streak:0,counters:{signWins:0,realGames:0,aTrades:0}},o,{rec:Object.assign(emptyRec(),o.rec||{}),counters:Object.assign({signWins:0,realGames:0,aTrades:0},o.counters||{}),quests:o.quests||{},weapons:Array.isArray(o.weapons)&&o.weapons.length?o.weapons:[0],history:Array.isArray(o.history)?o.history:[]})}
+function normalizeProfile(o){return Object.assign({v:1,id:genId(),name:'player',created:Date.now(),charId:1,points:0,exp:0,weapons:[0],equipped:0,quests:{},history:[],rec:emptyRec(),streak:0,yen:0,counters:{signWins:0,realGames:0,aTrades:0}},o,{rec:Object.assign(emptyRec(),o.rec||{}),counters:Object.assign({signWins:0,realGames:0,aTrades:0},o.counters||{}),quests:o.quests||{},weapons:Array.isArray(o.weapons)&&o.weapons.length?o.weapons:[0],history:Array.isArray(o.history)?o.history:[]})}
 function saveProfile(){if(!P)return;try{localStorage.setItem('hakei-dojo4-profile',JSON.stringify(P))}catch(e){}}
 function createProfile(name,charId){P=normalizeProfile({id:genId(),name,charId,created:Date.now()});saveProfile()}
 const curChar=()=>CHARS.find(c=>c.id===(P?P.charId:1))||CHARS[0];
@@ -977,9 +984,10 @@ function finish(){
     P.quests[q.id]={cleared:prev.cleared||ok,tries:(prev.tries||0)+1,best:Math.max(prev.best||-1e9,st.tot)};qres={ok,reward,first:ok&&!prev.cleared}}
   const unlockedBefore=CHARS.filter(charUnlocked).map(c=>c.id);
   const total=pt.total+reward;
+  const yen=G.trades.reduce((a,t)=>a+t.pips*t.lot*PIP,0);P.yen=(P.yen||0)+yen;
   P.points=Math.max(0,P.points+total);P.exp+=Math.max(0,total);P.streak=pt.streak;P.counters.signWins=(P.counters.signWins||0)+st.signWins;P.counters.aTrades=(P.counters.aTrades||0)+st.nA;if(st.mode==='real')P.counters.realGames=(P.counters.realGames||0)+1;
   const R=P.rec;R.games++;for(const t of G.trades){R.n++;if(t.pips>0)R.w++;R.pips+=t.pips;const g=R.g[t.grade];g.n++;if(t.pips>0)g.w++;g.p+=t.pips;if(t.agree==='順'){R.on.n++;R.on.p+=t.pips}else if(t.agree==='逆'){R.off.n++;R.off.p+=t.pips}}
-  P.history.unshift({d:Date.now(),scene,mode:S.mode,len:G.end-G.s0,pips:Math.round(st.tot*10)/10,n:st.n,a:st.n?Math.round(st.nA/st.n*100):null,pts:total,q:q?q.id:0,ok:qres?qres.ok:null});if(P.history.length>100)P.history.length=100;
+  P.history.unshift({d:Date.now(),scene,mode:S.mode,len:G.end-G.s0,pips:Math.round(st.tot*10)/10,yen:Math.round(yen),n:st.n,a:st.n?Math.round(st.nA/st.n*100):null,pts:total,q:q?q.id:0,ok:qres?qres.ok:null});if(P.history.length>100)P.history.length=100;
   const newly=CHARS.filter(charUnlocked).map(c=>c.id).filter(id=>!unlockedBefore.includes(id));
   saveProfile();
   G.result={st,pt,qres,total,newly,clamped:P.points===0&&total<0};
@@ -1017,6 +1025,7 @@ function renderChar(){
   $('charName').textContent=ch.name;$('charTitle').textContent=ch.title+' ・ '+P.name;
   $('charLv').textContent='Lv '+lv;$('charExp').textContent=`${fmtN(P.exp)} / ${fmtN(e1)} EXP`;$('lvBar').style.width=Math.min(100,Math.round((P.exp-e0)/(e1-e0)*100))+'%';
   $('charPts').textContent=fmtN(P.points)+' P';
+  const y=P.yen||0;$('charYen').innerHTML=`累計損益 <b class="mono ${y>0?'up':y<0?'down':''}">${fmtY(y)}</b> <span style="font-size:10.5px;color:var(--muted)">（${fmtN(P.rec.games)}ゲーム）</span>`;const yc=$('yenChip');yc.textContent=fmtY(y);yc.className='chip yen '+(y>0?'up':y<0?'down':'');
   $('charTrait').innerHTML=`<b>特性：</b>${esc(ch.trait)}<br><span style="color:var(--muted)">${esc(ch.desc)}</span>`;
   $('wIcon').innerHTML=weaponSVG(w);$('wName').textContent=w.name+'（ポイント倍率 ×'+w.mult+'）';$('wLot').textContent='取引数量の上限：'+fmtN(w.lot)+'通貨';
   $('chipName').textContent=P.name;$('chipLv').textContent='Lv'+lv;$('ptsChip').textContent=fmtN(P.points)+' P';
@@ -1056,7 +1065,7 @@ function updateUI(){
   $('btnBuy').classList.toggle('dim',!!G.pos||G.over);$('btnSell').classList.toggle('dim',!!G.pos||G.over);
   const T=G.trades,tot=T.reduce((s,t)=>s+t.pips,0),yen=T.reduce((s,t)=>s+t.pips*t.lot*PIP,0);
   $('totPips').textContent=fmtP(tot);$('totPips').className='big-num mono '+(tot>0?'up':tot<0?'down':'');
-  $('totYen').textContent=fmtY(yen)+`（現在 ${fmtN(S.lot)}通貨）`;
+  $('totYen').textContent=fmtY(yen)+`（現在 ${fmtN(S.lot)}通貨）`;$('totYen').className='sub money mono '+(yen>0?'up':yen<0?'down':'');
   const n=T.length,w=T.filter(t=>t.pips>0).length;
   $('wr').textContent=`${n}回 / ${n?Math.round(w/n*100)+'%':'—'}`;
   $('aRate').textContent=n?Math.round(T.filter(t=>t.grade==='A').length/n*100)+'%':'—';
@@ -1073,6 +1082,7 @@ function renderLog(){
 function renderRec(){
   const R=P?P.rec:emptyRec(),pc=(w,n)=>n?Math.round(w/n*100)+'%':'—',avg=(p,n)=>n?sg(p/n):'—';
   $('recBox').innerHTML=[['ゲーム数',R.games+'回'],['合計損益',(R.n?sg(R.pips):'±0.0')+' pips'],['取引 / 勝率',R.n+'回 / '+pc(R.w,R.n)],['A判定率',pc(R.g.A.n,R.n)],
+    ['累計損益（円）',fmtY(P?P.yen||0:0)],['1ゲーム平均（円）',R.games?fmtY((P?P.yen||0:0)/R.games):'—'],
     ['A 平均・勝率',avg(R.g.A.p,R.g.A.n)+' / '+pc(R.g.A.w,R.g.A.n)],['B 平均・勝率',avg(R.g.B.p,R.g.B.n)+' / '+pc(R.g.B.w,R.g.B.n)],['C 平均・勝率',avg(R.g.C.p,R.g.C.n)+' / '+pc(R.g.C.w,R.g.C.n)],['上位足 順/逆 平均',avg(R.on.p,R.on.n)+' / '+avg(R.off.p,R.off.n)]]
     .map(([k,v])=>`<div><div class="k">${k}</div><div class="v mono">${v}</div></div>`).join('');
 }
@@ -1088,6 +1098,7 @@ function showResult(){
     +(R.newly.length?`<div class="ln" style="margin-top:6px;font-weight:700">新しい仲間が解放：${R.newly.map(id=>CHARS.find(c=>c.id===id).name).join('、')}（プレイヤー情報から選択）</div>`:'');
     const qb=$('qResBox');if(q&&R.qres){const lines=q.cond.map(c=>`${c.f(R.st)?'✓':'✗'} ${esc(c.t)}（${esc(c.v(R.st))}）`).join('<br>');qb.innerHTML=`<div class="qres ${R.qres.ok?'ok':'ng'}"><b>クエスト${q.id}「${esc(q.name)}」 ${R.qres.ok?'クリア！':'未達成'}</b><br>${lines}${R.qres.ok&&q.id<10?'<br>次のクエストが解放されました':''}</div>`}else qb.innerHTML=''}
   $('mPips').textContent=fmtP(tot)+'　'+fmtY(yen);$('mPips').className='v mono '+(tot>=0?'up':'down');
+  $('yenBox').innerHTML=`<b>今回の損益</b> <span class="mono ${yen>0?'up':yen<0?'down':''}" style="font-size:20px;font-weight:700">${fmtY(yen)}</span> <span style="font-size:11.5px;color:var(--muted)">（${fmtP(tot)}${T.length?' ・ 取引数量 '+[...new Set(T.map(t=>fmtN(t.lot)))].join('/')+'通貨':''}）</span><br><b>累計損益</b> <span class="mono ${(P.yen||0)>0?'up':(P.yen||0)<0?'down':''}" style="font-size:16px;font-weight:700">${fmtY(P.yen||0)}</span> <span style="font-size:11.5px;color:var(--muted)">（${fmtN(P.rec.games)}ゲーム）</span>`;
   $('mWr').textContent=n?Math.round(w.length/n*100)+'%（'+w.length+'勝'+(n-w.length)+'敗）':'—';
   const pf=n?(gl?(gp/gl).toFixed(2):(gp>0?'∞':'—')):'—';$('mPf').textContent=pf;
   $('mDd').textContent=n?'-'+dd.toFixed(1)+' pips':'—';
@@ -1107,7 +1118,7 @@ function showResult(){
     v+=`\n\n※1ゲームの結果だけで手法の優劣は判断できません。通算成績で回数を重ねた傾向を見てください。`;
   }
   $('mVerdict').textContent=v;
-  $('shareTxt').value=`波形トレード道場 ${P.name}（${curChar().name} Lv${levelOf(P.exp)}） 場面#${scene}${q?' クエスト'+q.id+(R&&R.qres&&R.qres.ok?' クリア':''):''}\n${fmtP(tot)} ｜ 勝率 ${n?Math.round(w.length/n*100)+'%':'—'}（${n}回）｜ A判定率 ${n?Math.round(A.n/n*100)+'%':'—'} ｜ ${R&&R.total<0?'':'+'}${R?R.total:0}P`;
+  $('shareTxt').value=`波形トレード道場 ${P.name}（${curChar().name} Lv${levelOf(P.exp)}） 場面#${scene}${q?' クエスト'+q.id+(R&&R.qres&&R.qres.ok?' クリア':''):''}\n${fmtP(tot)}（${fmtY(yen)}） ｜ 勝率 ${n?Math.round(w.length/n*100)+'%':'—'}（${n}回）｜ A判定率 ${n?Math.round(A.n/n*100)+'%':'—'} ｜ ${R&&R.total<0?'':'+'}${R?R.total:0}P`;
   $('btnCopy').textContent='コピー';
   $('bkTxt').value=encodeProfile();$('btnBkCopy').textContent='コードをコピー';
   $('mNew').textContent=q&&R&&R.qres&&R.qres.ok&&q.id<10?'次のクエストへ':(q?'クエスト一覧へ':'新しい場面');
@@ -1367,9 +1378,9 @@ $('regName').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault
 $('btnRegImport').onclick=()=>{$('regImportBox').hidden=!$('regImportBox').hidden};
 $('btnRegImportGo').onclick=()=>{const o=decodeProfile($('regImportTxt').value);if(!o){toast('引き継ぎコードを読み取れませんでした');return}P=o;saveProfile();$('regBg').hidden=true;renderChar();renderRec();syncSettings();restart();toast(`おかえりなさい、${esc(P.name)} さん（ID ${P.id}）`)};
 function openProfile(){if(!P){$('regBg').hidden=false;return}
-  $('profLead').textContent=`${P.name} ・ ID ${P.id} ・ Lv ${levelOf(P.exp)} ・ 所持 ${fmtN(P.points)} P ・ 累計 ${fmtN(P.exp)} P ・ 登録 ${new Date(P.created).toLocaleDateString('ja-JP')}`;
+  $('profLead').textContent=`${P.name} ・ ID ${P.id} ・ Lv ${levelOf(P.exp)} ・ 所持 ${fmtN(P.points)} P ・ 累計獲得 ${fmtN(P.exp)} P ・ 累計損益 ${fmtY(P.yen||0)} ・ 登録 ${new Date(P.created).toLocaleDateString('ja-JP')}`;
   $('profName').value=P.name;$('profGrid').innerHTML=CHARS.map(c=>charCardHTML(c,c.id===P.charId)).join('');
-  $('histBody').innerHTML=P.history.length?P.history.map(h=>{const d=new Date(h.d);return`<tr><td>${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}</td><td class="mono">#${h.scene}</td><td>${h.q?'Q'+h.q+(h.ok?' ✓':' ✗')+' ':''}${h.mode==='real'?'実戦':'練習'} ${h.len}本</td><td class="mono ${h.pips>=0?'up':'down'}">${sg(h.pips)}</td><td class="mono">${h.a==null?'—':h.a+'%'}</td><td class="mono ${h.pts<0?'down':''}">${h.pts>=0?'+':''}${h.pts}</td></tr>`}).join(''):'<tr><td colspan="6" class="empty">まだ記録がありません</td></tr>';
+  $('histBody').innerHTML=P.history.length?P.history.map(h=>{const d=new Date(h.d);return`<tr><td>${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}</td><td class="mono">#${h.scene}</td><td>${h.q?'Q'+h.q+(h.ok?' ✓':' ✗')+' ':''}${h.mode==='real'?'実戦':'練習'} ${h.len}本</td><td class="mono ${h.pips>=0?'up':'down'}">${sg(h.pips)}</td><td class="mono ${(h.yen||0)>=0?'up':'down'}">${h.yen==null?'—':fmtY(h.yen)}</td><td class="mono">${h.a==null?'—':h.a+'%'}</td><td class="mono ${h.pts<0?'down':''}">${h.pts>=0?'+':''}${h.pts}</td></tr>`}).join(''):'<tr><td colspan="7" class="empty">まだ記録がありません</td></tr>';
   $('exportTxt').value=encodeProfile();$('importTxt').value='';$('btnWipe').textContent='削除する（確認あり）';wipeArmed=false;
   $('profBg').hidden=false}
 $('playerChip').onclick=openProfile;$('btnProfile').onclick=openProfile;
