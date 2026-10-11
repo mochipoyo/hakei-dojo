@@ -233,6 +233,10 @@ table.gt th{color:var(--ink2);font-weight:500;font-size:11px}
 .ptsbox .ln{display:flex;justify-content:space-between;font-size:12px;color:#5d4a10;padding:2px 0}
 .qres{border-radius:6px;padding:10px 12px;margin-bottom:12px;font-size:13px;line-height:1.6}
 .qres.ok{background:var(--okbg);border:1px solid #bfe6cf}.qres.ng{background:var(--ngbg);border:1px solid #f3c2c2}
+.bkbox{background:#eef3ff;border:1px solid #b9c9f0;border-radius:6px;padding:10px 12px;margin-bottom:12px;font-size:12px;line-height:1.6;color:#24418a}
+.bkbox b{display:block;font-size:13px;margin-bottom:2px}
+.bkbox .share{margin:8px 0 0}
+.bkbox textarea{height:48px;background:#fff}
 .share{display:flex;gap:6px;margin-bottom:12px}
 .share textarea{flex:1;min-width:0;height:64px;resize:none;background:var(--panel2);border:1px solid var(--line);border-radius:4px;font-size:11px;font-family:"JetBrains Mono",monospace;padding:6px;color:var(--ink2)}
 .mbtns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
@@ -532,6 +536,7 @@ table.gt th{color:var(--ink2);font-weight:500;font-size:11px}
     <div class="lead" id="mLead"></div>
     <div class="ptsbox" id="ptsBox"></div>
     <div id="qResBox"></div>
+    <div class="bkbox" id="bkBox"><b>引き継ぎコードを保存しましょう</b>ブラウザのデータ消去や端末の変更、iPhoneのSafariで7日間開かなかった場合などに記録が消えることがあります。コードをメモに控えておけば、いつでも復元できます（プレイヤー情報の「引き継ぎ・データ」からも取得できます）。<div class="share"><textarea id="bkTxt" readonly></textarea><button class="smallbtn fill" id="btnBkCopy">コードをコピー</button></div></div>
     <div class="grid2">
       <div class="tile"><div class="k">合計損益</div><div class="v mono" id="mPips"></div></div>
       <div class="tile"><div class="k">勝率</div><div class="v mono" id="mWr"></div></div>
@@ -1059,6 +1064,7 @@ function showResult(){
   $('mVerdict').textContent=v;
   $('shareTxt').value=`波形トレード道場 ${P.name}（${curChar().name} Lv${levelOf(P.exp)}） 場面#${scene}${q?' クエスト'+q.id+(R&&R.qres&&R.qres.ok?' クリア':''):''}\n${fmtP(tot)} ｜ 勝率 ${n?Math.round(w.length/n*100)+'%':'—'}（${n}回）｜ A判定率 ${n?Math.round(A.n/n*100)+'%':'—'} ｜ ${R&&R.total<0?'':'+'}${R?R.total:0}P`;
   $('btnCopy').textContent='コピー';
+  $('bkTxt').value=encodeProfile();$('btnBkCopy').textContent='コードをコピー';
   $('mNew').textContent=q&&R&&R.qres&&R.qres.ok&&q.id<10?'次のクエストへ':(q?'クエスト一覧へ':'新しい場面');
   $('modalBg').hidden=false;
   requestAnimationFrame(drawEquity);
@@ -1272,8 +1278,9 @@ $('btnResult').onclick=()=>{$('modalBg').hidden=false;requestAnimationFrame(draw
 $('btnSound').onclick=()=>{S.sound=!S.sound;saveS();syncSettings();if(S.sound){initAudio();beep(660,0.08,0.04)}};
 $('seedBtn').onclick=()=>copyText(String(scene),$('seedBtn'),'#'+scene);
 $('btnCopy').onclick=()=>copyText($('shareTxt').value,$('btnCopy'),'コピー');
-function copyText(txt,btn,orig){const done=()=>{btn.textContent='コピーしました';setTimeout(()=>btn.textContent=orig,1500)};
-  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(done).catch(()=>{const ta=$('shareTxt');ta.value=txt;ta.select();done()})}else{const ta=$('shareTxt');ta.value=txt;ta.select();done()}}
+$('btnBkCopy').onclick=()=>copyText($('bkTxt').value,$('btnBkCopy'),'コードをコピー',$('bkTxt'));
+function copyText(txt,btn,orig,ta){const done=()=>{btn.textContent='コピーしました';setTimeout(()=>btn.textContent=orig,1500)};const sel=()=>{const el=ta||$('shareTxt');el.value=txt;el.focus();el.select();try{document.execCommand('copy')}catch(e){}done()};
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(done).catch(sel)}else sel()}
 $('btnSeedGo').onclick=()=>{const v=parseInt($('seedIn').value,10);if(!isFinite(v)){toast('場面番号（整数）を入力してください');return}restart(v)};
 $('seedIn').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('btnSeedGo').click()}});
 $('log').addEventListener('click',e=>{const li=e.target.closest('li[data-k]');if(!li)return;const t=G.trades[+li.dataset.k];const g=GEO.base;const N=g?g.last-g.first:60;setRight(t.exitIdx+Math.floor(N*0.3));toast(`${fmtT(t.t,true)} ${t.dir===1?'買い':'売り'} @${t.price.toFixed(3)} → ${t.exit.toFixed(3)}（${fmtP(t.pips)}・判定 ${t.grade}）`)});
@@ -1324,7 +1331,7 @@ $('btnProfClose').onclick=()=>{$('profBg').hidden=true};
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b));['char','hist','data'].forEach(t=>$('tab-'+t).hidden=t!==b.dataset.tab)});
 $('profGrid').addEventListener('click',e=>{const el=e.target.closest('.cg');if(!el||el.classList.contains('lock'))return;P.charId=+el.dataset.ch;saveProfile();$('profGrid').innerHTML=CHARS.map(c=>charCardHTML(c,c.id===P.charId)).join('');renderChar();toast(`${curChar().name} に交代しました（特性：${curChar().trait}）`)});
 $('btnRename').onclick=()=>{const v=$('profName').value.trim();if(!v||v.length>12){toast('ニックネームは1〜12文字で入力してください');return}P.name=v;saveProfile();renderChar();openProfile();toast('ニックネームを変更しました')};
-$('btnExport').onclick=()=>copyText($('exportTxt').value,$('btnExport'),'コードをコピー');
+$('btnExport').onclick=()=>copyText($('exportTxt').value,$('btnExport'),'コードをコピー',$('exportTxt'));
 $('btnImport').onclick=()=>{const o=decodeProfile($('importTxt').value);if(!o){toast('引き継ぎコードを読み取れませんでした');return}P=o;saveProfile();$('profBg').hidden=true;renderChar();renderRec();syncSettings();restart();toast(`復元しました：${esc(P.name)} さん（ID ${P.id}）`)};
 let wipeArmed=false;
 $('btnWipe').onclick=()=>{if(!wipeArmed){wipeArmed=true;$('btnWipe').textContent='本当に削除する（もう一度押す）';return}try{localStorage.removeItem('hakei-dojo4-profile')}catch(e){}P=null;Q=null;$('profBg').hidden=true;$('regName').value='';regSel=1;renderRegGrid();$('regBg').hidden=false;toast('プレイヤーデータを削除しました')};
